@@ -115,6 +115,9 @@ export default function App() {
           messages: [...conversation.messages, newMessage],
           lastContact: new Date()
         });
+        // Refresh history state
+        const updated = await db.conversations.where('profileUrl').equals(window.location.href).first();
+        setConversationHistory(updated || null);
       } else {
         // Create new conversation
         const newConversation: Conversation = {
@@ -131,6 +134,7 @@ export default function App() {
           tags: []
         };
         await db.conversations.add(newConversation);
+        setConversationHistory(newConversation);
       }
 
       console.log('[Side Panel] Message logged to conversation history');
@@ -138,6 +142,24 @@ export default function App() {
     } catch (error) {
       console.error('[Side Panel] Error logging sent message:', error);
       showToast('Failed to save to history');
+    }
+  };
+
+  // Handle conversation status update
+  const handleStatusUpdate = async (conversationId: string, newStatus: Conversation['status']) => {
+    try {
+      await db.conversations.update(conversationId, { status: newStatus });
+
+      // Refresh history state
+      const profileUrl = window.location.href;
+      const updated = await db.conversations.where('profileUrl').equals(profileUrl).first();
+      setConversationHistory(updated || null);
+
+      console.log('[Side Panel] Conversation status updated:', newStatus);
+      showToast(`Status updated to ${newStatus.replace('_', ' ')}`);
+    } catch (error) {
+      console.error('[Side Panel] Error updating status:', error);
+      showToast('Failed to update status');
     }
   };
 
@@ -415,42 +437,58 @@ export default function App() {
             {activeTab === 'history' && (
               <div className="px-4 py-3">
                 {conversationHistory && conversationHistory.messages.length > 0 ? (
-                  <div className="space-y-3">
-                    {conversationHistory.messages.map((msg) => (
-                      <div key={msg.id} className="border border-[#262626] rounded-lg p-3 bg-[#111]">
-                        <div className="flex items-start justify-between mb-2">
-                          <span className="text-xs text-[#0070f3] bg-[#0070f3]/10 px-2 py-0.5 rounded capitalize">
-                            {msg.angle}
-                          </span>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-xs text-[#666]">
-                              {new Date(msg.timestamp).toLocaleDateString()}
+                  <div className="space-y-4">
+                    {/* Status Update Section */}
+                    <div className="flex items-center justify-between p-3 bg-[#111] border border-[#262626] rounded-lg">
+                      <div>
+                        <span className="text-xs text-[#666] block mb-1">Conversation Status</span>
+                        <select
+                          value={conversationHistory.status}
+                          onChange={(e) => handleStatusUpdate(conversationHistory.id, e.target.value as Conversation['status'])}
+                          className="bg-[#262626] text-[#ededed] text-sm px-3 py-1.5 rounded border border-[#333] focus:outline-none focus:border-[#0070f3] capitalize"
+                        >
+                          <option value="sent">Sent</option>
+                          <option value="responded">Responded</option>
+                          <option value="no_response">No Response</option>
+                          <option value="converted">Converted</option>
+                        </select>
+                      </div>
+                      <div className="text-right text-xs text-[#666]">
+                        <div>{conversationHistory.messages.length} message{conversationHistory.messages.length !== 1 ? 's' : ''}</div>
+                        <div>Last: {new Date(conversationHistory.lastContact).toLocaleDateString()}</div>
+                      </div>
+                    </div>
+
+                    {/* Messages */}
+                    <div className="space-y-3">
+                      {conversationHistory.messages.map((msg) => (
+                        <div key={msg.id} className="border border-[#262626] rounded-lg p-3 bg-[#111]">
+                          <div className="flex items-start justify-between mb-2">
+                            <span className="text-xs text-[#0070f3] bg-[#0070f3]/10 px-2 py-0.5 rounded capitalize">
+                              {msg.angle}
                             </span>
-                            <button
-                              onClick={() => {
-                                navigator.clipboard.writeText(msg.content);
-                                showToast('Message copied to clipboard!');
-                              }}
-                              className="text-xs text-[#a1a1a1] hover:text-[#ededed]"
-                            >
-                              Copy
-                            </button>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-xs text-[#666]">
+                                {new Date(msg.timestamp).toLocaleDateString()}
+                              </span>
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(msg.content);
+                                  showToast('Message copied to clipboard!');
+                                }}
+                                className="text-xs text-[#a1a1a1] hover:text-[#ededed]"
+                              >
+                                Copy
+                              </button>
+                            </div>
+                          </div>
+                          <p className="text-sm text-[#ededed] mb-2">{msg.content}</p>
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-[#666]">Voice: {msg.voiceMatchScore}% match</span>
                           </div>
                         </div>
-                        <p className="text-sm text-[#ededed] mb-2">{msg.content}</p>
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-[#666]">Voice: {msg.voiceMatchScore}% match</span>
-                          <span className={`
-                            capitalize
-                            ${conversationHistory.status === 'sent' ? 'text-[#ffc107]' : ''}
-                            ${conversationHistory.status === 'responded' ? 'text-[#00c853]' : ''}
-                            ${conversationHistory.status === 'converted' ? 'text-[#0070f3]' : ''}
-                          `}>
-                            {conversationHistory.status.replace('_', ' ')}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 ) : (
                   <div className="text-center py-8">

@@ -1,21 +1,24 @@
 {
-  "id": "dev-4-4",
+  "id": "dev-4-5",
   "phase": "DEVELOPMENT",
-  "title": "Status Updates (Phase 4.4)",
-  "goal": "Allow updating conversation status",
-  "priority": "low",
+  "title": "Testing & Verification (Phase 4.5)",
+  "goal": "Verify all Phase 4 features work end-to-end",
+  "priority": "high",
   "status": "pending",
-  "dependencies": ["dev-4-3"],
+  "dependencies": ["dev-4-1", "dev-4-2", "dev-4-3", "dev-4-4"],
   "attempt": 1,
   "spec": {
     "complexity": "C2",
-    "file": "entrypoints/sidepanel/App.tsx",
     "actions": [
-      "Add status dropdown in history view",
-      "Allow changing: sent → responded → converted",
-      "Update IndexedDB on status change",
-      "Show success toast on update",
-      "Test: Status persists across reload"
+      "Test voice profile extraction in options page",
+      "Verify voice profile loads in side panel",
+      "Verify 'Using your voice' badge shows when profile active",
+      "Test message generation uses voice profile",
+      "Verify history tab shows sent messages",
+      "Verify status dropdown updates conversation status",
+      "Verify status persists across page reload",
+      "Check build size < 1.1 MB",
+      "Commit: 'Phase 4 complete: Voice Training'"
     ]
   }
 }
