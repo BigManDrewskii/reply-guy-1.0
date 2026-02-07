@@ -1,20 +1,21 @@
 {
-  "id": "dev-3-1",
+  "id": "dev-3-2",
   "phase": "DEVELOPMENT",
-  "title": "Message Generation Prompt (Phase 3.1)",
-  "goal": "Define message generation prompt",
+  "title": "Message Generation API (Phase 3.2)",
+  "goal": "Implement streaming message generation",
   "priority": "high",
   "status": "in_progress",
-  "dependencies": [],
+  "dependencies": ["dev-3-1", "dev-2-4"],
   "attempt": 1,
   "spec": {
     "complexity": "C3",
     "file": "lib/openrouter.ts",
     "actions": [
-      "Write prompt for 3-5 DM variants",
-      "Request JSON array with angle, content, whyItWorks",
-      "Include voice profile context",
-      "Test prompt format"
+      "Create generateMessages() generator",
+      "Accept profile data, analysis, voice profile",
+      "Stream responses token-by-token",
+      "Parse JSON output",
+      "Test: Generates 3-5 messages"
     ]
   }
 }
