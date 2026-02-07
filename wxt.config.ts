@@ -1,26 +1,22 @@
-import {defineConfig} from 'wxt';
-import react from '@vitejs/plugin-react';
+import { defineConfig } from 'wxt';
 
-// See https://wxt.dev/api/config.html
 export default defineConfig({
-    manifest: {
-        permissions: ["activeTab", "scripting", "sidePanel", "storage", "tabs"],
-        host_permissions: ["https://x.com/*", "https://twitter.com/*", "https://www.linkedin.com/*"],
-        action: {},
-        name: '__MSG_extName__',
-        description: '__MSG_extDescription__',
-        default_locale: "en",
-        commands: {
-            "toggle-side-panel": {
-                suggested_key: {
-                    default: "Ctrl+Shift+R",
-                    mac: "Command+Shift+R"
-                },
-                description: "Toggle Reply Guy side panel"
-            }
-        }
+  modules: ['@wxt-dev/module-react'],
+  manifest: {
+    name: 'Reply Guy',
+    description: 'AI-powered outreach messages for any profile or page',
+    version: '0.1.0',
+    permissions: [
+      'sidePanel',
+      'activeTab',
+      'storage',
+      'clipboardWrite',
+    ],
+    side_panel: {
+      default_path: 'sidepanel.html',
     },
-    vite: () => ({
-        plugins: [react()],
-    }),
+    action: {
+      default_title: 'Open Reply Guy',
+    },
+  },
 });
