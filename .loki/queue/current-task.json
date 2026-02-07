@@ -1,22 +1,21 @@
 {
-  "id": "dev-6-4",
+  "id": "dev-6-5",
   "phase": "DEVELOPMENT",
   "subPhase": 6,
-  "title": "Global Error Handling (Phase 6.4)",
-  "goal": "Add error boundaries and API failure handlers",
+  "title": "Rate Limiting (Phase 6.5)",
+  "goal": "Implement 1 request per 5 second rate limiter",
   "priority": "high",
   "status": "in_progress",
   "dependencies": [],
   "attempt": 1,
   "spec": {
-    "complexity": "C3",
-    "files": ["entrypoints/sidepanel/App.tsx", "lib/openrouter.ts"],
+    "complexity": "C2",
+    "file": "lib/utils/rate-limiter.ts",
     "actions": [
-      "Add React ErrorBoundary to sidepanel App",
-      "Catch OpenRouter API errors, show user-friendly messages",
-      "Catch scraping errors, show 'try again' UI",
-      "Log errors to console for debugging",
-      "Test: Errors don't crash extension"
+      "Implement token bucket or sliding window rate limiter",
+      "Apply to analyzeProfile() and generateMessages() calls",
+      "Show countdown when rate limited",
+      "Test: Requests respect 5s minimum interval"
     ]
   }
 }

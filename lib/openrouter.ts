@@ -2,6 +2,7 @@
 import { OpenRouter } from '@openrouter/sdk';
 import { db } from './db';
 import type { ProfileAnalysis, AnalysisCache } from './db';
+import { withRateLimit, getWaitTimeDisplay } from './utils/rate-limiter';
 
 // Initialize OpenRouter client
 let client: OpenRouter | null = null;
@@ -100,6 +101,13 @@ export async function* analyzeProfile(profileData: any, profileUrl: string) {
 
   console.log('[OpenRouter] Cache miss, calling API...');
 
+  // Check rate limit before making API call
+  const waitTime = getWaitTimeDisplay();
+  if (waitTime !== 'Ready') {
+    console.warn(`[OpenRouter] Rate limited: please wait ${waitTime}`);
+    throw new Error(`Rate limited: Please wait ${waitTime} before generating more messages.`);
+  }
+
   let client: OpenRouter;
   try {
     client = await getClient();
@@ -108,18 +116,21 @@ export async function* analyzeProfile(profileData: any, profileUrl: string) {
     throw error;
   }
 
+  // Wrap API call in rate limiter
   try {
-    const stream = await client.chat.send({
-      model: 'anthropic/claude-sonnet-4.5',
-      messages: [
-        { role: 'system', content: PROFILE_ANALYSIS_PROMPT },
-        { role: 'user', content: JSON.stringify(profileData) }
-      ],
-      stream: true,
-      provider: {
-        data_collection: 'deny', // Zero data retention
-        sort: 'throughput'
-      }
+    const stream = await withRateLimit(async () => {
+      return await client.chat.send({
+        model: 'anthropic/claude-sonnet-4.5',
+        messages: [
+          { role: 'system', content: PROFILE_ANALYSIS_PROMPT },
+          { role: 'user', content: JSON.stringify(profileData) }
+        ],
+        stream: true,
+        provider: {
+          data_collection: 'deny', // Zero data retention
+          sort: 'throughput'
+        }
+      });
     });
 
     let fullResponse = '';
@@ -205,7 +216,16 @@ export async function* generateMessages(
     : 'No voice profile provided. Use casual, authentic tone.';
 
   try {
-    const stream = await client.chat.send({
+    // Check rate limit before making API call
+    const waitTime = getWaitTimeDisplay();
+    if (waitTime !== 'Ready') {
+      console.warn(`[OpenRouter] Rate limited: please wait ${waitTime}`);
+      throw new Error(`Rate limited: Please wait ${waitTime} before generating more messages.`);
+    }
+
+    // Wrap API call in rate limiter
+    const stream = await withRateLimit(async () => {
+      return await client.chat.send({
       model: 'anthropic/claude-sonnet-4.5',
       messages: [
         { role: 'system', content: MESSAGE_GENERATION_PROMPT },
@@ -223,6 +243,7 @@ export async function* generateMessages(
         data_collection: 'deny',
         sort: 'throughput'
       }
+    });
     });
 
     let fullResponse = '';
