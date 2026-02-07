@@ -1,22 +1,25 @@
 {
-  "id": "dev-6-7",
+  "id": "dev-6-8",
   "phase": "DEVELOPMENT",
   "subPhase": 6,
-  "title": "Empty States (Phase 6.7)",
-  "goal": "Add first-time user empty states",
-  "priority": "medium",
+  "title": "E2E Testing (Phase 6.8)",
+  "goal": "Test on 100 real profiles across both platforms",
+  "priority": "critical",
   "status": "in_progress",
-  "dependencies": [],
+  "dependencies": ["dev-6-1", "dev-6-2", "dev-6-3", "dev-6-4", "dev-6-5", "dev-6-6", "dev-6-7"],
   "attempt": 1,
   "spec": {
-    "complexity": "C2",
-    "file": "entrypoints/sidepanel/App.tsx",
+    "complexity": "C5",
     "actions": [
-      "Add 'navigate to profile' empty state",
-      "Add 'no API key' empty state (with settings link)",
-      "Add 'no voice profile' empty state (with train link)",
-      "Add 'no messages' empty state",
-      "Test: Empty states guide users to first action"
+      "Test on 50 X profiles (variety: verified, unverified, different follower counts)",
+      "Test on 50 LinkedIn profiles (variety: connections, experience levels)",
+      "Verify scraper accuracy: 95%+ data extraction success",
+      "Verify message generation: all angles produce valid DMs",
+      "Verify voice matching: trained voice produces >80% match",
+      "Verify performance: <2 min from profile load to message copy",
+      "Verify error handling: network failures, rate limits, invalid profiles",
+      "Document any edge cases or failures",
+      "Fix critical bugs found during testing"
     ]
   }
 }

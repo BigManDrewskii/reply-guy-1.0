@@ -7,7 +7,7 @@
       "title": "LinkedIn DOM Scraper (Phase 6.1)",
       "goal": "Implement LinkedIn profile scraper with class selector map",
       "priority": "critical",
-      "status": "pending",
+      "status": "completed",
       "dependencies": [],
       "spec": {
         "complexity": "C4",
@@ -51,7 +51,7 @@
       "title": "Keyboard Shortcut (Phase 6.3)",
       "goal": "Add Cmd+Shift+R to toggle side panel",
       "priority": "high",
-      "status": "in_progress",
+      "status": "completed",
       "dependencies": [],
       "spec": {
         "complexity": "C2",
@@ -71,7 +71,7 @@
       "title": "Global Error Handling (Phase 6.4)",
       "goal": "Add error boundaries and API failure handlers",
       "priority": "high",
-      "status": "pending",
+      "status": "completed",
       "dependencies": [],
       "spec": {
         "complexity": "C3",
@@ -92,7 +92,7 @@
       "title": "Rate Limiting (Phase 6.5)",
       "goal": "Implement 1 request per 5 second rate limiter",
       "priority": "high",
-      "status": "pending",
+      "status": "completed",
       "dependencies": [],
       "spec": {
         "complexity": "C2",
@@ -112,7 +112,7 @@
       "title": "Skeleton Loading States (Phase 6.6)",
       "goal": "Add shimmer skeletons for all async operations",
       "priority": "medium",
-      "status": "pending",
+      "status": "completed",
       "dependencies": [],
       "spec": {
         "complexity": "C2",
@@ -133,7 +133,7 @@
       "title": "Empty States (Phase 6.7)",
       "goal": "Add first-time user empty states",
       "priority": "medium",
-      "status": "pending",
+      "status": "completed",
       "dependencies": [],
       "spec": {
         "complexity": "C2",
@@ -154,7 +154,7 @@
       "title": "E2E Testing (Phase 6.8)",
       "goal": "Test on 100 real profiles across both platforms",
       "priority": "critical",
-      "status": "pending",
+      "status": "in_progress",
       "dependencies": ["dev-6-1", "dev-6-2", "dev-6-3", "dev-6-4", "dev-6-5", "dev-6-6", "dev-6-7"],
       "spec": {
         "complexity": "C5",
