@@ -1,21 +1,22 @@
 {
-  "id": "dev-4-2",
+  "id": "dev-4-3",
   "phase": "DEVELOPMENT",
-  "title": "Voice Profile Integration (Phase 4.2)",
-  "goal": "Use voice profile in message generation",
-  "priority": "high",
+  "title": "Conversation History UI (Phase 4.3)",
+  "goal": "Display conversation history in side panel",
+  "priority": "medium",
   "status": "pending",
-  "dependencies": ["dev-4-1"],
+  "dependencies": ["dev-3-7"],
   "attempt": 1,
   "spec": {
     "complexity": "C3",
     "file": "entrypoints/sidepanel/App.tsx",
     "actions": [
-      "Load voice profile from IndexedDB on mount",
-      "Pass voice profile to generateMessages()",
-      "Update regenerate to use voice profile",
-      "Display 'Using your voice' indicator when active",
-      "Test: Generated messages match user's writing style"
+      "Add 'History' tab next to Messages",
+      "Query conversations by current profile URL",
+      "Display sent messages with timestamps",
+      "Show status (sent/responded/no_response/converted)",
+      "Allow re-copying previous messages",
+      "Test: History shows all sent messages for profile"
     ]
   }
 }

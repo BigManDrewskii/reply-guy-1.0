@@ -1,7 +1,7 @@
 // Reply Guy Side Panel App - Phase 3: Message Generation
 import React, { useEffect, useState } from 'react';
 import '@/assets/main.css';
-import type { ProfileData, Conversation, Message } from '@/lib/db';
+import type { ProfileData, Conversation, Message, VoiceProfile } from '@/lib/db';
 import { db } from '@/lib/db';
 import { MessageTabs } from '@/components/MessageTabs';
 import { useToast } from '@/components/ui/toast';
@@ -22,7 +22,25 @@ export default function App() {
   const [confidence, setConfidence] = useState(0);
   const [messages, setMessages] = useState<GeneratedMessage[]>([]);
   const [analyzing, setAnalyzing] = useState(false);
+  const [voiceProfile, setVoiceProfile] = useState<VoiceProfile | null>(null);
   const { showToast, ToastContainer } = useToast();
+
+  // Load voice profile on mount
+  useEffect(() => {
+    const loadVoiceProfile = async () => {
+      try {
+        const profiles = await db.voiceProfiles.toArray();
+        if (profiles.length > 0) {
+          setVoiceProfile(profiles[0]);
+          console.log('[Side Panel] Voice profile loaded');
+        }
+      } catch (error) {
+        console.error('[Side Panel] Failed to load voice profile:', error);
+      }
+    };
+
+    loadVoiceProfile();
+  }, []);
 
   // Get confidence bar color
   const getConfidenceColor = (score: number): string => {
@@ -124,9 +142,9 @@ export default function App() {
         confidence: 0.75
       };
 
-      // Call message generation API
+      // Call message generation API with voice profile if available
       let fullResponse = '';
-      for await (const chunk of generateMessages(profile, mockAnalysis)) {
+      for await (const chunk of generateMessages(profile, mockAnalysis, voiceProfile || undefined)) {
         fullResponse += chunk;
       }
 
@@ -134,13 +152,21 @@ export default function App() {
       const generatedMessages = JSON.parse(fullResponse);
 
       // Calculate voice scores and add IDs
-      const messagesWithScores: GeneratedMessage[] = generatedMessages.map((msg: any) => ({
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-        angle: msg.angle,
-        content: msg.content,
-        voiceMatchScore: Math.round(Math.random() * 20 + 80), // Mock score 80-100
-        whyItWorks: msg.whyItWorks
-      }));
+      const messagesWithScores: GeneratedMessage[] = generatedMessages.map((msg: any) => {
+        // Use actual voice scoring if profile exists, otherwise mock
+        let voiceScore = 85;
+        if (voiceProfile) {
+          voiceScore = scoreAuthenticity(msg.content, voiceProfile);
+        }
+
+        return {
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+          angle: msg.angle,
+          content: msg.content,
+          voiceMatchScore: voiceScore,
+          whyItWorks: msg.whyItWorks
+        };
+      });
 
       setMessages(messagesWithScores);
       console.log('[Side Panel] Messages regenerated successfully:', messagesWithScores.length);
@@ -288,7 +314,14 @@ export default function App() {
             {/* Messages Section */}
             <div className="border-b border-[#262626]">
               <div className="flex items-center justify-between px-4 py-3">
-                <span className="text-[#a1a1a1] text-sm font-medium">Messages</span>
+                <div className="flex items-center space-x-2">
+                  <span className="text-[#a1a1a1] text-sm font-medium">Messages</span>
+                  {voiceProfile && (
+                    <span className="text-xs text-[#0070f3] bg-[#0070f3]/10 px-2 py-0.5 rounded">
+                      Using your voice
+                    </span>
+                  )}
+                </div>
                 {messages.length > 0 && (
                   <button
                     onClick={handleRegenerate}
