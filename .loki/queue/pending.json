@@ -1,0 +1,55 @@
+{
+  "queue": [
+    {
+      "id": "bootstrap-1",
+      "phase": "BOOTSTRAP",
+      "title": "Initialize project from WXT starter template",
+      "goal": "Set up project base using imtiger/wxt-react-shadcn-tailwindcss-chrome-extension",
+      "priority": "critical",
+      "status": "pending",
+      "dependencies": [],
+      "spec": {
+        "template": "https://github.com/imtiger/wxt-react-shadcn-tailwindcss-chrome-extension.git",
+        "actions": [
+          "Clone starter template",
+          "Install dependencies",
+          "Verify WXT dev server runs",
+          "Commit initial state"
+        ]
+      }
+    },
+    {
+      "id": "bootstrap-2",
+      "phase": "BOOTSTRAP",
+      "title": "Configure Vercel dark theme and Geist fonts",
+      "goal": "Apply Vercel design system to extension UI",
+      "priority": "critical",
+      "status": "pending",
+      "dependencies": ["bootstrap-1"],
+      "spec": {
+        "actions": [
+          "Download Geist Sans + Geist Mono WOFF2 files",
+          "Add Vercel theme CSS variables to globals.css",
+          "Configure Tailwind with Vercel color tokens",
+          "Bundle fonts in /assets/fonts/"
+        ]
+      }
+    },
+    {
+      "id": "bootstrap-3",
+      "phase": "BOOTSTRAP",
+      "title": "Create project directory structure",
+      "goal": "Set up lib/, components/, and entrypoints/ structure per PRD",
+      "priority": "high",
+      "status": "pending",
+      "dependencies": ["bootstrap-2"],
+      "spec": {
+        "structure": {
+          "lib/": ["db.ts", "openrouter.ts", "store.ts", "scraper/", "voice/", "utils/"],
+          "components/": ["ui/", "ProfileCard.tsx", "ConfidenceBar.tsx", "MessageTab.tsx"],
+          "entrypoints/": ["background.ts", "content.ts", "sidepanel/", "options/"]
+        }
+      }
+    }
+  ]
+}
