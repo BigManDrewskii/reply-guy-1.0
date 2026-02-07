@@ -8,6 +8,13 @@ export default function App() {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [confidence, setConfidence] = useState(0);
 
+  // Get confidence bar color
+  const getConfidenceColor = (score: number): string => {
+    if (score >= 0.8) return '#00c853'; // Green
+    if (score >= 0.6) return '#ffc107'; // Amber
+    return '#f44336'; // Red
+  };
+
   useEffect(() => {
     // Listen for messages from background script
     const handleMessage = (message: any) => {
@@ -129,8 +136,11 @@ export default function App() {
               </div>
               <div className="h-2 bg-[#111] rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-[#00c853] rounded-full transition-all duration-300"
-                  style={{ width: `${confidence * 100}%` }}
+                  className="h-full rounded-full transition-all duration-300"
+                  style={{
+                    width: `${confidence * 100}%`,
+                    backgroundColor: getConfidenceColor(confidence)
+                  }}
                 ></div>
               </div>
             </div>
