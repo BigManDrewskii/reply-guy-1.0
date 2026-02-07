@@ -1,21 +1,22 @@
 {
-  "id": "dev-6-5",
+  "id": "dev-6-7",
   "phase": "DEVELOPMENT",
   "subPhase": 6,
-  "title": "Rate Limiting (Phase 6.5)",
-  "goal": "Implement 1 request per 5 second rate limiter",
-  "priority": "high",
+  "title": "Empty States (Phase 6.7)",
+  "goal": "Add first-time user empty states",
+  "priority": "medium",
   "status": "in_progress",
   "dependencies": [],
   "attempt": 1,
   "spec": {
     "complexity": "C2",
-    "file": "lib/utils/rate-limiter.ts",
+    "file": "entrypoints/sidepanel/App.tsx",
     "actions": [
-      "Implement token bucket or sliding window rate limiter",
-      "Apply to analyzeProfile() and generateMessages() calls",
-      "Show countdown when rate limited",
-      "Test: Requests respect 5s minimum interval"
+      "Add 'navigate to profile' empty state",
+      "Add 'no API key' empty state (with settings link)",
+      "Add 'no voice profile' empty state (with train link)",
+      "Add 'no messages' empty state",
+      "Test: Empty states guide users to first action"
     ]
   }
 }

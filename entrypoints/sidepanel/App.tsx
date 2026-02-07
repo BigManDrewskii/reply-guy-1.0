@@ -26,6 +26,7 @@ export default function App() {
   const [voiceProfile, setVoiceProfile] = useState<VoiceProfile | null>(null);
   const [activeTab, setActiveTab] = useState<'messages' | 'history'>('messages');
   const [conversationHistory, setConversationHistory] = useState<Conversation | null>(null);
+  const [apiKeyMissing, setApiKeyMissing] = useState(false);
   const { showToast, ToastContainer } = useToast();
 
   // Get current platform from URL
@@ -37,8 +38,20 @@ export default function App() {
     return 'linkedin';
   };
 
-  // Load voice profile on mount
+  // Check API key and load voice profile on mount
   useEffect(() => {
+    const checkApiKey = async () => {
+      try {
+        const result = await new Promise<{ openrouterApiKey?: string }>((resolve) => {
+          chrome.storage.local.get(['openrouterApiKey'], resolve);
+        });
+        setApiKeyMissing(!result.openrouterApiKey);
+      } catch (error) {
+        console.error('[Side Panel] Failed to check API key:', error);
+        setApiKeyMissing(true);
+      }
+    };
+
     const loadVoiceProfile = async () => {
       try {
         const profiles = await db.voiceProfiles.toArray();
@@ -51,6 +64,7 @@ export default function App() {
       }
     };
 
+    checkApiKey();
     loadVoiceProfile();
   }, []);
 
@@ -284,7 +298,39 @@ export default function App() {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
-        {loading ? (
+        {apiKeyMissing ? (
+          // No API key empty state
+          <div className="flex flex-col items-center justify-center h-full text-center px-6">
+            <div className="text-4xl mb-4">🔑</div>
+            <h2 className="text-lg font-semibold mb-2">API Key Required</h2>
+            <p className="text-sm text-[#a1a1a1] mb-6">
+              Add your OpenRouter API key to start generating personalized messages.
+            </p>
+            <a
+              href={chrome.runtime.getURL('options.html')}
+              target="_blank"
+              className="px-4 py-2 bg-[#0070f3] text-white rounded hover:bg-[#0060df] transition-colors"
+            >
+              Open Settings
+            </a>
+          </div>
+        ) : !voiceProfile && profile ? (
+          // No voice profile empty state
+          <div className="flex flex-col items-center justify-center h-full text-center px-6">
+            <div className="text-4xl mb-4">🎤</div>
+            <h2 className="text-lg font-semibold mb-2">Train Your Voice</h2>
+            <p className="text-sm text-[#a1a1a1] mb-6">
+              Add example messages to teach Reply Guy how to write like you. Messages will sound more authentic.
+            </p>
+            <a
+              href={chrome.runtime.getURL('options.html')}
+              target="_blank"
+              className="px-4 py-2 bg-[#0070f3] text-white rounded hover:bg-[#0060df] transition-colors"
+            >
+              Train Voice
+            </a>
+          </div>
+        ) : loading ? (
           // Loading shimmer (Phase 1: Skeleton)
           <div className="p-4 space-y-4">
             {/* Profile Card Skeleton */}
@@ -450,10 +496,23 @@ export default function App() {
                 {messages.length > 0 ? (
                   <MessageTabs messages={messages} onCopy={handleCopy} />
                 ) : (
-                  <div className="px-4 py-3">
-                    <p className="text-[#666] text-sm text-center">
-                      {analyzing ? 'Generating messages...' : 'Analysis complete. Generate messages to get started.'}
-                    </p>
+                  <div className="px-4 py-8 text-center">
+                    {analyzing ? (
+                      <>
+                        <div className="text-2xl mb-3">⚡</div>
+                        <p className="text-[#a1a1a1] text-sm">Generating messages...</p>
+                      </>
+                    ) : (
+                      <>
+                        <div className="text-2xl mb-3">💬</div>
+                        <p className="text-[#a1a1a1] text-sm mb-4">
+                          Ready to generate personalized messages for {profile?.name || 'this profile'}
+                        </p>
+                        <p className="text-[#666] text-xs">
+                          Messages will appear here once generated
+                        </p>
+                      </>
+                    )}
                   </div>
                 )}
               </>
