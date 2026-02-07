@@ -1,21 +1,22 @@
 {
-  "id": "dev-6-3",
+  "id": "dev-6-4",
   "phase": "DEVELOPMENT",
   "subPhase": 6,
-  "title": "Keyboard Shortcut (Phase 6.3)",
-  "goal": "Add Cmd+Shift+R to toggle side panel",
+  "title": "Global Error Handling (Phase 6.4)",
+  "goal": "Add error boundaries and API failure handlers",
   "priority": "high",
   "status": "in_progress",
   "dependencies": [],
   "attempt": 1,
   "spec": {
-    "complexity": "C2",
-    "file": "entrypoints/background.ts",
+    "complexity": "C3",
+    "files": ["entrypoints/sidepanel/App.tsx", "lib/openrouter.ts"],
     "actions": [
-      "Add commands manifest: '_execute_action' → Cmd+Shift+R",
-      "Implement toggleSidePanel() function",
-      "Handle keyboard shortcut in background script",
-      "Test: Cmd+Shift+R opens/closes side panel"
+      "Add React ErrorBoundary to sidepanel App",
+      "Catch OpenRouter API errors, show user-friendly messages",
+      "Catch scraping errors, show 'try again' UI",
+      "Log errors to console for debugging",
+      "Test: Errors don't crash extension"
     ]
   }
 }

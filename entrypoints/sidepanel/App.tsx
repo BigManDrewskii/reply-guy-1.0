@@ -7,6 +7,7 @@ import { MessageTabs } from '@/components/MessageTabs';
 import { useToast } from '@/components/ui/toast';
 import { generateMessages } from '@/lib/openrouter';
 import { scoreAuthenticity } from '@/lib/voice/scorer';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 interface GeneratedMessage {
   id: string;
@@ -264,7 +265,8 @@ export default function App() {
   }, []);
 
   return (
-    <div className="w-[380px] h-screen bg-black text-[#ededed] flex flex-col font-sans relative">
+    <ErrorBoundary>
+      <div className="w-[380px] h-screen bg-black text-[#ededed] flex flex-col font-sans relative">
       {/* Toast Container */}
       <ToastContainer />
       {/* Header */}
@@ -534,5 +536,6 @@ export default function App() {
         )}
       </div>
     </div>
+    </ErrorBoundary>
   );
 }

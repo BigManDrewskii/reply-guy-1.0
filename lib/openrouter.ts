@@ -10,12 +10,19 @@ export async function getClient(): Promise<OpenRouter> {
   if (!client) {
     const apiKey = await getApiKey();
     if (!apiKey) {
-      throw new Error('OpenRouter API key not found. Please configure in options.');
+      const error = new Error('OpenRouter API key not found. Please configure in options.');
+      console.error('[OpenRouter] API key missing:', error.message);
+      throw error;
     }
 
-    client = new OpenRouter({
-      apiKey,
-    });
+    try {
+      client = new OpenRouter({
+        apiKey,
+      });
+    } catch (error) {
+      console.error('[OpenRouter] Failed to initialize client:', error);
+      throw new Error('Failed to initialize OpenRouter client. Please check your API key.');
+    }
   }
 
   return client;
@@ -80,50 +87,94 @@ export async function* analyzeProfile(profileData: any, profileUrl: string) {
   const cacheKey = profileUrl;
 
   // Check cache first
-  const cached = await db.analysisCache.get(cacheKey);
-  if (cached && isCacheValid(cached.timestamp)) {
-    console.log('[OpenRouter] Cache hit, returning cached analysis');
-    yield JSON.stringify(cached.analysis);
-    return;
+  try {
+    const cached = await db.analysisCache.get(cacheKey);
+    if (cached && isCacheValid(cached.timestamp)) {
+      console.log('[OpenRouter] Cache hit, returning cached analysis');
+      yield JSON.stringify(cached.analysis);
+      return;
+    }
+  } catch (error) {
+    console.warn('[OpenRouter] Cache check failed, proceeding to API:', error);
   }
 
   console.log('[OpenRouter] Cache miss, calling API...');
-  const client = await getClient();
 
-  const stream = await client.chat.send({
-    model: 'anthropic/claude-sonnet-4.5',
-    messages: [
-      { role: 'system', content: PROFILE_ANALYSIS_PROMPT },
-      { role: 'user', content: JSON.stringify(profileData) }
-    ],
-    stream: true,
-    provider: {
-      data_collection: 'deny', // Zero data retention
-      sort: 'throughput'
-    }
-  });
-
-  let fullResponse = '';
-
-  for await (const chunk of stream) {
-    const content = chunk.choices[0]?.delta?.content ?? '';
-    if (content) {
-      fullResponse += content;
-      yield content;
-    }
+  let client: OpenRouter;
+  try {
+    client = await getClient();
+  } catch (error) {
+    console.error('[OpenRouter] Failed to get client:', error);
+    throw error;
   }
 
-  // Store in cache
   try {
-    const analysis: ProfileAnalysis = JSON.parse(fullResponse);
-    await db.analysisCache.put({
-      profileUrl: cacheKey,
-      analysis,
-      timestamp: new Date()
+    const stream = await client.chat.send({
+      model: 'anthropic/claude-sonnet-4.5',
+      messages: [
+        { role: 'system', content: PROFILE_ANALYSIS_PROMPT },
+        { role: 'user', content: JSON.stringify(profileData) }
+      ],
+      stream: true,
+      provider: {
+        data_collection: 'deny', // Zero data retention
+        sort: 'throughput'
+      }
     });
-    console.log('[OpenRouter] Analysis cached successfully');
+
+    let fullResponse = '';
+
+    for await (const chunk of stream) {
+      const content = chunk.choices[0]?.delta?.content ?? '';
+      if (content) {
+        fullResponse += content;
+        yield content;
+      }
+    }
+
+    // Validate and parse response
+    try {
+      const analysis: ProfileAnalysis = JSON.parse(fullResponse);
+
+      // Validate analysis structure
+      if (!analysis.summary || !analysis.painPoints || !analysis.outreachAngles) {
+        throw new Error('Invalid analysis structure: missing required fields');
+      }
+
+      // Store in cache
+      try {
+        await db.analysisCache.put({
+          profileUrl: cacheKey,
+          analysis,
+          timestamp: new Date()
+        });
+        console.log('[OpenRouter] Analysis cached successfully');
+      } catch (error) {
+        console.warn('[OpenRouter] Failed to cache analysis:', error);
+      }
+    } catch (error) {
+      console.error('[OpenRouter] Failed to parse analysis response:', error);
+      throw new Error('Failed to parse AI response. Please try again.');
+    }
   } catch (error) {
-    console.warn('[OpenRouter] Failed to cache analysis:', error);
+    // Handle specific error types
+    if (error instanceof Error) {
+      if (error.message.includes('rate limit')) {
+        console.error('[OpenRouter] Rate limit exceeded:', error);
+        throw new Error('Rate limit exceeded. Please wait a moment and try again.');
+      }
+      if (error.message.includes('network') || error.message.includes('fetch')) {
+        console.error('[OpenRouter] Network error:', error);
+        throw new Error('Network error. Please check your connection and try again.');
+      }
+      if (error.message.includes('API key')) {
+        console.error('[OpenRouter] API key error:', error);
+        throw new Error('Invalid API key. Please check your settings.');
+      }
+    }
+
+    console.error('[OpenRouter] Analysis failed:', error);
+    throw new Error('Failed to analyze profile. Please try again.');
   }
 }
 
@@ -141,41 +192,93 @@ export async function* generateMessages(
   profileAnalysis: any,
   voiceProfile?: any
 ) {
-  const client = await getClient();
+  let client: OpenRouter;
+  try {
+    client = await getClient();
+  } catch (error) {
+    console.error('[OpenRouter] Failed to get client for message generation:', error);
+    throw error;
+  }
 
   const context = voiceProfile
     ? `Voice Profile: ${JSON.stringify(voiceProfile)}`
     : 'No voice profile provided. Use casual, authentic tone.';
 
-  const stream = await client.chat.send({
-    model: 'anthropic/claude-sonnet-4.5',
-    messages: [
-      { role: 'system', content: MESSAGE_GENERATION_PROMPT },
-      {
-        role: 'user',
-        content: JSON.stringify({
-          profile: profileData,
-          analysis: profileAnalysis,
-          voiceContext: context
-        })
+  try {
+    const stream = await client.chat.send({
+      model: 'anthropic/claude-sonnet-4.5',
+      messages: [
+        { role: 'system', content: MESSAGE_GENERATION_PROMPT },
+        {
+          role: 'user',
+          content: JSON.stringify({
+            profile: profileData,
+            analysis: profileAnalysis,
+            voiceContext: context
+          })
+        }
+      ],
+      stream: true,
+      provider: {
+        data_collection: 'deny',
+        sort: 'throughput'
       }
-    ],
-    stream: true,
-    provider: {
-      data_collection: 'deny',
-      sort: 'throughput'
-    }
-  });
+    });
 
-  for await (const chunk of stream) {
-    const content = chunk.choices[0]?.delta?.content ?? '';
-    if (content) yield content;
+    let fullResponse = '';
+
+    for await (const chunk of stream) {
+      const content = chunk.choices[0]?.delta?.content ?? '';
+      if (content) {
+        fullResponse += content;
+        yield content;
+      }
+    }
+
+    // Validate response (check if it's valid JSON array)
+    try {
+      const messages = JSON.parse(fullResponse);
+      if (!Array.isArray(messages)) {
+        throw new Error('Response is not an array');
+      }
+      if (messages.length === 0) {
+        throw new Error('No messages generated');
+      }
+    } catch (error) {
+      console.error('[OpenRouter] Failed to validate message generation response:', error);
+      throw new Error('Failed to generate messages. Please try again.');
+    }
+  } catch (error) {
+    // Handle specific error types
+    if (error instanceof Error) {
+      if (error.message.includes('rate limit')) {
+        console.error('[OpenRouter] Rate limit exceeded:', error);
+        throw new Error('Rate limit exceeded. Please wait a moment and try again.');
+      }
+      if (error.message.includes('network') || error.message.includes('fetch')) {
+        console.error('[OpenRouter] Network error:', error);
+        throw new Error('Network error. Please check your connection and try again.');
+      }
+      if (error.message.includes('API key')) {
+        console.error('[OpenRouter] API key error:', error);
+        throw new Error('Invalid API key. Please check your settings.');
+      }
+    }
+
+    console.error('[OpenRouter] Message generation failed:', error);
+    throw new Error('Failed to generate messages. Please try again.');
   }
 }
 
 // Extract voice fingerprint from example messages
 export async function extractVoiceProfile(messages: string[]): Promise<any> {
-  const client = await getClient();
+  let client: OpenRouter;
+  try {
+    client = await getClient();
+  } catch (error) {
+    console.error('[OpenRouter] Failed to get client for voice extraction:', error);
+    throw error;
+  }
 
   const VOICE_EXTRACTION_PROMPT = `
 Analyze these message examples and extract a precise voice fingerprint.
@@ -198,17 +301,54 @@ Return a JSON voice profile with:
 Be extremely precise. This profile will be used to ghostwrite messages.
 `;
 
-  const response = await client.chat.send({
-    model: 'anthropic/claude-sonnet-4.5',
-    messages: [
-      { role: 'system', content: VOICE_EXTRACTION_PROMPT },
-      { role: 'user', content: messages.join('\n---\n') }
-    ],
-    stream: false,
-    provider: {
-      data_collection: 'deny'
-    }
-  });
+  try {
+    const response = await client.chat.send({
+      model: 'anthropic/claude-sonnet-4.5',
+      messages: [
+        { role: 'system', content: VOICE_EXTRACTION_PROMPT },
+        { role: 'user', content: messages.join('\n---\n') }
+      ],
+      stream: false,
+      provider: {
+        data_collection: 'deny'
+      }
+    });
 
-  return JSON.parse(response.choices[0]?.message?.content || '{}');
+    const content = response.choices[0]?.message?.content;
+    if (!content) {
+      throw new Error('Empty response from voice extraction');
+    }
+
+    const voiceProfile = JSON.parse(content);
+
+    // Validate voice profile structure
+    if (!voiceProfile.avgMessageLength || !voiceProfile.tone) {
+      throw new Error('Invalid voice profile structure');
+    }
+
+    return voiceProfile;
+  } catch (error) {
+    // Handle specific error types
+    if (error instanceof Error) {
+      if (error.message.includes('rate limit')) {
+        console.error('[OpenRouter] Rate limit exceeded:', error);
+        throw new Error('Rate limit exceeded. Please wait a moment and try again.');
+      }
+      if (error.message.includes('network') || error.message.includes('fetch')) {
+        console.error('[OpenRouter] Network error:', error);
+        throw new Error('Network error. Please check your connection and try again.');
+      }
+      if (error.message.includes('API key')) {
+        console.error('[OpenRouter] API key error:', error);
+        throw new Error('Invalid API key. Please check your settings.');
+      }
+      if (error instanceof SyntaxError) {
+        console.error('[OpenRouter] JSON parse error:', error);
+        throw new Error('Failed to analyze voice profile. Please try again.');
+      }
+    }
+
+    console.error('[OpenRouter] Voice extraction failed:', error);
+    throw new Error('Failed to analyze voice profile. Please try again.');
+  }
 }
