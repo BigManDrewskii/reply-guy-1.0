@@ -1,480 +1,848 @@
-# Reply Guy — Refined PRD v2.0
+# Reply Guy — PRD v4.0
 ## AI-Powered Cold Outreach Chrome Extension
 
-**Version:** 2.0  
-**Last Updated:** February 7, 2026  
-**Author:** Studio Drewskii  
-**Status:** Research Complete → Ready to Build
+**Version:** 4.0 — The One That Actually Works
+**Author:** Studio Drewskii
 
 ---
 
-## What Changed From v1
+## What This Is
 
-This document is a research-backed refinement of the original Reply Guy PRD. Here's what changed and why:
+A Chrome sidebar extension that helps you craft personalized outreach messages for anyone you're looking at online. Works on **any website** — X, LinkedIn, personal sites, company pages, GitHub profiles, portfolios, Dribbble, Behance, whatever. You browse, it reads the page, and generates messages that sound like you wrote them.
 
-| Area | v1 Decision | v2 Decision | Why |
-|------|-------------|-------------|-----|
-| **Extension Framework** | Jonghakseo boilerplate (5.3K ⭐) | **WXT Framework** (9K+ ⭐) | Superior HMR, auto-imports, built-in storage utils, active maintenance, better tree-shaking (5MB → 500KB reported), first-class side panel support |
-| **UI Components** | shadcn/ui + Tailwind (generic) | **shadcn/ui + Tailwind + Vercel Theme + Geist Font** | Vercel-grade dark aesthetic per design requirement — pure black/white, high contrast, surgical minimalism |
-| **LLM SDK** | OpenAI SDK (compatibility mode) | **@openrouter/sdk (official)** | Official OpenRouter TypeScript SDK launched — native streaming, typed responses, ESM-first, no compatibility shim needed |
-| **Voice Training** | TensorFlow.js + embeddings | **LLM-only voice analysis** (drop TF.js) | TF.js adds ~2MB to extension, browser embeddings are fragile. LLM can extract voice fingerprints from examples equally well with zero overhead |
-| **IndexedDB Wrapper** | `idb` (6.7K ⭐) | **Dexie.js** (11.6K ⭐) | Richer query API, built-in live queries for reactive UI, better TypeScript support, observable pattern fits React well |
-| **LinkedIn Scraper Ref** | Yale3 (outdated selectors) | **Yale3 + selector resilience pattern** | LinkedIn DOM changes frequently — added accessibility tree fallback + vision model fallback as primary strategy |
-| **Boilerplate Starter** | WXT from scratch | **imtiger/wxt-react-shadcn-tailwindcss** | Pre-wired WXT + React + shadcn + Tailwind + dark mode — eliminates ~2hrs of config work |
-
----
-
-## Executive Summary
-
-**Reply Guy** is a Chrome sidebar extension that transforms profile browsing on X (Twitter) and LinkedIn into instant, personalized cold outreach opportunities. The extension analyzes profiles in real-time and generates multiple cold DM variants that are indistinguishable from messages you would personally write.
-
-### The Core Loop
+### How It Works
 
 ```
-Browse profile → Extension auto-detects → Scrapes context → LLM analyzes →
-Generates 3-5 voice-matched messages → You copy → You paste → Log it
+You're on ANY webpage → Click extension icon → Side panel opens →
+Extension reads the page context → LLM analyzes the person/page →
+Generates 4 voice-matched messages → You copy → You paste → Done
 ```
 
-**Time per outreach:** 20 min → 2 min (90% reduction)
+**Not limited to X and LinkedIn.** Those get special treatment (smarter scraping), but the extension works everywhere by reading whatever's on the page.
 
 ---
 
-## Design Direction: Vercel Aesthetic
+## Critical: Making the Extension Actually Load
 
-The entire UI follows Vercel's design language — near 1:1. This isn't just a preference, it's the product identity.
+The #1 reason WXT extensions fail to load is misconfigured entry points. Here is the exact configuration that MUST be used:
 
-### Design Tokens
+### package.json
 
-```css
-/* Reply Guy — Vercel Dark Theme */
-:root {
-  /* Background layers */
-  --bg-primary: #000000;          /* Pure black */
-  --bg-secondary: #0a0a0a;       /* Elevated surfaces */
-  --bg-tertiary: #111111;        /* Cards, panels */
-  --bg-hover: #1a1a1a;           /* Interactive hover */
-  
-  /* Borders */
-  --border-default: #262626;     /* Subtle dividers */
-  --border-hover: #333333;       /* Interactive borders */
-  --border-focus: #ffffff;       /* Focus ring — white */
-  
-  /* Text */
-  --text-primary: #ededed;       /* High emphasis */
-  --text-secondary: #a1a1a1;     /* Medium emphasis */
-  --text-tertiary: #666666;      /* Low emphasis */
-  
-  /* Accents */
-  --accent-blue: #0070f3;        /* Vercel blue — links, primary actions */
-  --accent-green: #00c853;       /* Success states, high confidence */
-  --accent-amber: #f5a623;       /* Warning states, medium confidence */
-  --accent-red: #ee0000;         /* Error states, low confidence */
-  
-  /* Typography */
-  --font-sans: 'Geist Sans', system-ui, sans-serif;
-  --font-mono: 'Geist Mono', monospace;
-  
-  /* Spacing */
-  --radius: 8px;                 /* Consistent border radius */
-  --sidebar-width: 380px;        /* Side panel width */
+```json
+{
+  "name": "reply-guy",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wxt",
+    "dev:firefox": "wxt -b firefox",
+    "build": "wxt build",
+    "build:firefox": "wxt build -b firefox",
+    "zip": "wxt zip",
+    "zip:firefox": "wxt zip -b firefox",
+    "postinstall": "wxt prepare"
+  },
+  "dependencies": {
+    "@openrouter/sdk": "latest",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "dexie": "^4.0.11",
+    "dexie-react-hooks": "^1.1.7",
+    "lucide-react": "^0.460.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tailwind-merge": "^2.6.0",
+    "zustand": "^5.0.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@wxt-dev/module-react": "^1.1.2",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.7.0",
+    "wxt": "^0.19.0"
+  }
 }
 ```
 
-### Typography System
-
-```
-Geist Sans — All UI text
-  → 11px / Medium — Labels, metadata, badges
-  → 13px / Regular — Body text, descriptions
-  → 14px / Medium — Section headers
-  → 16px / Semibold — Panel title
-  → 20px / Bold — Profile name (hero)
-
-Geist Mono — Code-like data
-  → Confidence scores: "0.87"
-  → Timestamps: "2d ago"
-  → Counts: "14.2K followers"
-```
-
-### Visual Principles
-
-1. **Pure black backgrounds** — `#000` base, no grays above `#1a1a1a`
-2. **1px borders** — `#262626`, the Vercel signature divider
-3. **No color fills on surfaces** — borders define hierarchy, not background color
-4. **White text only** — `#ededed` primary, `#a1a1a1` secondary, `#666` tertiary
-5. **Vercel blue sparingly** — only for primary CTA and active tab indicators
-6. **Micro-animations** — 150ms ease transitions on hover/focus, skeleton loading with shimmer
-7. **No shadows** — flat hierarchy, borders do all the work
-8. **Geist font everywhere** — load from WOFF2 bundled in extension assets
-
-### Sidebar Layout (380px wide)
-
-```
-┌─────────────────────────────────────┐
-│  ⚡ Reply Guy              ⚙ ···    │  ← Header: 48px, border-bottom
-├─────────────────────────────────────┤
-│  ┌────┐                             │
-│  │ AV │  @username                  │  ← Profile card: avatar + name
-│  └────┘  Senior Product Designer    │     handle, headline
-│          San Francisco · 14.2K      │     location, followers (Geist Mono)
-│                                     │
-│  "Building design systems that..."  │  ← Bio excerpt, #a1a1a1
-├─────────────────────────────────────┤
-│  Confidence ███████████░░░  82%     │  ← Progress bar, accent-green
-├─────────────────────────────────────┤
-│  ⚠ Contacted 3d ago — View thread  │  ← Warning banner (if applicable)
-├─────────────────────────────────────┤
-│  [Service] [Partner] [Community]    │  ← Tabs: pill-style, 1px borders
-│─────────────────────────────────────│
-│                                     │
-│  "Hey — saw your recent post about  │  ← Message card: #111 bg
-│   design tokens. We just shipped... │     14px Geist Sans
-│   something similar at our studio.  │     White text
-│   Would love to compare notes."     │
-│                                     │
-│  Voice: 94% match · 47 words       │  ← Metadata: Geist Mono, #666
-│                                     │
-│  ┌───────────────────────────────┐  │
-│  │     ▶ Copy Message            │  │  ← CTA: white bg, black text
-│  └───────────────────────────────┘  │     (inverted Vercel button)
-│                                     │
-│  Why this works:                    │
-│  "They posted about design tokens   │  ← Hook explanation: #a1a1a1
-│   2 days ago — high relevance"      │     
-├─────────────────────────────────────┤
-│  ⟳ Regenerate  ✎ Edit  ⓘ Details  │  ← Action bar: icon buttons
-└─────────────────────────────────────┘
-```
-
----
-
-## Technical Architecture — Revised
-
-### Technology Stack
-
-```
-Extension Framework:    WXT (wxt.dev)
-                       ├─ React 19 via @wxt-dev/module-react
-                       ├─ TypeScript 5.x
-                       ├─ Vite 6 (under the hood)
-                       ├─ Manifest V3 auto-generation
-                       ├─ Superior HMR (even for service workers)
-                       └─ Auto-imports for browser APIs
-
-Starter Template:      imtiger/wxt-react-shadcn-tailwindcss-chrome-extension
-                       ├─ WXT + React pre-configured
-                       ├─ shadcn/ui components ready
-                       ├─ Tailwind CSS v4
-                       ├─ Dark mode support built-in
-                       └─ Side panel entry point included
-
-UI Layer:              shadcn/ui + Tailwind CSS
-                       ├─ Vercel shadcn theme (shadcn.io/theme/vercel)
-                       ├─ Geist Sans + Geist Mono (bundled WOFF2)
-                       ├─ Lucide React icons
-                       ├─ class-variance-authority (CVA) for variants
-                       └─ Dark-only mode (no light theme)
-
-State Management:      Zustand 5.x
-                       ├─ Extension state (current profile, messages, UI)
-                       └─ Persist middleware → chrome.storage.local
-
-Database:              Dexie.js 4.x (IndexedDB wrapper)
-                       ├─ Conversations table (full history)
-                       ├─ VoiceProfiles table
-                       ├─ AnalysisCache table (24hr TTL)
-                       ├─ Live queries → reactive React hooks
-                       └─ useLiveQuery() for auto-updating UI
-
-LLM Integration:       @openrouter/sdk (official TypeScript SDK)
-                       ├─ Claude Sonnet 4.5 — profile analysis + generation
-                       ├─ Streaming responses for real-time UI
-                       ├─ Structured JSON output (no parsing gymnastics)
-                       └─ Fallback: GPT-4o → Llama 3.3 70B
-
-Scraping Engine:       Custom DOM parsers + fallback chain
-                       ├─ Primary: data-testid selectors (X) / class selectors (LinkedIn)
-                       ├─ Fallback 1: Accessibility tree via chrome.debugger
-                       ├─ Fallback 2: Screenshot + Claude Vision
-                       └─ MutationObserver for dynamic content
-
-Voice Training:        LLM-powered analysis (no TensorFlow.js)
-                       ├─ User uploads 10-20 example DMs
-                       ├─ Claude extracts voice fingerprint
-                       ├─ Stored as structured JSON in Dexie
-                       └─ Fed into generation prompts as context
-```
-
-### Architecture Diagram — Revised
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     USER NAVIGATES TO PROFILE                    │
-│                    (X.com/username or linkedin.com/in/name)      │
-└────────────────────────┬────────────────────────────────────────┘
-                         │ URL pattern match triggers WXT entrypoint
-                         ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    WXT CONTENT SCRIPT                            │
-│  entrypoints/content.ts                                         │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │ 1. Detect platform (X vs LinkedIn) from hostname        │   │
-│  │ 2. Run platform-specific scraper with fallback chain    │   │
-│  │ 3. Send scraped ProfileData to background via messaging │   │
-│  └─────────────────────────────────────────────────────────┘   │
-└────────────────────────┬────────────────────────────────────────┘
-                         │ chrome.runtime.sendMessage
-                         ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                  WXT BACKGROUND ENTRYPOINT                       │
-│  entrypoints/background.ts                                      │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │ 1. Receive ProfileData                                   │   │
-│  │ 2. Check Dexie cache (skip if <24hrs old)               │   │
-│  │ 3. Open side panel: browser.sidePanel.open()            │   │
-│  │ 4. Relay data to side panel via port messaging          │   │
-│  └─────────────────────────────────────────────────────────┘   │
-└────────────────────────┬────────────────────────────────────────┘
-                         │
-                    ┌────┴────┐
-                    ▼         ▼
-┌──────────────────────┐  ┌──────────────────────────────────────┐
-│  DEXIE.JS (IndexedDB) │  │         OPENROUTER API               │
-│  ┌────────────────┐  │  │  ┌──────────────────────────────┐   │
-│  │ analysisCache  │  │  │  │ Step 1: Profile Analysis     │   │
-│  │ conversations  │  │  │  │ Model: claude-sonnet-4.5     │   │
-│  │ voiceProfiles  │  │  │  │ → Summary, pain points,      │   │
-│  └────────────────┘  │  │  │   outreach angles, confidence │   │
-│  24hr TTL on cache   │  │  │                               │   │
-│  Live queries → UI   │  │  │ Step 2: Message Generation    │   │
-└──────────────────────┘  │  │ Model: claude-sonnet-4.5     │   │
-                          │  │ → 3-5 voice-matched variants  │   │
-                          │  │ → Streamed to side panel      │   │
-                          │  └──────────────────────────────┘   │
-                          └──────────┬───────────────────────────┘
-                                     │ streaming response
-                                     ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    WXT SIDE PANEL                                │
-│  entrypoints/sidepanel/                                         │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │ React App (Vercel Dark Theme)                           │   │
-│  │                                                          │   │
-│  │ ┌─ ProfileCard ──────────────────────────────────┐      │   │
-│  │ │ Avatar · Name · Handle · Bio · Followers       │      │   │
-│  │ └────────────────────────────────────────────────┘      │   │
-│  │ ┌─ ConfidenceBar ───────────────────────────────┐      │   │
-│  │ │ ████████████░░░  82%                           │      │   │
-│  │ └────────────────────────────────────────────────┘      │   │
-│  │ ┌─ ConversationWarning (if exists) ─────────────┐      │   │
-│  │ │ ⚠ Last contacted 3 days ago                    │      │   │
-│  │ └────────────────────────────────────────────────┘      │   │
-│  │ ┌─ MessageTabs ─────────────────────────────────┐      │   │
-│  │ │ [Service] [Partner] [Community] [Value-First]  │      │   │
-│  │ │                                                │      │   │
-│  │ │  Message preview (streaming in real-time)      │      │   │
-│  │ │  Voice match: 94% · 47 words                   │      │   │
-│  │ │  [████████ Copy Message ████████]               │      │   │
-│  │ │  Why this works: "Posted about X 2d ago"       │      │   │
-│  │ └────────────────────────────────────────────────┘      │   │
-│  └─────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## Open Source Toolkit — Gems Found
-
-Based on research using the GitHub Gem Seeker methodology, here are the repos that directly accelerate this build:
-
-### Tier 1: Core Infrastructure (Use These)
-
-**[WXT](https://github.com/wxt-dev/wxt)** — ⭐ 9,077 | 🔤 TypeScript
-> Next-gen web extension framework. Vite-powered, auto-imports browser APIs, superior HMR even for service workers, auto-generates manifest from code.
-
-**Why it's a gem:** The 2025 consensus pick over Plasmo (maintenance concerns) and Jonghakseo boilerplate (manual config). Tree-shaking alone reduces bundle from ~5MB to ~500KB. Has built-in `wxt/utils/storage` for type-safe Chrome Storage API access.
-
-**Best for:** Our exact use case — React + TypeScript + Side Panel + Content Scripts.
-
----
-
-**[imtiger/wxt-react-shadcn-tailwindcss-chrome-extension](https://github.com/imtiger/wxt-react-shadcn-tailwindcss-chrome-extension)** — ⭐ ~200 | 🔤 TypeScript
-> Pre-wired starter: WXT + React + shadcn/ui + Tailwind CSS + dark mode + i18n. Side panel entry point already configured.
-
-**Why it's a gem:** Eliminates ~2 hours of boilerplate config. We clone this, swap in the Vercel theme tokens, and we're coding features immediately.
-
-**Best for:** Our starter template. Fork → customize → build.
-
----
-
-**[Dexie.js](https://github.com/dexie/Dexie.js)** — ⭐ 11,600+ | 🔤 TypeScript
-> A minimalistic wrapper for IndexedDB with reactive live queries, excellent TypeScript support, and an intuitive API.
-
-**Why it's a gem:** The `useLiveQuery()` hook is perfect for React — conversation history updates in real-time without manual state management. Query API is far richer than `idb`. Example: `db.conversations.where('platform').equals('x').sortBy('lastContact')` — clean and readable.
-
-**Best for:** Conversations table, voice profiles, analysis cache. Replaces `idb` from v1.
-
----
-
-**[@openrouter/sdk](https://github.com/OpenRouterTeam/typescript-sdk)** — ⭐ Official | 🔤 TypeScript
-> Official OpenRouter TypeScript SDK. ESM-first, native streaming, typed responses, provider config for model fallbacks.
-
-**Why it's a gem:** Replaces the OpenAI SDK compatibility shim from v1. Native streaming support means we can render messages token-by-token in the side panel. The `provider.zdr` (zero data retention) flag is critical for privacy.
-
-**Best for:** All LLM calls — profile analysis and message generation.
-
----
-
-### Tier 2: Scraping Reference (Learn From These)
-
-**[OgnjenAdzic28/x-post-scraper-extension](https://github.com/OgnjenAdzic28/x-post-scraper-extension)** — ⭐ ~50 | 🔤 JavaScript
-> Chrome extension that scrapes X posts with auto-scroll, deduplication, engagement metrics, and ad blocking. Manifest V3.
-
-**Why it's a gem:** Working `data-testid` selectors for X's current DOM structure (tested 2025). Smart deduplication strategies. Their `selectors.js` utility file is a great reference for our X scraper — extract, don't reinvent.
-
-**Best for:** Reference for X content script selectors. Copy the selector patterns, adapt to profile scraping.
-
----
-
-**[KartikayKaul/Yale3](https://github.com/DrakenWan/Yale3)** — ⭐ 95 | 🔤 JavaScript
-> LinkedIn profile scraper as Chrome extension. Extracts profile data, experience, education. MIT licensed. Uses a selectors object pattern for easy DOM updates.
-
-**Why it's a gem:** The `selectors.js` pattern is smart — all DOM selectors in one object, making it trivial to update when LinkedIn changes their markup. Recently updated with 2025 selectors.
-
-**Best for:** Reference for LinkedIn content script. The selector object pattern should be adopted for both platforms.
-
----
-
-### Tier 3: Voice & Style Analysis (Inspiration)
-
-**[houtini-ai/voice-analyser-mcp](https://github.com/houtini-ai)** — ⭐ ~50 | 🔤 TypeScript
-> Extracts writing voice from published content via sitemap. Generates statistical fingerprints: sentence rhythm, vocabulary patterns, argument flow, micro-rhythms. Outputs .md style guide.
-
-**Why it's a gem:** Their approach of "extracting statistical fingerprints" rather than using embeddings is exactly what we need for voice training — but adapted for DMs instead of articles. The concept of generating a "voice guide" document that teaches LLMs to replicate style through examples is proven and lightweight.
-
-**Best for:** Inspiration for voice training architecture. We adapt their fingerprint extraction concept to work on uploaded DM samples instead of sitemaps.
-
----
-
-### Tier 4: Design Reference
-
-**[Vercel Geist Design System](https://vercel.com/geist/introduction)** — Official
-> Vercel's design system documentation. Color system, typography, components, spacing, materials.
-
-**[Vercel shadcn Theme](https://www.shadcn.io/theme/vercel)** — Community
-> Drop-in CSS variables that transform shadcn/ui into Vercel's aesthetic. Pure black/white, Geist typography, surgical minimalism.
-
-**[vercel/geist-font](https://github.com/vercel/geist-font)** — ⭐ 2K+ | Official
-> Geist Sans + Geist Mono. WOFF2 files for bundling. OFL licensed (free for all use).
-
-**How to use:** Download WOFF2 from geist-font releases → bundle in extension `/assets/fonts/` → reference via `@font-face` in global CSS. This avoids CDN dependency and works offline.
-
----
-
-## Revised Model Strategy
-
-### Why Claude Sonnet 4.5 for Everything (Drop Opus)
-
-The v1 PRD specified Opus for analysis and Sonnet for generation. After cost analysis:
-
-| Model | Analysis Cost | Generation Cost (×5) | Total/Profile |
-|-------|--------------|----------------------|---------------|
-| Opus + Sonnet (v1) | ~$0.04 | ~$0.015 | ~$0.055 |
-| **Sonnet only (v2)** | ~$0.008 | ~$0.015 | **~$0.023** |
-
-Sonnet 4.5 is more than capable of profile analysis — Opus is overkill for structured JSON extraction. At 20 profiles/day, this saves ~$0.64/day ($19/month).
-
-**Fallback chain:** Claude Sonnet 4.5 → GPT-4o → Llama 3.3 70B
-
-### Streaming Architecture
+### wxt.config.ts — THIS MUST BE EXACT
 
 ```typescript
-// lib/openrouter.ts — using official SDK
-import { OpenRouter } from '@openrouter/sdk';
+import { defineConfig } from 'wxt';
 
-const client = new OpenRouter({
-  apiKey: await getApiKey(), // from chrome.storage.local
-});
-
-export async function* analyzeProfile(profileData: ProfileData) {
-  const stream = await client.chat.send({
-    model: 'anthropic/claude-sonnet-4.5',
-    messages: [
-      { role: 'system', content: PROFILE_ANALYSIS_PROMPT },
-      { role: 'user', content: JSON.stringify(profileData) }
+export default defineConfig({
+  modules: ['@wxt-dev/module-react'],
+  manifest: {
+    name: 'Reply Guy',
+    description: 'AI-powered outreach messages for any profile or page',
+    version: '0.1.0',
+    permissions: [
+      'sidePanel',
+      'activeTab',
+      'storage',
+      'clipboardWrite',
     ],
-    stream: true,
-    provider: { 
-      data_collection: 'deny', // Zero data retention
-      sort: 'throughput'
+    side_panel: {
+      default_path: 'sidepanel.html',
+    },
+    action: {
+      default_title: 'Open Reply Guy',
+    },
+  },
+});
+```
+
+**Key points that prevent loading failures:**
+- The `side_panel.default_path` must match the entrypoint name exactly: `sidepanel.html` (WXT generates this from `entrypoints/sidepanel/`)
+- Use `sidePanel` permission (camelCase), NOT `side_panel`
+- Use `action` (not `browser_action` — that's MV2)
+- The `activeTab` permission lets us read the current page without broad host permissions
+
+### Entry Points — WXT Naming Convention
+
+WXT auto-discovers entry points by folder/file name. These names are NOT optional:
+
+```
+entrypoints/
+├── background.ts          → Service worker (MUST be this exact name)
+├── content.ts             → Content script (MUST be this exact name)
+└── sidepanel/             → Side panel (folder name = "sidepanel", generates sidepanel.html)
+    ├── index.html
+    ├── main.tsx
+    └── App.tsx
+```
+
+### entrypoints/background.ts — WORKING BOOTSTRAP
+
+```typescript
+export default defineBackground(() => {
+  // Open side panel when extension icon is clicked
+  chrome.action.onClicked.addListener(async (tab) => {
+    if (tab.id) {
+      await chrome.sidePanel.open({ tabId: tab.id });
     }
   });
 
-  for await (const chunk of stream) {
-    yield chunk.choices[0]?.delta?.content ?? '';
+  // Enable side panel on ALL pages
+  chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })
+    .catch(console.error);
+
+  // Listen for messages from content script
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.type === 'PAGE_DATA') {
+      // Relay to side panel — side panel listens via port or storage
+      chrome.storage.session.set({ currentPageData: message.data });
+    }
+    return true;
+  });
+
+  // When tab updates, tell content script to re-scrape
+  chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+    if (changeInfo.status === 'complete') {
+      chrome.tabs.sendMessage(tabId, { type: 'SCRAPE_PAGE' }).catch(() => {});
+    }
+  });
+
+  // When active tab changes, tell new tab to scrape
+  chrome.tabs.onActivated.addListener(async (activeInfo) => {
+    chrome.tabs.sendMessage(activeInfo.tabId, { type: 'SCRAPE_PAGE' }).catch(() => {});
+  });
+});
+```
+
+### entrypoints/content.ts — WORKING BOOTSTRAP
+
+```typescript
+export default defineContentScript({
+  matches: ['<all_urls>'],  // Run on EVERY page
+  runAt: 'document_idle',
+
+  main() {
+    // Scrape on load
+    scrapeAndSend();
+
+    // Re-scrape when background asks (tab change, navigation)
+    chrome.runtime.onMessage.addListener((message) => {
+      if (message.type === 'SCRAPE_PAGE') {
+        scrapeAndSend();
+      }
+    });
+
+    // Watch for SPA navigation
+    let lastUrl = location.href;
+    const observer = new MutationObserver(() => {
+      if (location.href !== lastUrl) {
+        lastUrl = location.href;
+        setTimeout(scrapeAndSend, 500); // Wait for SPA content to render
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+  },
+});
+
+function scrapeAndSend() {
+  const data = scrapePage();
+  chrome.runtime.sendMessage({ type: 'PAGE_DATA', data }).catch(() => {});
+}
+
+function scrapePage() {
+  const url = location.href;
+  const hostname = location.hostname;
+
+  // Detect platform for enhanced scraping
+  const platform = detectPlatform(hostname);
+
+  // Base data available on ALL pages
+  const base = {
+    url,
+    hostname,
+    platform,
+    title: document.title,
+    metaDescription: getMeta('description'),
+    ogTitle: getMeta('og:title'),
+    ogDescription: getMeta('og:description'),
+    ogImage: getMeta('og:image'),
+    author: getMeta('author') || getMeta('article:author'),
+    scrapedAt: new Date().toISOString(),
+  };
+
+  // Platform-specific enhanced scraping
+  if (platform === 'x') return { ...base, ...scrapeX() };
+  if (platform === 'linkedin') return { ...base, ...scrapeLinkedIn() };
+  if (platform === 'github') return { ...base, ...scrapeGitHub() };
+
+  // Generic: grab visible text content for context
+  return { ...base, ...scrapeGeneric() };
+}
+
+function detectPlatform(hostname: string) {
+  if (hostname.includes('x.com') || hostname.includes('twitter.com')) return 'x';
+  if (hostname.includes('linkedin.com')) return 'linkedin';
+  if (hostname.includes('github.com')) return 'github';
+  if (hostname.includes('dribbble.com')) return 'dribbble';
+  if (hostname.includes('behance.net')) return 'behance';
+  return 'generic';
+}
+
+function getMeta(name: string): string {
+  const el =
+    document.querySelector(`meta[name="${name}"]`) ||
+    document.querySelector(`meta[property="${name}"]`);
+  return el?.getAttribute('content') || '';
+}
+
+function scrapeX() {
+  // Enhanced X profile scraping using data-testid selectors
+  try {
+    return {
+      name: document.querySelector('[data-testid="UserName"] span')?.textContent || '',
+      handle: document.querySelector('[data-testid="UserName"] + div span')?.textContent || '',
+      bio: document.querySelector('[data-testid="UserDescription"]')?.textContent || '',
+      location: document.querySelector('[data-testid="UserLocation"]')?.textContent || '',
+      website: document.querySelector('[data-testid="UserUrl"] a')?.getAttribute('href') || '',
+      followers: document.querySelector('[href$="/followers"] span')?.textContent || '',
+      following: document.querySelector('[href$="/following"] span')?.textContent || '',
+      verified: !!document.querySelector('[data-testid="icon-verified"]'),
+      recentPosts: Array.from(document.querySelectorAll('[data-testid="tweetText"]'))
+        .slice(0, 8)
+        .map(el => el.textContent || ''),
+      isProfile: true,
+    };
+  } catch {
+    return { isProfile: false };
   }
+}
+
+function scrapeLinkedIn() {
+  try {
+    return {
+      name: document.querySelector('.text-heading-xlarge')?.textContent?.trim() || '',
+      headline: document.querySelector('.text-body-medium.break-words')?.textContent?.trim() || '',
+      location: document.querySelector('.text-body-small.inline.t-black--light.break-words')?.textContent?.trim() || '',
+      about: document.querySelector('#about ~ div .visually-hidden + span')?.textContent?.trim() || '',
+      company: document.querySelector('.experience-item .t-bold span')?.textContent?.trim() || '',
+      connections: document.querySelector('.t-bold + .t-black--light')?.textContent?.trim() || '',
+      isProfile: !!document.querySelector('.text-heading-xlarge'),
+    };
+  } catch {
+    return { isProfile: false };
+  }
+}
+
+function scrapeGitHub() {
+  try {
+    return {
+      name: document.querySelector('.p-name')?.textContent?.trim() || '',
+      handle: document.querySelector('.p-nickname')?.textContent?.trim() || '',
+      bio: document.querySelector('.p-note .js-user-profile-bio')?.textContent?.trim() || '',
+      location: document.querySelector('[itemprop="homeLocation"]')?.textContent?.trim() || '',
+      company: document.querySelector('[itemprop="worksFor"]')?.textContent?.trim() || '',
+      website: document.querySelector('[itemprop="url"] a')?.getAttribute('href') || '',
+      repos: document.querySelector('.Counter')?.textContent?.trim() || '',
+      followers: document.querySelector('a[href$="followers"] span')?.textContent?.trim() || '',
+      isProfile: !!document.querySelector('.p-name'),
+    };
+  } catch {
+    return { isProfile: false };
+  }
+}
+
+function scrapeGeneric() {
+  // Get readable text content from the page (first ~2000 chars)
+  const bodyText = document.body.innerText.substring(0, 3000);
+
+  // Try to find any profile-like info
+  const h1 = document.querySelector('h1')?.textContent?.trim() || '';
+  const h2 = document.querySelector('h2')?.textContent?.trim() || '';
+
+  // Look for social links
+  const socialLinks = Array.from(document.querySelectorAll('a[href]'))
+    .map(a => a.getAttribute('href') || '')
+    .filter(href =>
+      href.includes('twitter.com') || href.includes('x.com') ||
+      href.includes('linkedin.com') || href.includes('github.com')
+    )
+    .slice(0, 5);
+
+  // Look for email
+  const emailMatch = bodyText.match(/[\w.-]+@[\w.-]+\.\w+/);
+
+  return {
+    h1,
+    h2,
+    bodyText: bodyText.substring(0, 2000), // Trim for token budget
+    socialLinks,
+    email: emailMatch?.[0] || '',
+    isProfile: false,
+  };
+}
+```
+
+### entrypoints/sidepanel/index.html
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reply Guy</title>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="./main.tsx"></script>
+</body>
+</html>
+```
+
+### entrypoints/sidepanel/main.tsx
+
+```tsx
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import '../../styles/globals.css';
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+```
+
+### entrypoints/sidepanel/App.tsx — WORKING BOOTSTRAP
+
+```tsx
+import React, { useEffect, useState } from 'react';
+
+type Tab = 'outreach' | 'history' | 'settings';
+
+export default function App() {
+  const [tab, setTab] = useState<Tab>('outreach');
+  const [pageData, setPageData] = useState<any>(null);
+
+  useEffect(() => {
+    // Listen for page data updates from background
+    const listener = (changes: any) => {
+      if (changes.currentPageData) {
+        setPageData(changes.currentPageData.newValue);
+      }
+    };
+    chrome.storage.session.onChanged.addListener(listener);
+
+    // Load existing data
+    chrome.storage.session.get('currentPageData', (result) => {
+      if (result.currentPageData) setPageData(result.currentPageData);
+    });
+
+    return () => chrome.storage.session.onChanged.removeListener(listener);
+  }, []);
+
+  return (
+    <div className="h-screen flex flex-col bg-[#000] text-[#ededed] font-sans">
+      {/* Header */}
+      <header className="h-12 flex items-center px-4 border-b border-[#262626] bg-[#0a0a0a] shrink-0">
+        <span className="text-base font-semibold">⚡ Reply Guy</span>
+      </header>
+
+      {/* Content */}
+      <main className="flex-1 overflow-y-auto">
+        {/* Render active screen here based on tab + state */}
+      </main>
+
+      {/* Bottom Nav */}
+      <nav className="h-14 flex items-center justify-around border-t border-[#262626] bg-[#0a0a0a] shrink-0">
+        {(['outreach', 'history', 'settings'] as Tab[]).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`flex flex-col items-center gap-1 text-[11px] ${
+              tab === t ? 'text-[#ededed]' : 'text-[#666]'
+            }`}
+          >
+            <span className="text-sm">{t === 'outreach' ? '💬' : t === 'history' ? '📋' : '⚙️'}</span>
+            <span className="capitalize">{t}</span>
+          </button>
+        ))}
+      </nav>
+    </div>
+  );
 }
 ```
 
 ---
 
-## Revised Scraping Strategy
+## Architecture: Works on Any Website
 
-### The Selector Resilience Pattern
+### Platform Detection Tiers
 
-Both X and LinkedIn change their DOM constantly. Instead of brittle selectors, we use a **three-tier fallback chain**:
+| Tier | Sites | Scraping Method | Quality |
+|------|-------|----------------|---------|
+| **Tier 1: Enhanced** | X, LinkedIn | data-testid / class selectors → structured profile data | Excellent — name, bio, posts, followers |
+| **Tier 2: Known** | GitHub, Dribbble, Behance, Product Hunt | Platform-specific selectors | Good — name, bio, work samples |
+| **Tier 3: Generic** | Any other website | Meta tags + OG data + h1/h2 + body text + social links | Usable — enough context for LLM to work with |
 
-```typescript
-// lib/scraper/strategy.ts
-export async function scrapeProfile(platform: Platform): Promise<ProfileData> {
-  // Tier 1: DOM selectors (fast, ~50ms)
-  try {
-    return platform === 'x' 
-      ? await scrapeXProfile() 
-      : await scrapeLinkedInProfile();
-  } catch (e) {
-    console.warn('DOM selectors failed, trying a11y tree...');
-  }
+**The LLM handles the gaps.** Even on a random portfolio site, the generic scraper grabs enough context (page title, headings, body text, social links) for Claude to understand who this person is and what they do. The message quality scales with how much context is available, but it always works.
 
-  // Tier 2: Accessibility tree (reliable, ~200ms)
-  try {
-    return await scrapeViaAccessibilityTree(platform);
-  } catch (e) {
-    console.warn('A11y tree failed, trying screenshot...');
-  }
+### Data Flow
 
-  // Tier 3: Screenshot + Claude Vision (expensive, ~2s)
-  return await scrapeViaScreenshot(platform);
+```
+ANY WEBPAGE
+    │
+    ▼
+Content Script (runs on <all_urls>)
+    │ detectPlatform() → tier 1, 2, or 3 scraper
+    │ scrapeAndSend()
+    ▼
+Background Service Worker
+    │ receives PAGE_DATA
+    │ stores in chrome.storage.session
+    ▼
+Side Panel React App
+    │ listens to storage.session changes
+    │ receives pageData automatically
+    │ checks Dexie cache (24hr TTL)
+    │ if miss → streams LLM analysis
+    ▼
+UI renders: page context → analysis → messages
+```
+
+**Why chrome.storage.session instead of ports:**
+- Simpler than managing port connections
+- Survives side panel close/reopen
+- No race conditions on startup
+- Side panel can read last state immediately on open
+
+---
+
+## Design System
+
+### Color Tokens
+
+```css
+:root {
+  --bg-000: #000000;    /* App base */
+  --bg-050: #0a0a0a;    /* Header, footer, nav */
+  --bg-100: #111111;    /* Cards, inputs, interactive surfaces */
+  --bg-150: #171717;    /* Hover on cards */
+  --bg-200: #1a1a1a;    /* Active/pressed */
+
+  --border: #262626;
+  --border-hover: #333333;
+  --border-focus: #ededed;
+
+  --text-primary: #ededed;
+  --text-secondary: #a1a1a1;
+  --text-tertiary: #666666;
+  --text-inverted: #000000;
+
+  --accent: #0070f3;
+  --success: #00c853;
+  --warning: #f5a623;
+  --danger: #ee0000;
+
+  --font-sans: 'Geist', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Geist Mono', 'SF Mono', monospace;
+
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --transition: 150ms ease;
 }
 ```
 
-### Selector Object Pattern (from Yale3)
+### Typography
+
+```
+Geist Sans — All UI text
+  11px medium  → labels, badges, metadata
+  13px normal  → body text, descriptions, messages
+  14px medium  → section headers, tab labels
+  16px semibold → panel headers
+  20px bold    → profile name hero
+
+Geist Mono — Data
+  12px normal → confidence %, follower counts, timestamps, word counts
+```
+
+### Visual Rules
+
+1. Full-width sidebar (100%). No hardcoded pixel widths.
+2. Pure black base (#000). Cards are #111. Max surface brightness: #1a1a1a.
+3. 1px #262626 borders only. No shadows. No gradients. No glows.
+4. White text only: #ededed / #a1a1a1 / #666666. No colored text except links (blue) and errors (red).
+5. Vercel blue (#0070f3) sparingly — primary CTA active state, active tab indicator, links.
+6. Inverted CTA: white bg (#ededed), black text (#000), 8px radius. Hover: #d4d4d4.
+7. Geist Mono for all numerical data.
+8. 150ms ease transitions on all interactive states.
+9. Skeleton shimmer loading (dark pulse on #111). Never full-page spinners.
+10. No emojis in UI chrome (icons from Lucide only).
+11. 8px radius on interactive elements. 12px on outer containers.
+12. Fonts bundled as WOFF2. No CDN.
+
+### Spacing
+
+```
+4px  → badge/chip inner padding
+8px  → icon-to-label gaps
+12px → card/input inner padding
+16px → section spacing
+20px → between major sections
+24px → page-level horizontal padding
+```
+
+---
+
+## Icon System (lib/icons.ts)
+
+Every icon in the app is imported from this centralized registry. Components import from `@/lib/icons`, never from `lucide-react` directly.
 
 ```typescript
-// lib/scraper/selectors/x.ts
-export const X_SELECTORS = {
-  name: '[data-testid="UserName"] > div > div > span',
-  handle: '[data-testid="UserName"] + div span',
-  bio: '[data-testid="UserDescription"]',
-  location: '[data-testid="UserLocation"]',
-  website: '[data-testid="UserUrl"] a',
-  followers: '[href$="/followers"] span',
-  following: '[href$="/following"] span',
-  verified: '[data-testid="icon-verified"]',
-  tweets: '[data-testid="tweet"]',
-  tweetText: '[data-testid="tweetText"]',
-  tweetTime: 'time[datetime]',
-  tweetLikes: '[data-testid="like"] span',
-  tweetRetweets: '[data-testid="retweet"] span',
+export {
+  // Navigation
+  Zap as LogoIcon,
+  MessageSquare as OutreachIcon,
+  History as HistoryIcon,
+  Settings as SettingsIcon,
+
+  // Profile
+  User as UserIcon,
+  MapPin as LocationIcon,
+  Link as WebsiteIcon,
+  Users as FollowersIcon,
+  BadgeCheck as VerifiedIcon,
+  Building2 as CompanyIcon,
+  Briefcase as RoleIcon,
+
+  // Platform
+  Twitter as XIcon,
+  Linkedin as LinkedInIcon,
+  Github as GitHubIcon,
+  Globe as GenericSiteIcon,
+
+  // Analysis
+  Brain as AnalyzeIcon,
+  Target as ConfidenceIcon,
+  TrendingUp as HighConfIcon,
+  TrendingDown as LowConfIcon,
+  Sparkles as InsightIcon,
+
+  // Messages
+  Copy as CopyIcon,
+  Check as CopiedIcon,
+  RefreshCw as RegenerateIcon,
+  Pencil as EditIcon,
+  Send as SendIcon,
+  MessageCircle as ReplyIcon,
+  Layers as AnglesIcon,
+
+  // Angle tabs
+  Handshake as ServiceIcon,
+  HeartHandshake as PartnerIcon,
+  UsersRound as CommunityIcon,
+  Gift as ValueIcon,
+  Lightbulb as IdeaIcon,
+
+  // Voice
+  AudioWaveform as VoiceIcon,
+  Upload as UploadIcon,
+  FileText as ExamplesIcon,
+  Fingerprint as FingerprintIcon,
+  BarChart3 as ScoreIcon,
+
+  // History
+  Clock as RecentIcon,
+  Search as SearchIcon,
+  Filter as FilterIcon,
+  ArrowUpRight as OpenProfileIcon,
+  Trash2 as DeleteIcon,
+
+  // Status
+  CircleDot as SentIcon,
+  CircleCheck as RespondedIcon,
+  CircleX as NoResponseIcon,
+  Star as ConvertedIcon,
+
+  // Settings
+  Key as ApiKeyIcon,
+  Eye as ShowIcon,
+  EyeOff as HideIcon,
+  Database as StorageIcon,
+  Trash as ClearDataIcon,
+  Info as AboutIcon,
+  ExternalLink as ExternalIcon,
+
+  // Feedback
+  AlertTriangle as WarningIcon,
+  AlertCircle as ErrorIcon,
+  CheckCircle2 as SuccessIcon,
+  Loader2 as LoaderIcon,
+  ChevronDown as ExpandIcon,
+  ChevronUp as CollapseIcon,
+  ChevronRight as ChevronIcon,
+  X as CloseIcon,
+  MoreHorizontal as MoreIcon,
+  ArrowLeft as BackIcon,
+} from 'lucide-react';
+
+export const ICON_SIZE = {
+  xs: 12, sm: 14, md: 16, lg: 20, xl: 24, xxl: 32,
 } as const;
 
-// When X changes their DOM, update THIS file only.
-// Content script imports selectors — zero coupling.
+export const ICON_DEFAULTS = {
+  strokeWidth: 1.5,
+  className: 'shrink-0',
+} as const;
 ```
 
 ---
 
-## Revised Database Schema (Dexie.js)
+## UX Screens
+
+### App Shell (Always Visible)
+
+```
+┌───────────────────────────────────────────┐
+│  ⚡ Reply Guy                  [site] ··· │  ← 48px header, bg-050, border-bottom
+├───────────────────────────────────────────┤  ← [site] = platform badge (X/LI/GH/🌐)
+│                                           │
+│           [ SCROLLABLE CONTENT ]          │  ← bg-000, flex-1, overflow-y-auto
+│                                           │
+├───────────────────────────────────────────┤
+│  💬 Outreach    📋 History    ⚙ Settings  │  ← 56px bottom nav, bg-050, border-top
+└───────────────────────────────────────────┘
+```
+
+### Onboarding (No API Key)
+
+```
+│         [ApiKeyIcon xxl #666]             │
+│                                           │
+│       Set up your API key                 │
+│                                           │
+│  Reply Guy uses OpenRouter to analyze     │
+│  pages and generate outreach messages.    │
+│                                           │
+│  ┌─────────────────────────────────────┐  │
+│  │  Enter your OpenRouter key          │  │  ← bg-100, border
+│  └─────────────────────────────────────┘  │
+│  ┌─────────────────────────────────────┐  │
+│  │        Get Started →                │  │  ← inverted CTA
+│  └─────────────────────────────────────┘  │
+│  Get a key at openrouter.ai ↗            │
+```
+
+### Idle (API Key Set, Side Panel Open)
+
+```
+│         [ConfidenceIcon xxl #666]         │
+│                                           │
+│       Browse any page                     │
+│                                           │
+│  Navigate to any profile or page and      │
+│  Reply Guy will read it and help you      │
+│  craft the perfect outreach message.      │
+│                                           │
+│  Works best on:                           │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐  │
+│  │  𝕏  X    │ │ in  LI   │ │  GH      │  │  ← platform pills
+│  └──────────┘ └──────────┘ └──────────┘  │
+│  ...and any website with profile info.    │
+```
+
+### Loading (Scraping + Analyzing)
+
+```
+│  ┌─────────────────────────────────────┐  │
+│  │ ░░░░░  ░░░░░░░░░░░░░░             │  │  ← skeleton profile card
+│  │ ○      ░░░░░░░░░░                  │  │
+│  │        ░░░░░░░░░░░░░░░░            │  │
+│  └─────────────────────────────────────┘  │
+│  ┌─────────────────────────────────────┐  │
+│  │  Reading page...                    │  │  ← analysis skeleton
+│  │  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  │  │
+│  └─────────────────────────────────────┘  │
+│  ┌─────────────────────────────────────┐  │
+│  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░       │  │  ← message skeletons
+│  │ ░░░░░░░░░░░░░░░░░░                │  │
+│  └─────────────────────────────────────┘  │
+```
+
+Progressive reveal: profile card fills first → analysis streams → messages appear one by one.
+
+### Ready (Messages Generated)
+
+```
+│  ┌─────────────────────────────────────┐  │
+│  │ [IMG]  Sarah Chen          ✓       │  │  ← profile card: bg-100
+│  │  48px  @sarahchen_design           │  │     avatar, name (xl bold), verified
+│  │        Design Lead · Figma         │  │     handle, role+company (sm, secondary)
+│  │        SF · 14.2K followers        │  │     location + followers (mono, tertiary)
+│  │  "Building design systems..."      │  │     bio (sm, secondary, italic)
+│  └─────────────────────────────────────┘  │
+│                                           │
+│  ┌─────────────────────────────────────┐  │
+│  │ Outreach Score  ████████████░░  82% │  │  ← confidence bar: bg-100
+│  │ Strong match — recent activity      │  │     bar color by score, mono for %
+│  └─────────────────────────────────────┘  │
+│                                           │
+│  ┌─────────────────────────────────────┐  │  ← warning (only if prior contact)
+│  │ ⚠ Contacted 3d ago — view thread → │  │     bg-100, left 2px warning border
+│  └─────────────────────────────────────┘  │
+│                                           │
+│  [Service] [Partner] [Community] [Value]  │  ← angle tabs
+│  ─────────────────────────────────────    │     active: text-primary, 2px accent bottom
+│                                           │
+│  ┌─────────────────────────────────────┐  │
+│  │ Hey Sarah — saw your thread on      │  │  ← message card: bg-100
+│  │ multi-brand token systems. We've    │  │     sm text, primary color
+│  │ been solving the same problem for   │  │
+│  │ startup clients and would love      │  │
+│  │ to compare approaches.              │  │
+│  │ ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌  │  │
+│  │ Voice: 94%  ·  38 words             │  │  ← mono, tertiary
+│  │ ┌───────────────────────────────┐   │  │
+│  │ │     📋  Copy Message          │   │  │  ← inverted CTA
+│  │ └───────────────────────────────┘   │  │     click → "✓ Copied" 2s
+│  │ Hook: Posted about design tokens    │  │  ← why this works (xs, tertiary)
+│  │ 2 days ago — directly relevant.     │  │
+│  └─────────────────────────────────────┘  │
+│  ┌─────────────────────────────────────┐  │
+│  │  ↻ Regenerate          ✎ Edit      │  │  ← action bar: ghost buttons
+│  └─────────────────────────────────────┘  │
+```
+
+### Generic Page (Not a Profile — Still Works)
+
+When the page isn't a recognized profile (Tier 3 scraping), show adapted UI:
+
+```
+│  ┌─────────────────────────────────────┐  │
+│  │ 🌐  studio-drewskii.com            │  │  ← page card: GenericSiteIcon + hostname
+│  │     "Studio Drewskii — Brand..."    │  │     og:title or document.title
+│  │                                     │  │     og:description or meta desc
+│  │     Social: x.com/drewskii ↗       │  │     any detected social links
+│  └─────────────────────────────────────┘  │
+│                                           │
+│  ┌─────────────────────────────────────┐  │
+│  │ Context Score  ██████░░░░░░░  52%   │  │  ← lower confidence (less data)
+│  │ Limited context — generic page       │  │
+│  └─────────────────────────────────────┘  │
+│                                           │
+│  [Messages generate as normal]            │  ← LLM adapts to available context
+```
+
+The LLM prompt explicitly handles low-context situations: "If profile data is sparse, focus the outreach on what IS available — the content on their site, their work, their company."
+
+### Post-Copy Sheet
+
+After copy → "✓ Copied" for 2s → bottom sheet slides up:
+
+```
+│  Did you send this message?              │
+│  Logging helps avoid duplicate outreach.  │
+│  ┌──────────────┐ ┌──────────────────┐   │
+│  │  ✓ Yes, sent │ │   ✕ Not yet      │   │
+│  └──────────────┘ └──────────────────┘   │
+```
+
+Yes → save to Dexie → "Logged ✓" toast. Not yet → dismiss. Auto-dismiss 15s.
+
+### History Screen
+
+```
+│  ┌─────────────────────────────────────┐  │
+│  │ 🔍  Search conversations...         │  │
+│  └─────────────────────────────────────┘  │
+│  [All] [𝕏 X] [in LI] [🌐 Other]        │  ← filter chips (now includes "Other")
+│                                           │
+│  Today                                    │
+│  ┌─────────────────────────────────────┐  │
+│  │ [AV] Sarah Chen          𝕏    3m   │  │
+│  │      "Hey Sarah — saw..."          │  │
+│  │      ● Sent                         │  │
+│  └─────────────────────────────────────┘  │
+│  ┌─────────────────────────────────────┐  │
+│  │ [🌐] studio-drewskii.com   🌐  1h  │  │  ← generic site: globe icon as avatar
+│  │      "Loved the brand systems..."   │  │
+│  │      ✓ Responded                    │  │
+│  └─────────────────────────────────────┘  │
+```
+
+### Settings Screen
+
+```
+│  API Key                                  │
+│  ┌─────────────────────────────────────┐  │
+│  │ sk-or-••••••••••7f3a           👁   │  │
+│  └─────────────────────────────────────┘  │
+│  Connected ✓                              │
+│  ─────────────────────────────────────    │
+│  Voice Training                           │
+│  ┌─────────────────────────────────────┐  │
+│  │  🎤 Train Your Voice →              │  │
+│  │     12 examples · 94% match         │  │
+│  └─────────────────────────────────────┘  │
+│  ─────────────────────────────────────    │
+│  Data                                     │
+│  ┌─────────────────────────────────────┐  │
+│  │  Clear Cache · Delete All · Reset   │  │
+│  └─────────────────────────────────────┘  │
+│  ─────────────────────────────────────    │
+│  Reply Guy v0.1.0 · Studio Drewskii     │
+```
+
+### Voice Training (3 Steps)
+
+Step 1: Paste 10-20 example DMs + "Analyze My Voice →"
+Step 2: LLM extracts voice traits (streamed, each trait fades in)
+Step 3: Review fingerprint (tone, patterns, avoid phrases) + "Save" or "Retrain"
+
+---
+
+## Database Schema (Dexie.js)
 
 ```typescript
 // lib/db.ts
@@ -482,16 +850,16 @@ import Dexie, { type EntityTable } from 'dexie';
 
 interface Conversation {
   id: string;
-  platform: 'x' | 'linkedin';
-  profileUrl: string;
-  profileName: string;
-  profileHandle: string;
-  profileSnapshot: ProfileData;
-  messages: Message[];
+  platform: string;           // 'x' | 'linkedin' | 'github' | 'generic'
+  pageUrl: string;
+  pageName: string;            // person name or page title
+  pageHandle: string;          // handle if available, empty string if not
+  pageSnapshot: any;           // full scraped data at time of outreach
+  sentMessage: string;         // the message they actually copied/sent
+  angle: string;
   firstContact: Date;
   lastContact: Date;
   status: 'sent' | 'responded' | 'no_response' | 'converted';
-  tags: string[];
 }
 
 interface VoiceProfile {
@@ -499,393 +867,197 @@ interface VoiceProfile {
   avgMessageLength: number;
   emojiFrequency: number;
   emojiTypes: string[];
-  tone: number; // 0-10
-  sentenceStructure: 'simple' | 'complex' | 'mixed';
+  tone: number;
   openingPatterns: string[];
   closingPatterns: string[];
   personalityMarkers: string[];
   avoidPhrases: string[];
+  vocabularySignature: string[];
   exampleMessages: string[];
   lastUpdated: Date;
 }
 
 interface AnalysisCache {
-  profileUrl: string;
-  analysis: ProfileAnalysis;
+  pageUrl: string;
+  analysis: any;
   timestamp: Date;
 }
 
 const db = new Dexie('ReplyGuyDB') as Dexie & {
   conversations: EntityTable<Conversation, 'id'>;
   voiceProfiles: EntityTable<VoiceProfile, 'id'>;
-  analysisCache: EntityTable<AnalysisCache, 'profileUrl'>;
+  analysisCache: EntityTable<AnalysisCache, 'pageUrl'>;
 };
 
 db.version(1).stores({
-  conversations: 'id, platform, profileUrl, status, lastContact, *tags',
-  voiceProfiles: 'id, lastUpdated',
-  analysisCache: 'profileUrl, timestamp',
+  conversations: 'id, platform, pageUrl, status, lastContact',
+  voiceProfiles: 'id',
+  analysisCache: 'pageUrl, timestamp',
 });
 
 export { db };
 ```
 
-### Reactive Queries in React
+---
 
-```typescript
-// hooks/useConversation.ts
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/lib/db';
+## LLM Strategy
 
-export function useConversation(profileUrl: string) {
-  return useLiveQuery(
-    () => db.conversations.where('profileUrl').equals(profileUrl).first(),
-    [profileUrl]
-  );
+### Model: Claude Sonnet 4.5 via OpenRouter
+
+Cost: ~$0.020 per page analyzed + 4 messages generated.
+Fallback: GPT-4o → Llama 3.3 70B.
+Always: `data_collection: 'deny'`, streaming enabled.
+
+### Prompts (all in lib/prompts.ts)
+
+**Analysis prompt adapts to available data:**
+
+```
+You are analyzing a webpage to help craft personalized outreach messages.
+
+PAGE DATA:
+{pageData}
+
+Based on whatever information is available, return JSON:
+{
+  "personName": "best guess at the person's name, or the page/company name",
+  "summary": "2-3 sentences about who this is and what they do",
+  "interests": ["3-5 topics they care about based on available evidence"],
+  "outreachAngles": [
+    { "angle": "service", "hook": "specific reason to reach out", "relevance": "why now" },
+    { "angle": "partner", "hook": "...", "relevance": "..." },
+    { "angle": "community", "hook": "...", "relevance": "..." },
+    { "angle": "value", "hook": "...", "relevance": "..." }
+  ],
+  "confidence": 0-100,
+  "confidenceReason": "why this score — based on data quality and recency"
 }
 
-// Automatically re-renders when conversation is updated anywhere
+If the page has rich profile data (social profiles, bio, recent posts), confidence should be higher.
+If the page only has generic text content, confidence should be lower but still provide useful angles.
+Always try. Never refuse. Work with whatever context you have.
 ```
+
+**Message generation prompt includes voice profile (if trained) and adapts to context quality.**
 
 ---
 
-## Voice Training — Simplified Architecture
-
-### Drop TensorFlow.js
-
-The v1 PRD proposed TensorFlow.js for browser-based embeddings and vector similarity matching. This is over-engineered for our use case:
-
-- TF.js adds ~2MB to the extension bundle
-- Browser-based embeddings are unreliable across devices
-- Vector similarity requires maintaining an embedding model
-- The LLM already understands writing style natively
-
-### New Approach: LLM-Extracted Voice Fingerprint
-
-```typescript
-// lib/voice-trainer.ts
-const VOICE_EXTRACTION_PROMPT = `
-Analyze these message examples and extract a precise voice fingerprint.
-
-MESSAGES:
-{messages}
-
-Return a JSON voice profile with:
-1. avgMessageLength: average word count
-2. emojiFrequency: average emojis per message (decimal)
-3. emojiTypes: top 5 most-used emojis (array)
-4. tone: 0 (extremely casual) to 10 (extremely formal)
-5. sentenceStructure: "simple" | "complex" | "mixed"
-6. openingPatterns: 3-5 typical message openers (e.g., "Hey", "Yo", "Saw your post about")
-7. closingPatterns: 3-5 typical message closers
-8. personalityMarkers: 3-5 distinctive traits (e.g., "uses analogies", "asks rhetorical questions")
-9. avoidPhrases: phrases this person would NEVER use
-10. vocabularySignature: 10-15 distinctive words/phrases they frequently use
-
-Be extremely precise. This profile will be used to ghostwrite messages.
-`;
-
-export async function trainVoice(messages: string[]): Promise<VoiceProfile> {
-  const response = await analyzeWithLLM(
-    VOICE_EXTRACTION_PROMPT.replace('{messages}', messages.join('\n---\n'))
-  );
-  
-  // Also compute statistical metrics locally (no LLM needed)
-  const localMetrics = {
-    avgMessageLength: computeAvgLength(messages),
-    emojiFrequency: computeEmojiFreq(messages),
-    emojiTypes: extractTopEmojis(messages),
-  };
-  
-  // Merge LLM analysis with local statistics
-  return { ...response, ...localMetrics };
-}
-```
-
-### Voice Scoring — Keep It Simple
-
-```typescript
-export function scoreAuthenticity(message: string, profile: VoiceProfile): number {
-  let score = 100;
-  
-  const wordCount = message.split(/\s+/).length;
-  score -= Math.abs(wordCount - profile.avgMessageLength) * 2;
-  
-  const emojiCount = (message.match(/\p{Emoji}/gu) || []).length;
-  score -= Math.abs(emojiCount - profile.emojiFrequency) * 10;
-  
-  for (const phrase of profile.avoidPhrases) {
-    if (message.toLowerCase().includes(phrase.toLowerCase())) score -= 20;
-  }
-  
-  return Math.max(0, Math.min(100, score));
-}
-```
-
----
-
-## WXT Project Structure
+## File Structure
 
 ```
 reply-guy/
+├── assets/fonts/
+│   ├── GeistVF.woff2
+│   └── GeistMonoVF.woff2
 ├── entrypoints/
-│   ├── background.ts              # Service worker — message relay, side panel control
-│   ├── content.ts                 # Content script — profile detection + scraping
-│   ├── sidepanel/                 # Side panel React app
-│   │   ├── index.html
-│   │   ├── main.tsx
-│   │   └── App.tsx
-│   └── options/                   # Options page (voice training, API key)
-│       ├── index.html
-│       ├── main.tsx
-│       └── App.tsx
+│   ├── background.ts                # Service worker (exact code above)
+│   ├── content.ts                   # Content script (exact code above)
+│   └── sidepanel/
+│       ├── index.html               # HTML shell (exact code above)
+│       ├── main.tsx                  # React mount (exact code above)
+│       └── App.tsx                   # App shell with routing
 ├── components/
-│   ├── ui/                        # shadcn/ui components (Vercel themed)
-│   │   ├── button.tsx
-│   │   ├── tabs.tsx
-│   │   ├── card.tsx
-│   │   ├── badge.tsx
-│   │   ├── progress.tsx
-│   │   ├── skeleton.tsx
-│   │   └── toast.tsx
-│   ├── ProfileCard.tsx
-│   ├── ConfidenceBar.tsx
-│   ├── MessageTab.tsx
-│   ├── ConversationWarning.tsx
-│   ├── VoiceTrainingWizard.tsx
-│   └── CopyButton.tsx
+│   ├── app/
+│   │   ├── Header.tsx
+│   │   ├── BottomNav.tsx
+│   │   └── Toast.tsx
+│   ├── screens/
+│   │   ├── OnboardingScreen.tsx
+│   │   ├── IdleScreen.tsx
+│   │   ├── OutreachScreen.tsx
+│   │   ├── HistoryScreen.tsx
+│   │   ├── SettingsScreen.tsx
+│   │   └── VoiceTrainingScreen.tsx
+│   ├── profile/
+│   │   ├── ProfileCard.tsx          # Adapts to platform — rich for X/LI, basic for generic
+│   │   ├── PageCard.tsx             # Generic page card (hostname + title + description)
+│   │   ├── ConfidenceBar.tsx
+│   │   └── ConversationWarning.tsx
+│   ├── messages/
+│   │   ├── AngleTabs.tsx
+│   │   ├── MessageCard.tsx
+│   │   ├── CopyButton.tsx
+│   │   ├── PostCopySheet.tsx
+│   │   └── ActionBar.tsx
+│   ├── history/
+│   │   ├── ConversationRow.tsx
+│   │   ├── ConversationDetail.tsx
+│   │   └── FilterChips.tsx
+│   ├── settings/
+│   │   ├── ApiKeyInput.tsx
+│   │   ├── VoiceProfileCard.tsx
+│   │   └── DataManagement.tsx
+│   └── ui/
+│       ├── Button.tsx
+│       ├── Card.tsx
+│       ├── Input.tsx
+│       ├── Badge.tsx
+│       ├── Skeleton.tsx
+│       ├── Tabs.tsx
+│       ├── Sheet.tsx
+│       └── Divider.tsx
 ├── lib/
-│   ├── db.ts                      # Dexie.js setup + schemas
-│   ├── openrouter.ts              # LLM client + prompts
-│   ├── store.ts                   # Zustand store
-│   ├── scraper/
-│   │   ├── strategy.ts            # Fallback chain orchestrator
-│   │   ├── x-scraper.ts           # X DOM scraper
-│   │   ├── linkedin-scraper.ts    # LinkedIn DOM scraper
-│   │   ├── a11y-scraper.ts        # Accessibility tree fallback
-│   │   └── selectors/
-│   │       ├── x.ts               # X selector map
-│   │       └── linkedin.ts        # LinkedIn selector map
+│   ├── icons.ts                     # Centralized icon registry
+│   ├── db.ts                        # Dexie.js (schema above)
+│   ├── openrouter.ts                # Streaming LLM client
+│   ├── store.ts                     # Zustand stores
+│   ├── prompts.ts                   # All LLM prompts
+│   ├── messaging.ts                 # Extension message types
 │   ├── voice/
-│   │   ├── trainer.ts             # Voice profile extraction
-│   │   └── scorer.ts              # Authenticity scoring
+│   │   ├── trainer.ts
+│   │   └── scorer.ts
 │   └── utils/
-│       ├── rate-limiter.ts        # Request throttling
-│       ├── cache.ts               # 24hr analysis cache
-│       └── platform-detect.ts     # URL pattern matching
-├── assets/
-│   └── fonts/
-│       ├── GeistVF.woff2          # Geist Sans variable
-│       └── GeistMonoVF.woff2      # Geist Mono variable
+│       ├── cn.ts                    # clsx + tailwind-merge
+│       ├── rate-limiter.ts
+│       ├── cache.ts
+│       └── platform.ts
+├── hooks/
+│   ├── usePageData.ts               # Subscribe to chrome.storage.session changes
+│   ├── useConversation.ts           # Dexie live query
+│   ├── useVoiceProfile.ts
+│   └── useAnalysis.ts               # Streaming analysis hook
+├── types/
+│   └── index.ts
 ├── styles/
-│   └── globals.css                # Vercel theme tokens + @font-face
-├── wxt.config.ts                  # WXT configuration
-├── tailwind.config.ts             # Tailwind + Vercel theme
+│   └── globals.css
+├── wxt.config.ts                    # EXACT config from above
+├── tailwind.config.ts
 ├── tsconfig.json
-└── package.json
+└── package.json                     # EXACT config from above
 ```
 
 ---
 
-## Revised Implementation Roadmap
+## Implementation Phases
 
-### Phase 1: Skeleton (Days 1-3)
+### Phase 1: Working Extension (Days 1-2)
+Build the app shell that actually loads in Chrome. Header, bottom nav, three empty screens, correct fonts and colors. The extension must install and open the side panel on icon click.
 
-**Goal:** Extension installs, side panel opens on profiles, shows loading state.
+### Phase 2: Page Scraping (Days 2-3)
+Content script runs on all URLs. Scrapes page data (generic + platform-enhanced). Data flows to side panel. ProfileCard and PageCard render real data.
 
-- [ ] Fork `imtiger/wxt-react-shadcn-tailwindcss-chrome-extension`
-- [ ] Swap in Vercel dark theme tokens (CSS variables from shadcn.io/theme/vercel)
-- [ ] Bundle Geist fonts in `/assets/fonts/`
-- [ ] Configure side panel to open on X profile URLs
-- [ ] Build ProfileCard component (hardcoded data)
-- [ ] Build skeleton loading state (shimmer animation)
+### Phase 3: LLM Analysis (Days 3-5)
+OpenRouter streaming connected. Analysis prompt adapts to data quality. ConfidenceBar renders. 24hr Dexie cache.
 
-**Success:** Extension loads in Chrome, side panel opens on `x.com/*` profiles.
+### Phase 4: Message Generation (Days 5-7)
+4 angle tabs. Messages stream in. CopyButton works. PostCopySheet logs to Dexie.
 
-### Phase 2: Scraping + Analysis (Days 4-7)
+### Phase 5: Voice Training (Days 7-9)
+3-step wizard. LLM extraction + local stats. Voice score on messages.
 
-**Goal:** Real profiles scraped, LLM analysis displayed.
-
-- [ ] Implement X DOM scraper with selector map
-- [ ] Wire content script → background → side panel messaging
-- [ ] Set up @openrouter/sdk with streaming
-- [ ] Implement profile analysis prompt
-- [ ] Display real analysis in ProfileCard + ConfidenceBar
-- [ ] Add 24hr analysis cache in Dexie
-
-**Success:** Browse to any X profile → see real analysis in <5 seconds.
-
-### Phase 3: Message Generation (Days 8-12)
-
-**Goal:** 3-5 voice-matched messages generated per profile.
-
-- [ ] Implement message generation prompt (multi-angle)
-- [ ] Build MessageTabs component with streaming display
-- [ ] Implement CopyButton with clipboard API
-- [ ] Add "Did you send this?" confirmation toast
-- [ ] Implement voice scoring (basic — no training yet)
-- [ ] Add regenerate functionality
-
-**Success:** Copy a generated message, paste into X DMs. Feels authentic.
-
-### Phase 4: Voice Training (Days 13-17)
-
-**Goal:** User trains voice profile, messages match their style.
-
-- [ ] Build VoiceTrainingWizard in options page
-- [ ] File upload for past DMs (text/JSON)
-- [ ] Manual message input UI
-- [ ] LLM voice extraction pipeline
-- [ ] Store voice profile in Dexie
-- [ ] Integrate voice profile into generation prompts
-- [ ] Add voice match score to message cards
-- [ ] A/B test: show user their real vs AI message (blind)
-
-**Success:** User cannot tell which message is AI-generated in blind test.
-
-### Phase 5: Conversation History (Days 18-22)
-
-**Goal:** Track sent messages, prevent duplicate outreach, enable follow-ups.
-
-- [ ] Implement Dexie conversations schema
-- [ ] Log conversations on "Yes, I sent this" confirmation
-- [ ] Build ConversationWarning banner
-- [ ] Conversation history viewer (in options page)
-- [ ] Follow-up message generation (with prior context)
-- [ ] Analytics: response rates by angle type
-
-**Success:** Extension warns you when you've already contacted someone.
-
-### Phase 6: LinkedIn + Polish (Days 23-30)
-
-**Goal:** Full LinkedIn support, production-ready quality.
-
-- [ ] Implement LinkedIn DOM scraper with selector map
-- [ ] Test on 50 LinkedIn profiles
-- [ ] Add keyboard shortcut (Cmd+Shift+R to toggle panel)
-- [ ] Error handling for all API failures
-- [ ] Rate limiting (1 request per 5 seconds)
-- [ ] Skeleton loading states for all async operations
-- [ ] Empty states for first-time users
-- [ ] Test on 100 real profiles across both platforms
-
-**Success:** Zero crashes, <2 min from profile to sent message.
+### Phase 6: History + Polish (Days 9-12)
+History screen with search/filter. Conversation warning on revisit. Error states. Rate limiting. Test on 50+ pages across platforms.
 
 ---
 
-## Cost Analysis — Revised
+## Privacy
 
-### Per-Profile Breakdown (Claude Sonnet 4.5 only)
-
-| Operation | Input Tokens | Output Tokens | Cost |
-|-----------|-------------|---------------|------|
-| Profile Analysis | ~2,000 | ~500 | ~$0.008 |
-| Message Gen ×5 | ~1,500 ×5 | ~200 ×5 | ~$0.015 |
-| **Total per profile** | | | **~$0.023** |
-
-### Monthly Cost at Scale
-
-| Daily Profiles | Monthly Cost | Notes |
-|---------------|-------------|-------|
-| 10 | $6.90 | Light usage |
-| 20 | $13.80 | Target daily usage |
-| 50 | $34.50 | Power user |
-
-### NPM Dependencies (Extension Size Budget)
-
-| Package | Size (gzipped) | Purpose |
-|---------|---------------|---------|
-| React + React DOM | ~42KB | UI framework |
-| Zustand | ~1KB | State management |
-| Dexie.js | ~28KB | IndexedDB wrapper |
-| @openrouter/sdk | ~15KB | LLM client |
-| shadcn/ui (tree-shaken) | ~20KB | UI components |
-| Lucide React (tree-shaken) | ~5KB | Icons |
-| Geist fonts (WOFF2) | ~80KB | Typography |
-| **Total estimate** | **~191KB** | Well under Chrome's limits |
+1. Local-first. All scraping in-browser. No server.
+2. API calls to OpenRouter only. `data_collection: 'deny'`.
+3. No telemetry. No tracking. No analytics.
+4. User controls all data via Settings.
+5. No auto-sending. Manual copy-paste only.
 
 ---
 
-## Privacy & Compliance — Unchanged
-
-All v1 privacy principles carry forward:
-
-1. **Local-first:** All scraping in browser. Profile data never touches any server.
-2. **API calls only to OpenRouter:** Encrypted HTTPS. `data_collection: 'deny'` flag set.
-3. **No telemetry:** Zero analytics, zero tracking, zero server-side logging.
-4. **User controls everything:** Clear all data via options page. Uninstall = full deletion.
-5. **No auto-sending:** User always copies and pastes manually. Fully TOS-compliant.
-
----
-
-## Open Questions — Resolved
-
-| # | Question (v1) | Resolution (v2) |
-|---|--------------|-----------------|
-| 1 | Voice training bootstrap? | Hybrid: 10 manual examples + LLM extraction. No TF.js. |
-| 2 | Model selection? | Sonnet 4.5 only. Opus dropped for cost. Fallback chain via OpenRouter SDK. |
-| 3 | X or LinkedIn first? | X first (Phase 1-5). LinkedIn in Phase 6. |
-| 4 | Auto-log or manual confirm? | Manual: "Did you send this?" toast after copy. |
-| 5 | Sidebar persistence? | Tab-specific: opens on profile pages, closes on navigation. |
-| 6 | Extension framework? | WXT (replaced Jonghakseo boilerplate). |
-| 7 | IndexedDB library? | Dexie.js (replaced idb). Reactive hooks are essential for React. |
-| 8 | How to handle DOM changes? | Three-tier fallback: selectors → a11y tree → screenshot + vision. |
-
----
-
-## Quick Start — Updated
-
-```bash
-# 1. Clone the WXT + React + shadcn starter
-git clone https://github.com/imtiger/wxt-react-shadcn-tailwindcss-chrome-extension.git reply-guy
-cd reply-guy
-
-# 2. Install dependencies
-npm install
-
-# 3. Add project-specific deps
-npm install dexie dexie-react-hooks @openrouter/sdk zustand
-
-# 4. Download Geist fonts
-# → github.com/vercel/geist-font/releases → WOFF2 → /assets/fonts/
-
-# 5. Apply Vercel theme
-# → shadcn.io/theme/vercel → copy CSS variables → globals.css
-
-# 6. Get OpenRouter API key
-# → openrouter.ai → Add $10 credits → .env
-
-# 7. Start development
-npm run dev
-# → Opens Chrome with extension loaded + HMR
-```
-
----
-
-## Resources — Updated
-
-### Core Tools
-- **WXT Framework:** [wxt.dev](https://wxt.dev) | [GitHub](https://github.com/wxt-dev/wxt)
-- **WXT React Starter:** [imtiger/wxt-react-shadcn-tailwindcss](https://github.com/imtiger/wxt-react-shadcn-tailwindcss-chrome-extension)
-- **shadcn/ui:** [ui.shadcn.com](https://ui.shadcn.com)
-- **Vercel shadcn Theme:** [shadcn.io/theme/vercel](https://www.shadcn.io/theme/vercel)
-- **Geist Font:** [vercel.com/font](https://vercel.com/font) | [GitHub](https://github.com/vercel/geist-font)
-- **Dexie.js:** [dexie.org](https://dexie.org) | [GitHub](https://github.com/dexie/Dexie.js)
-- **OpenRouter SDK:** [npm](https://www.npmjs.com/package/@openrouter/sdk) | [GitHub](https://github.com/OpenRouterTeam/typescript-sdk)
-- **Zustand:** [GitHub](https://github.com/pmndrs/zustand)
-
-### Scraping References
-- **X Post Scraper:** [OgnjenAdzic28/x-post-scraper-extension](https://github.com/OgnjenAdzic28/x-post-scraper-extension)
-- **Yale3 LinkedIn Scraper:** [KartikayKaul/Yale3](https://github.com/DrakenWan/Yale3)
-- **Chrome Side Panel API:** [developer.chrome.com](https://developer.chrome.com/docs/extensions/reference/api/sidePanel)
-
-### Design System
-- **Geist Design System:** [vercel.com/geist](https://vercel.com/geist/introduction)
-- **Vercel Color Tokens:** [vercel.com/geist/colors](https://vercel.com/geist/colors)
-- **tweakcn (theme editor):** [tweakcn.com](https://tweakcn.com)
-
----
-
-**End of Refined PRD v2.0**
-
-**Ready to build. Let's go. ⚡**
+**End of PRD v4.0**

@@ -1,135 +1,87 @@
-// Reply Guy - Zustand Store
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import type {
+  Tab,
+  ScrapedData,
+  Analysis,
+  GeneratedMessage,
+  VoiceProfile,
+  OutreachAngle,
+  Toast,
+} from '../types';
 
-// Profile data (from scraper)
-export interface ProfileData {
-  name: string;
-  handle: string;
-  bio: string;
-  location?: string;
-  followers?: number;
-  verified: boolean;
-  recentPosts?: any[];
+interface AppState {
+  // UI State
+  activeTab: Tab;
+  setActiveTab: (tab: Tab) => void;
+
+  // Onboarding
+  hasApiKey: boolean;
+  setHasApiKey: (has: boolean) => void;
+
+  // Page Data
+  pageData: ScrapedData | null;
+  setPageData: (data: ScrapedData | null) => void;
+
+  // Analysis
+  analysis: Analysis | null;
+  setAnalysis: (analysis: Analysis | null) => void;
+  isAnalyzing: boolean;
+  setIsAnalyzing: (is: boolean) => void;
+
+  // Messages
+  messages: GeneratedMessage[];
+  setMessages: (messages: GeneratedMessage[]) => void;
+  activeAngle: OutreachAngle['angle'] | null;
+  setActiveAngle: (angle: OutreachAngle['angle'] | null) => void;
+
+  // Voice Profile
+  voiceProfile: VoiceProfile | null;
+  setVoiceProfile: (profile: VoiceProfile | null) => void;
+
+  // Toasts
+  toasts: Toast[];
+  addToast: (toast: Omit<Toast, 'id'>) => void;
+  removeToast: (id: string) => void;
 }
 
-// Analysis result
-export interface ProfileAnalysis {
-  summary: string;
-  painPoints: string[];
-  outreachAngles: any[];
-  confidence: number;
-}
+export const useStore = create<AppState>((set) => ({
+  // UI State
+  activeTab: 'outreach',
+  setActiveTab: (tab) => set({ activeTab: tab }),
 
-// Generated message
-export interface GeneratedMessage {
-  id: string;
-  angle: string;
-  content: string;
-  voiceMatchScore: number;
-  whyItWorks: string;
-}
+  // Onboarding
+  hasApiKey: false,
+  setHasApiKey: (has) => set({ hasApiKey: has }),
 
-// UI state
-export interface UIState {
-  selectedTab: string;
-  isGenerating: boolean;
-  error: string | null;
-}
+  // Page Data
+  pageData: null,
+  setPageData: (data) => set({ pageData: data }),
 
-// Store state
-interface ReplyGuyState {
-  // Current profile
-  currentProfile: ProfileData | null;
-  setCurrentProfile: (profile: ProfileData | null) => void;
+  // Analysis
+  analysis: null,
+  setAnalysis: (analysis) => set({ analysis }),
+  isAnalyzing: false,
+  setIsAnalyzing: (is) => set({ isAnalyzing: is }),
 
-  // Profile analysis
-  profileAnalysis: ProfileAnalysis | null;
-  setProfileAnalysis: (analysis: ProfileAnalysis | null) => void;
+  // Messages
+  messages: [],
+  setMessages: (messages) => set({ messages }),
+  activeAngle: null,
+  setActiveAngle: (angle) => set({ activeAngle: angle }),
 
-  // Generated messages
-  generatedMessages: GeneratedMessage[];
-  setGeneratedMessages: (messages: GeneratedMessage[]) => void;
-  addMessage: (message: GeneratedMessage) => void;
+  // Voice Profile
+  voiceProfile: null,
+  setVoiceProfile: (profile) => set({ voiceProfile: profile }),
 
-  // Voice profile
-  voiceProfile: any | null;
-  setVoiceProfile: (profile: any | null) => void;
-
-  // UI state
-  ui: UIState;
-  setSelectedTab: (tab: string) => void;
-  setIsGenerating: (isGenerating: boolean) => void;
-  setError: (error: string | null) => void;
-}
-
-export const useReplyGuyStore = create<ReplyGuyState>()(
-  persist(
-    (set) => ({
-      // Current profile
-      currentProfile: null,
-      setCurrentProfile: (profile) => set({ currentProfile: profile }),
-
-      // Profile analysis
-      profileAnalysis: null,
-      setProfileAnalysis: (analysis) => set({ profileAnalysis: analysis }),
-
-      // Generated messages
-      generatedMessages: [],
-      setGeneratedMessages: (messages) => set({ generatedMessages: messages }),
-      addMessage: (message) =>
-        set((state) => ({
-          generatedMessages: [...state.generatedMessages, message]
-        })),
-
-      // Voice profile
-      voiceProfile: null,
-      setVoiceProfile: (profile) => set({ voiceProfile: profile }),
-
-      // UI state
-      ui: {
-        selectedTab: 'service',
-        isGenerating: false,
-        error: null,
-      },
-      setSelectedTab: (tab) =>
-        set((state) => ({
-          ui: { ...state.ui, selectedTab: tab }
-        })),
-      setIsGenerating: (isGenerating) =>
-        set((state) => ({
-          ui: { ...state.ui, isGenerating }
-        })),
-      setError: (error) =>
-        set((state) => ({
-          ui: { ...state.ui, error }
-        })),
-    }),
-    {
-      name: 'reply-guy-storage',
-      storage: {
-        getItem: (name) => {
-          return new Promise((resolve) => {
-            chrome.storage.local.get([name], (result) => {
-              resolve(result[name]);
-            });
-          });
-        },
-        setItem: (name, value) => {
-          return new Promise((resolve) => {
-            chrome.storage.local.set({ [name]: value }, () => {
-              resolve();
-            });
-          });
-        },
-        removeItem: (name) => {
-          return new Promise((resolve) => {
-            chrome.storage.local.remove([name], () => {
-              resolve();
-            });
-          });
-        },
-      },
-    }
-  )
-);
+  // Toasts
+  toasts: [],
+  addToast: (toast) => set((state) => ({
+    toasts: [
+      ...state.toasts,
+      { ...toast, id: crypto.randomUUID() },
+    ],
+  })),
+  removeToast: (id) => set((state) => ({
+    toasts: state.toasts.filter((t) => t.id !== id),
+  })),
+}));
