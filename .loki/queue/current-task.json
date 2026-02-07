@@ -1,22 +1,21 @@
 {
-  "id": "dev-4-3",
+  "id": "dev-4-4",
   "phase": "DEVELOPMENT",
-  "title": "Conversation History UI (Phase 4.3)",
-  "goal": "Display conversation history in side panel",
-  "priority": "medium",
+  "title": "Status Updates (Phase 4.4)",
+  "goal": "Allow updating conversation status",
+  "priority": "low",
   "status": "pending",
-  "dependencies": ["dev-3-7"],
+  "dependencies": ["dev-4-3"],
   "attempt": 1,
   "spec": {
-    "complexity": "C3",
+    "complexity": "C2",
     "file": "entrypoints/sidepanel/App.tsx",
     "actions": [
-      "Add 'History' tab next to Messages",
-      "Query conversations by current profile URL",
-      "Display sent messages with timestamps",
-      "Show status (sent/responded/no_response/converted)",
-      "Allow re-copying previous messages",
-      "Test: History shows all sent messages for profile"
+      "Add status dropdown in history view",
+      "Allow changing: sent → responded → converted",
+      "Update IndexedDB on status change",
+      "Show success toast on update",
+      "Test: Status persists across reload"
     ]
   }
 }

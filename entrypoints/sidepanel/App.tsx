@@ -23,6 +23,8 @@ export default function App() {
   const [messages, setMessages] = useState<GeneratedMessage[]>([]);
   const [analyzing, setAnalyzing] = useState(false);
   const [voiceProfile, setVoiceProfile] = useState<VoiceProfile | null>(null);
+  const [activeTab, setActiveTab] = useState<'messages' | 'history'>('messages');
+  const [conversationHistory, setConversationHistory] = useState<Conversation | null>(null);
   const { showToast, ToastContainer } = useToast();
 
   // Load voice profile on mount
@@ -41,6 +43,23 @@ export default function App() {
 
     loadVoiceProfile();
   }, []);
+
+  // Load conversation history when profile changes
+  useEffect(() => {
+    const loadConversationHistory = async () => {
+      if (!profile) return;
+
+      try {
+        const profileUrl = window.location.href;
+        const conversation = await db.conversations.where('profileUrl').equals(profileUrl).first();
+        setConversationHistory(conversation || null);
+      } catch (error) {
+        console.error('[Side Panel] Failed to load conversation history:', error);
+      }
+    };
+
+    loadConversationHistory();
+  }, [profile]);
 
   // Get confidence bar color
   const getConfidenceColor = (score: number): string => {
@@ -311,18 +330,54 @@ export default function App() {
               </div>
             </div>
 
-            {/* Messages Section */}
+            {/* Messages Section Header with Tabs */}
             <div className="border-b border-[#262626]">
               <div className="flex items-center justify-between px-4 py-3">
-                <div className="flex items-center space-x-2">
-                  <span className="text-[#a1a1a1] text-sm font-medium">Messages</span>
-                  {voiceProfile && (
-                    <span className="text-xs text-[#0070f3] bg-[#0070f3]/10 px-2 py-0.5 rounded">
+                <div className="flex items-center space-x-1">
+                  {/* Tab Switcher */}
+                  <button
+                    onClick={() => setActiveTab('messages')}
+                    className={`
+                      relative px-3 py-1.5 text-sm font-medium transition-colors
+                      ${activeTab === 'messages'
+                        ? 'text-[#ededed]'
+                        : 'text-[#a1a1a1] hover:text-[#ededed]'
+                      }
+                    `}
+                  >
+                    Messages
+                    {activeTab === 'messages' && (
+                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0070f3]" />
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab('history')}
+                    className={`
+                      relative px-3 py-1.5 text-sm font-medium transition-colors
+                      ${activeTab === 'history'
+                        ? 'text-[#ededed]'
+                        : 'text-[#a1a1a1] hover:text-[#ededed]'
+                      }
+                    `}
+                  >
+                    History
+                    {conversationHistory && conversationHistory.messages.length > 0 && (
+                      <span className="ml-1 text-xs text-[#666]">({conversationHistory.messages.length})</span>
+                    )}
+                    {activeTab === 'history' && (
+                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0070f3]" />
+                    )}
+                  </button>
+
+                  {voiceProfile && activeTab === 'messages' && (
+                    <span className="text-xs text-[#0070f3] bg-[#0070f3]/10 px-2 py-0.5 rounded ml-2">
                       Using your voice
                     </span>
                   )}
                 </div>
-                {messages.length > 0 && (
+
+                {activeTab === 'messages' && messages.length > 0 && (
                   <button
                     onClick={handleRegenerate}
                     disabled={analyzing}
@@ -341,13 +396,69 @@ export default function App() {
               </div>
             </div>
 
-            {messages.length > 0 ? (
-              <MessageTabs messages={messages} onCopy={handleCopy} />
-            ) : (
+            {/* Messages Tab Content */}
+            {activeTab === 'messages' && (
+              <>
+                {messages.length > 0 ? (
+                  <MessageTabs messages={messages} onCopy={handleCopy} />
+                ) : (
+                  <div className="px-4 py-3">
+                    <p className="text-[#666] text-sm text-center">
+                      {analyzing ? 'Generating messages...' : 'Analysis complete. Generate messages to get started.'}
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* History Tab Content */}
+            {activeTab === 'history' && (
               <div className="px-4 py-3">
-                <p className="text-[#666] text-sm text-center">
-                  {analyzing ? 'Generating messages...' : 'Analysis complete. Generate messages to get started.'}
-                </p>
+                {conversationHistory && conversationHistory.messages.length > 0 ? (
+                  <div className="space-y-3">
+                    {conversationHistory.messages.map((msg) => (
+                      <div key={msg.id} className="border border-[#262626] rounded-lg p-3 bg-[#111]">
+                        <div className="flex items-start justify-between mb-2">
+                          <span className="text-xs text-[#0070f3] bg-[#0070f3]/10 px-2 py-0.5 rounded capitalize">
+                            {msg.angle}
+                          </span>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs text-[#666]">
+                              {new Date(msg.timestamp).toLocaleDateString()}
+                            </span>
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(msg.content);
+                                showToast('Message copied to clipboard!');
+                              }}
+                              className="text-xs text-[#a1a1a1] hover:text-[#ededed]"
+                            >
+                              Copy
+                            </button>
+                          </div>
+                        </div>
+                        <p className="text-sm text-[#ededed] mb-2">{msg.content}</p>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-[#666]">Voice: {msg.voiceMatchScore}% match</span>
+                          <span className={`
+                            capitalize
+                            ${conversationHistory.status === 'sent' ? 'text-[#ffc107]' : ''}
+                            ${conversationHistory.status === 'responded' ? 'text-[#00c853]' : ''}
+                            ${conversationHistory.status === 'converted' ? 'text-[#0070f3]' : ''}
+                          `}>
+                            {conversationHistory.status.replace('_', ' ')}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-[#666] text-sm">
+                      No messages sent yet. Copy a message to start tracking your conversations.
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </div>
