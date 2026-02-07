@@ -1,20 +1,21 @@
 {
-  "id": "dev-3-4",
+  "id": "dev-3-5",
   "phase": "DEVELOPMENT",
-  "title": "Copy Button Implementation (Phase 3.4)",
-  "goal": "Implement clipboard copy with confirmation",
-  "priority": "high",
+  "title": "Voice Scoring (Phase 3.5)",
+  "goal": "Implement basic voice scoring",
+  "priority": "medium",
   "status": "in_progress",
-  "dependencies": ["dev-3-3"],
+  "dependencies": [],
   "attempt": 1,
   "spec": {
     "complexity": "C2",
-    "file": "components/MessageTab.tsx",
+    "file": "lib/voice/scorer.ts",
     "actions": [
-      "Add copy button to each message",
-      "Use navigator.clipboard.writeText()",
-      "Show confirmation toast",
-      "Test: Copies to clipboard"
+      "Implement scoreAuthenticity() function",
+      "Score based on length, emoji frequency, avoid phrases",
+      "Return 0-100 score",
+      "Display score on messages",
+      "Test: Scores reasonable values"
     ]
   }
 }
