@@ -1,33 +1,126 @@
-import './style.css';
-import ReactDOM from 'react-dom/client';
-import App from './App.tsx';
-import {i18nConfig} from "@/components/i18nConfig.ts";
-import initTranslations from "@/components/i18n.ts";
-import {ThemeProvider} from "@/components/theme-provider.tsx";
+// Reply Guy Content Script
+// Detects profile pages and prepares for scraping
 
 export default defineContentScript({
-    matches: ['*://*/*'],
-    cssInjectionMode: 'ui',
-    async main(ctx) {
-        initTranslations(i18nConfig.defaultLocale, ["common", "content"])
-        const ui = await createShadowRootUi(ctx, {
-            name: 'language-learning-content-box',
-            position: 'inline',
-            onMount: (container) => {
-                console.log(container);
-                const root = ReactDOM.createRoot(container);
-                root.render(
-                    <ThemeProvider>
-                        <App/>
-                    </ThemeProvider>
-                );
-                return root;
-            },
-            onRemove: (root) => {
-                root?.unmount();
-            },
+  matches: ['*://x.com/*', '*://twitter.com/*', '*://www.linkedin.com/*'],
+  main() {
+    console.log('[Reply Guy] Content script loaded');
+
+    // Platform detection
+    function detectPlatform(): 'x' | 'linkedin' | null {
+      const hostname = window.location.hostname;
+
+      if (hostname === 'x.com' || hostname === 'twitter.com') {
+        return 'x';
+      }
+
+      if (hostname === 'www.linkedin.com') {
+        return 'linkedin';
+      }
+
+      return null;
+    }
+
+    // Profile URL detection
+    function isProfileURL(url: string): boolean {
+      try {
+        const urlObj = new URL(url);
+
+        // X/Twitter profiles
+        if (urlObj.hostname === 'x.com' || urlObj.hostname === 'twitter.com') {
+          const pathname = urlObj.pathname;
+          const parts = pathname.split('/').filter(Boolean);
+          // Match: /username or /username/with_replies
+          return parts.length === 1 || (parts.length === 2 && parts[1] === 'with_replies');
+        }
+
+        // LinkedIn profiles
+        if (urlObj.hostname === 'www.linkedin.com') {
+          return pathname.startsWith('/in/') && pathname.split('/').filter(Boolean).length === 2;
+        }
+
+        return false;
+      } catch {
+        return false;
+      }
+    }
+
+    // Send profile detection to background
+    function notifyProfileDetection(platform: 'x' | 'linkedin') {
+      chrome.runtime.sendMessage({
+        type: 'PROFILE_DETECTED',
+        platform,
+        url: window.location.href,
+        timestamp: Date.now()
+      }).catch((error) => {
+        console.error('[Reply Guy] Failed to send profile detection:', error);
+      });
+    }
+
+    // Initial page load detection
+    function onPageLoad() {
+      const platform = detectPlatform();
+
+      if (platform && isProfileURL(window.location.href)) {
+        console.log(`[Reply Guy] Profile page detected: ${platform}`);
+        notifyProfileDetection(platform);
+      }
+    }
+
+    // SPA navigation detection (X/Twitter are SPAs)
+    function setupNavigationObserver() {
+      // Detect URL changes via MutationObserver (for SPAs)
+      let lastUrl = window.location.href;
+
+      const observer = new MutationObserver(() => {
+        const currentUrl = window.location.href;
+
+        if (currentUrl !== lastUrl) {
+          console.log(`[Reply Guy] URL changed: ${lastUrl} → ${currentUrl}`);
+          lastUrl = currentUrl;
+
+          // Check if new URL is a profile page
+          const platform = detectPlatform();
+          if (platform && isProfileURL(currentUrl)) {
+            console.log(`[Reply Guy] Navigated to profile page: ${platform}`);
+            notifyProfileDetection(platform);
+          }
+        }
+      });
+
+      // Observe document changes
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true
+      });
+
+      console.log('[Reply Guy] Navigation observer setup complete');
+    }
+
+    // Listen for messages from background/side panel
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      console.log('[Reply Guy] Received message:', message);
+
+      if (message.type === 'SCRAPE_PROFILE') {
+        // Future: Implement profile scraping
+        console.log('[Reply Guy] Scrape request received (not yet implemented)');
+
+        sendResponse({
+          success: false,
+          error: 'Scraping not yet implemented',
+          platform: detectPlatform()
         });
 
-        ui.mount();
-    },
+        return true;
+      }
+
+      return false;
+    });
+
+    // Initialize content script
+    onPageLoad();
+    setupNavigationObserver();
+
+    console.log('[Reply Guy] Content script initialized');
+  }
 });

@@ -70,23 +70,40 @@ export default defineBackground(() => {
     });
 
     // Handle messages from content scripts
-    browser.runtime.onMessage.addListener(async (message: ExtMessage, sender, sendResponse) => {
+    browser.runtime.onMessage.addListener(async (message: ExtMessage | { type: string; platform?: string; url?: string; timestamp?: number }, sender, sendResponse) => {
       console.log('[Message] Received:', message);
 
-      if (message.messageType === MessageType.clickExtIcon) {
-        console.log('[Message] Extension icon clicked, message handled');
-        return true;
-      } else if (message.messageType === MessageType.changeTheme || message.messageType === MessageType.changeLocale) {
-        // Broadcast theme/locale changes to all tabs
-        const tabs = await browser.tabs.query({active: true, currentWindow: true});
-        console.log(`[Message] Broadcasting to ${tabs.length} tabs`);
+      // Handle Reply Guy profile detection
+      if (message.type === 'PROFILE_DETECTED') {
+        console.log('[Profile Detection] Profile detected:', {
+          platform: message.platform,
+          url: message.url,
+          timestamp: message.timestamp
+        });
 
-        if (tabs) {
-          for (const tab of tabs) {
-            try {
-              await browser.tabs.sendMessage(tab.id!, message);
-            } catch (error) {
-              console.error(`[Message] Failed to send to tab ${tab.id}:`, error);
+        // Future: Trigger scraping, check cache, send to side panel
+        // For now: Just log the detection
+
+        return true;
+      }
+
+      // Handle legacy messages from starter template
+      if ('messageType' in message) {
+        if (message.messageType === MessageType.clickExtIcon) {
+          console.log('[Message] Extension icon clicked, message handled');
+          return true;
+        } else if (message.messageType === MessageType.changeTheme || message.messageType === MessageType.changeLocale) {
+          // Broadcast theme/locale changes to all tabs
+          const tabs = await browser.tabs.query({active: true, currentWindow: true});
+          console.log(`[Message] Broadcasting to ${tabs.length} tabs`);
+
+          if (tabs) {
+            for (const tab of tabs) {
+              try {
+                await browser.tabs.sendMessage(tab.id!, message);
+              } catch (error) {
+                console.error(`[Message] Failed to send to tab ${tab.id}:`, error);
+              }
             }
           }
         }

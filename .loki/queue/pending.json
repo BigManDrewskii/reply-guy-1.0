@@ -6,7 +6,7 @@
       "title": "Side Panel Integration (Phase 1.1)",
       "goal": "Configure side panel to open on X profile URLs",
       "priority": "critical",
-      "status": "pending",
+      "status": "completed",
       "dependencies": [],
       "spec": {
         "complexity": "C3",
@@ -26,7 +26,9 @@
       "goal": "Detect when user lands on profile page",
       "priority": "critical",
       "status": "pending",
-      "dependencies": ["dev-1-1"],
+      "dependencies": [
+        "dev-1-1"
+      ],
       "spec": {
         "complexity": "C2",
         "file": "entrypoints/content.ts",
@@ -45,7 +47,9 @@
       "goal": "Verify Phase 1 success criteria",
       "priority": "high",
       "status": "pending",
-      "dependencies": ["dev-1-2"],
+      "dependencies": [
+        "dev-1-2"
+      ],
       "spec": {
         "actions": [
           "Test: Extension installs in Chrome",

@@ -1,20 +1,20 @@
 {
-  "id": "dev-1-1",
+  "id": "dev-1-2",
   "phase": "DEVELOPMENT",
-  "title": "Side Panel Integration (Phase 1.1)",
-  "goal": "Configure side panel to open on X profile URLs",
+  "title": "Content Script Detection (Phase 1.2)",
+  "goal": "Detect when user lands on profile page",
   "priority": "critical",
   "status": "in_progress",
-  "dependencies": [],
+  "dependencies": ["dev-1-1"],
   "attempt": 1,
   "spec": {
-    "complexity": "C3",
-    "file": "entrypoints/background.ts",
+    "complexity": "C2",
+    "file": "entrypoints/content.ts",
     "actions": [
-      "Add side panel manifest permissions",
-      "Configure URL pattern matching: x.com/*, twitter.com/*",
-      "Implement browser.sidePanel.open() trigger",
-      "Test: Side panel opens on X profile navigation"
+      "Implement URL pattern detection",
+      "Add MutationObserver for SPA navigation",
+      "Send detection message to background",
+      "Test: Detection works on navigate and page load"
     ]
   }
 }
