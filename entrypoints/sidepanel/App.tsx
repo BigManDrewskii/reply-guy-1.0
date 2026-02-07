@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import '@/assets/main.css';
 import type { ProfileData, Conversation, Message, VoiceProfile } from '@/lib/db';
-import { db } from '@/lib/db';
+import { db, trackMessageGenerated, trackMessageSent, trackConversion } from '@/lib/db';
 import { MessageTabs } from '@/components/MessageTabs';
 import { useToast } from '@/components/ui/toast';
 import { generateMessages } from '@/lib/openrouter';
@@ -26,6 +26,15 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'messages' | 'history'>('messages');
   const [conversationHistory, setConversationHistory] = useState<Conversation | null>(null);
   const { showToast, ToastContainer } = useToast();
+
+  // Get current platform from URL
+  const getPlatform = (): 'x' | 'linkedin' => {
+    const hostname = window.location.hostname;
+    if (hostname.includes('x.com') || hostname.includes('twitter.com')) {
+      return 'x';
+    }
+    return 'linkedin';
+  };
 
   // Load voice profile on mount
   useEffect(() => {
@@ -87,6 +96,10 @@ export default function App() {
         onClick: async () => {
           console.log('[Side Panel] User confirmed sending message');
           await logSentMessage(message);
+
+          // Track metrics
+          const platform = getPlatform();
+          await trackMessageSent(platform);
         }
       }
     ]);
@@ -120,9 +133,10 @@ export default function App() {
         setConversationHistory(updated || null);
       } else {
         // Create new conversation
+        const platform = getPlatform();
         const newConversation: Conversation = {
           id: Date.now().toString(),
-          platform: window.location.hostname.includes('x.com') || window.location.hostname.includes('twitter.com') ? 'x' : 'linkedin',
+          platform: platform,
           profileUrl: window.location.href,
           profileName: profile.name,
           profileHandle: profile.handle,
@@ -149,6 +163,12 @@ export default function App() {
   const handleStatusUpdate = async (conversationId: string, newStatus: Conversation['status']) => {
     try {
       await db.conversations.update(conversationId, { status: newStatus });
+
+      // Track conversion if status changed to 'converted'
+      if (newStatus === 'converted') {
+        const platform = getPlatform();
+        await trackConversion(platform);
+      }
 
       // Refresh history state
       const profileUrl = window.location.href;
@@ -212,6 +232,10 @@ export default function App() {
       setMessages(messagesWithScores);
       console.log('[Side Panel] Messages regenerated successfully:', messagesWithScores.length);
       showToast(`Generated ${messagesWithScores.length} new messages!`);
+
+      // Track metrics
+      const platform = getPlatform();
+      await trackMessageGenerated(platform);
     } catch (error) {
       console.error('[Side Panel] Error regenerating messages:', error);
       showToast('Failed to generate messages. Please try again.');
