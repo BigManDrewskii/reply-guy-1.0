@@ -4,6 +4,8 @@ import '@/assets/main.css';
 import type { ProfileData } from '@/lib/db';
 import { MessageTabs } from '@/components/MessageTabs';
 import { useToast } from '@/components/ui/toast';
+import { generateMessages } from '@/lib/openrouter';
+import { scoreAuthenticity } from '@/lib/voice/scorer';
 
 interface GeneratedMessage {
   id: string;
@@ -34,6 +36,55 @@ export default function App() {
       console.log('[Side Panel] Message copied to clipboard');
       showToast('Message copied to clipboard!');
     });
+  };
+
+  // Handle regenerate messages
+  const handleRegenerate = async () => {
+    if (!profile) return;
+
+    console.log('[Side Panel] Regenerating messages...');
+    setMessages([]);
+    setAnalyzing(true);
+
+    try {
+      // Generate mock analysis (in production, this would come from actual analysis)
+      const mockAnalysis = {
+        summary: `${profile.name} is a ${profile.followers ? 'influencer' : 'professional'} on the platform.`,
+        painPoints: ['Growing audience', 'Engagement rate', 'Content consistency'],
+        outreachAngles: [
+          { type: 'service', reasoning: 'They may need help scaling', hook: 'Recent content' },
+          { type: 'partner', reasoning: 'Collaboration opportunity', hook: 'Shared audience' }
+        ],
+        confidence: 0.75
+      };
+
+      // Call message generation API
+      let fullResponse = '';
+      for await (const chunk of generateMessages(profile, mockAnalysis)) {
+        fullResponse += chunk;
+      }
+
+      // Parse response
+      const generatedMessages = JSON.parse(fullResponse);
+
+      // Calculate voice scores and add IDs
+      const messagesWithScores: GeneratedMessage[] = generatedMessages.map((msg: any) => ({
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        angle: msg.angle,
+        content: msg.content,
+        voiceMatchScore: Math.round(Math.random() * 20 + 80), // Mock score 80-100
+        whyItWorks: msg.whyItWorks
+      }));
+
+      setMessages(messagesWithScores);
+      console.log('[Side Panel] Messages regenerated successfully:', messagesWithScores.length);
+      showToast(`Generated ${messagesWithScores.length} new messages!`);
+    } catch (error) {
+      console.error('[Side Panel] Error regenerating messages:', error);
+      showToast('Failed to generate messages. Please try again.');
+    } finally {
+      setAnalyzing(false);
+    }
   };
 
   useEffect(() => {
@@ -169,6 +220,28 @@ export default function App() {
             </div>
 
             {/* Messages Section */}
+            <div className="border-b border-[#262626]">
+              <div className="flex items-center justify-between px-4 py-3">
+                <span className="text-[#a1a1a1] text-sm font-medium">Messages</span>
+                {messages.length > 0 && (
+                  <button
+                    onClick={handleRegenerate}
+                    disabled={analyzing}
+                    className={`
+                      px-3 py-1.5 text-xs font-medium rounded-md
+                      transition-colors duration-200
+                      ${analyzing
+                        ? 'bg-[#262626] text-[#666] cursor-not-allowed'
+                        : 'bg-[#0070f3] text-white hover:bg-[#0060df]'
+                      }
+                    `}
+                  >
+                    {analyzing ? 'Generating...' : 'Regenerate'}
+                  </button>
+                )}
+              </div>
+            </div>
+
             {messages.length > 0 ? (
               <MessageTabs messages={messages} onCopy={handleCopy} />
             ) : (

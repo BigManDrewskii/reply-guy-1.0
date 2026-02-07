@@ -1,21 +1,21 @@
 {
-  "id": "dev-3-5",
+  "id": "dev-3-7",
   "phase": "DEVELOPMENT",
-  "title": "Voice Scoring (Phase 3.5)",
-  "goal": "Implement basic voice scoring",
+  "title": "Send Confirmation (Phase 3.7)",
+  "goal": "Track sent messages in history",
   "priority": "medium",
-  "status": "in_progress",
-  "dependencies": [],
+  "status": "pending",
+  "dependencies": ["dev-3-4"],
   "attempt": 1,
   "spec": {
     "complexity": "C2",
-    "file": "lib/voice/scorer.ts",
+    "file": "entrypoints/sidepanel/App.tsx",
     "actions": [
-      "Implement scoreAuthenticity() function",
-      "Score based on length, emoji frequency, avoid phrases",
-      "Return 0-100 score",
-      "Display score on messages",
-      "Test: Scores reasonable values"
+      "After copy toast, show confirmation: \"Did you send this?\"",
+      "If yes: log to conversation history (IndexedDB)",
+      "If no: dismiss",
+      "Store: profile URL, message content, timestamp",
+      "Test: Sent messages appear in history"
     ]
   }
 }
