@@ -1,75 +1,59 @@
 {
   "queue": [
     {
-      "id": "bootstrap-1",
-      "phase": "BOOTSTRAP",
-      "title": "Initialize project from WXT starter template",
-      "goal": "Set up project base using imtiger/wxt-react-shadcn-tailwindcss-chrome-extension",
+      "id": "dev-1-1",
+      "phase": "DEVELOPMENT",
+      "title": "Side Panel Integration (Phase 1.1)",
+      "goal": "Configure side panel to open on X profile URLs",
       "priority": "critical",
-      "status": "completed",
+      "status": "pending",
       "dependencies": [],
       "spec": {
-        "template": "https://github.com/imtiger/wxt-react-shadcn-tailwindcss-chrome-extension.git",
+        "complexity": "C3",
+        "file": "entrypoints/background.ts",
         "actions": [
-          "Clone starter template",
-          "Install dependencies",
-          "Verify WXT dev server runs",
-          "Commit initial state"
+          "Add side panel manifest permissions",
+          "Configure URL pattern matching: x.com/*, twitter.com/*",
+          "Implement browser.sidePanel.open() trigger",
+          "Test: Side panel opens on X profile navigation"
         ]
       }
     },
     {
-      "id": "bootstrap-2",
-      "phase": "BOOTSTRAP",
-      "title": "Configure Vercel dark theme and Geist fonts",
-      "goal": "Apply Vercel design system to extension UI",
+      "id": "dev-1-2",
+      "phase": "DEVELOPMENT",
+      "title": "Content Script Detection (Phase 1.2)",
+      "goal": "Detect when user lands on profile page",
       "priority": "critical",
-      "status": "completed",
-      "dependencies": [
-        "bootstrap-1"
-      ],
+      "status": "pending",
+      "dependencies": ["dev-1-1"],
       "spec": {
+        "complexity": "C2",
+        "file": "entrypoints/content.ts",
         "actions": [
-          "Download Geist Sans + Geist Mono WOFF2 files",
-          "Add Vercel theme CSS variables to globals.css",
-          "Configure Tailwind with Vercel color tokens",
-          "Bundle fonts in /assets/fonts/"
+          "Implement URL pattern detection",
+          "Add MutationObserver for SPA navigation",
+          "Send detection message to background",
+          "Test: Detection works on navigate and page load"
         ]
       }
     },
     {
-      "id": "bootstrap-3",
-      "phase": "BOOTSTRAP",
-      "title": "Create project directory structure",
-      "goal": "Set up lib/, components/, and entrypoints/ structure per PRD",
+      "id": "dev-1-3",
+      "phase": "DEVELOPMENT",
+      "title": "Phase 1 Verification",
+      "goal": "Verify Phase 1 success criteria",
       "priority": "high",
       "status": "pending",
-      "dependencies": [
-        "bootstrap-2"
-      ],
+      "dependencies": ["dev-1-2"],
       "spec": {
-        "structure": {
-          "lib/": [
-            "db.ts",
-            "openrouter.ts",
-            "store.ts",
-            "scraper/",
-            "voice/",
-            "utils/"
-          ],
-          "components/": [
-            "ui/",
-            "ProfileCard.tsx",
-            "ConfidenceBar.tsx",
-            "MessageTab.tsx"
-          ],
-          "entrypoints/": [
-            "background.ts",
-            "content.ts",
-            "sidepanel/",
-            "options/"
-          ]
-        }
+        "actions": [
+          "Test: Extension installs in Chrome",
+          "Test: Side panel opens on x.com/* profiles",
+          "Test: Loading shimmer displays correctly",
+          "Test: Vercel theme applied everywhere",
+          "Commit: 'Phase 1 complete: Skeleton'"
+        ]
       }
     }
   ]

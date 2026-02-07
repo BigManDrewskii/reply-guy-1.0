@@ -1,17 +1,20 @@
 {
-  "id": "bootstrap-3",
-  "phase": "BOOTSTRAP",
-  "title": "Create project directory structure",
-  "goal": "Set up lib/, components/, and entrypoints/ structure per PRD",
-  "priority": "high",
+  "id": "dev-1-1",
+  "phase": "DEVELOPMENT",
+  "title": "Side Panel Integration (Phase 1.1)",
+  "goal": "Configure side panel to open on X profile URLs",
+  "priority": "critical",
   "status": "in_progress",
-  "dependencies": ["bootstrap-2"],
+  "dependencies": [],
   "attempt": 1,
   "spec": {
-    "structure": {
-      "lib/": ["db.ts", "openrouter.ts", "store.ts", "scraper/", "voice/", "utils/"],
-      "components/": ["ui/", "ProfileCard.tsx", "ConfidenceBar.tsx", "MessageTab.tsx"],
-      "entrypoints/": ["background.ts", "content.ts", "sidepanel/", "options/"]
-    }
+    "complexity": "C3",
+    "file": "entrypoints/background.ts",
+    "actions": [
+      "Add side panel manifest permissions",
+      "Configure URL pattern matching: x.com/*, twitter.com/*",
+      "Implement browser.sidePanel.open() trigger",
+      "Test: Side panel opens on X profile navigation"
+    ]
   }
 }

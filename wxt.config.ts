@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
     manifest: {
         permissions: ["activeTab", "scripting", "sidePanel", "storage", "tabs"],
+        host_permissions: ["https://x.com/*", "https://twitter.com/*", "https://www.linkedin.com/*"],
         action: {},
         name: '__MSG_extName__',
         description: '__MSG_extDescription__',
