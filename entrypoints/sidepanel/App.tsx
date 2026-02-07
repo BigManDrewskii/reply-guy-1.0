@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import '@/assets/main.css';
 import type { ProfileData } from '@/lib/db';
 import { MessageTabs } from '@/components/MessageTabs';
+import { useToast } from '@/components/ui/toast';
 
 interface GeneratedMessage {
   id: string;
@@ -18,6 +19,7 @@ export default function App() {
   const [confidence, setConfidence] = useState(0);
   const [messages, setMessages] = useState<GeneratedMessage[]>([]);
   const [analyzing, setAnalyzing] = useState(false);
+  const { showToast, ToastContainer } = useToast();
 
   // Get confidence bar color
   const getConfidenceColor = (score: number): string => {
@@ -30,7 +32,7 @@ export default function App() {
   const handleCopy = (message: GeneratedMessage) => {
     navigator.clipboard.writeText(message.content).then(() => {
       console.log('[Side Panel] Message copied to clipboard');
-      // TODO: Show confirmation toast
+      showToast('Message copied to clipboard!');
     });
   };
 
@@ -54,7 +56,9 @@ export default function App() {
   }, []);
 
   return (
-    <div className="w-[380px] h-screen bg-black text-[#ededed] flex flex-col font-sans">
+    <div className="w-[380px] h-screen bg-black text-[#ededed] flex flex-col font-sans relative">
+      {/* Toast Container */}
+      <ToastContainer />
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-[#262626]">
         <h1 className="text-[16px] font-semibold">⚡ Reply Guy</h1>

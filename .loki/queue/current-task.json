@@ -1,21 +1,20 @@
 {
-  "id": "dev-3-3",
+  "id": "dev-3-4",
   "phase": "DEVELOPMENT",
-  "title": "Message Tabs Component (Phase 3.3)",
-  "goal": "Build tabbed interface for message angles",
+  "title": "Copy Button Implementation (Phase 3.4)",
+  "goal": "Implement clipboard copy with confirmation",
   "priority": "high",
-  "status": "pending",
-  "dependencies": ["dev-3-2"],
+  "status": "in_progress",
+  "dependencies": ["dev-3-3"],
   "attempt": 1,
   "spec": {
-    "complexity": "C3",
-    "files": ["components/MessageTab.tsx", "MessageTabs.tsx"],
+    "complexity": "C2",
+    "file": "components/MessageTab.tsx",
     "actions": [
-      "Create tab navigation (Service, Partner, Community)",
-      "Display message content with Vercel styling",
-      "Show voice match score",
-      "Show word count",
-      "Test: Tabs switch correctly"
+      "Add copy button to each message",
+      "Use navigator.clipboard.writeText()",
+      "Show confirmation toast",
+      "Test: Copies to clipboard"
     ]
   }
 }
