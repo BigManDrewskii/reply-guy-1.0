@@ -3,7 +3,7 @@
 **Project:** Reply Guy Chrome Extension
 **PRD:** reply-guy-prd.md (v2.0, 892 lines)
 **Started:** 2025-02-07
-**Phase:** BOOTSTRAP
+**Phase:** DEVELOPMENT (Phase 2: Scraping + Analysis)
 
 ---
 
@@ -19,13 +19,16 @@ Reply Guy is a Chrome sidebar extension that transforms profile browsing on X (T
 - LLM: @openrouter/sdk → Claude Sonnet 4.5
 - State: Zustand 5.x + chrome.storage.local
 
-**Current Phase:** BOOTSTRAP (Initializing project from WXT starter)
+**Current Phase:** DEVELOPMENT (Phase 2: Scraping + Analysis)
+**Tasks Completed:** 9
+**Tasks Failed:** 0
 
 ---
 
 ## Progress Tracking
 
 ### Completed Tasks
+
 **BOOTSTRAP PHASE COMPLETE** ✓
 
 - **bootstrap-1:** WXT starter template initialized successfully
@@ -53,8 +56,54 @@ Reply Guy is a Chrome sidebar extension that transforms profile browsing on X (T
   - Dependencies: dexie, @openrouter/sdk, zustand installed
   - Build verified: 991.66KB (within budget)
 
-### Current Task
 **DISCOVERY PHASE COMPLETE** ✓
+
+**DEVELOPMENT PHASE - IN PROGRESS** ⏳
+
+**Phase 1: Skeleton (COMPLETE)** ✓
+
+- **dev-1-1:** Side Panel Integration (Phase 1.1)
+  - Added host_permissions for x.com, twitter.com, linkedin.com
+  - Configured URL pattern matching with isProfileURL()
+  - Implemented browser.sidePanel.open() on tab update
+  - Build: 993.09 KB
+
+- **dev-1-2:** Content Script Detection (Phase 1.2)
+  - Converted content script from React to pure JS
+  - Implemented detectPlatform() and isProfileURL()
+  - Added MutationObserver for SPA navigation
+  - Created SCRAPE_PROFILE message handler (stub)
+  - Fixed: Wrapped code in defineContentScript({ main() { ... } })
+  - Build: 686.49 KB (307 KB reduction!)
+
+- **dev-1-3:** Phase 1 Verification
+  - Rewrote sidepanel/App.tsx with Vercel theme
+  - Loading shimmer with skeleton animation
+  - Hardcoded profile display (Phase 2: real data)
+  - Empty state with navigation prompt
+  - Commit: "feat: Phase 1 complete - Skeleton"
+
+**Phase 2: Scraping + Analysis (IN PROGRESS)** ⏳
+
+- **dev-2-1:** X DOM Scraper (Phase 2.1) ✓
+  - Implemented scrapeXProfile() with data-testid selectors
+  - Extracts: name, handle, bio, location, followers, verified
+  - Extracts recent posts (text, likes, retweets, timestamp)
+  - Returns typed ProfileData object
+  - Parse number helper: "1.2K" → 1200
+  - Safe query helper with error handling
+  - Note: Manual testing required on real X profiles
+
+### Current Task
+**dev-2-2:** Content Script Integration (Phase 2.2) - IN PROGRESS ⏳
+
+**Goal:** Wire scraper into content script
+
+**Actions:**
+- Import and call scrapeXProfile()
+- Send ProfileData to background via chrome.runtime
+- Handle errors gracefully
+- Test: Data flows from content → background
 
 **Summary:**
 - PRD analyzed: 892 lines, all sections complete
@@ -71,10 +120,12 @@ Reply Guy is a Chrome sidebar extension that transforms profile browsing on X (T
 - Recommendation: Skip ARCHITECTURE, proceed to DEVELOPMENT (Phase 1: Skeleton)
 
 ### Next Tasks
-1. Clone WXT starter template
-2. Configure Vercel dark theme
-3. Set up project structure
-4. Begin Phase 1: Skeleton
+1. dev-2-2: Content Script Integration
+2. dev-2-3: Background Messaging Relay
+3. dev-2-4: OpenRouter SDK Integration
+4. dev-2-5: Profile Analysis Prompt
+5. dev-2-6: Side Panel State Integration
+6. dev-2-7: 24hr Analysis Cache
 
 ---
 

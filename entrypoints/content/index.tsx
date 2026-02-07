@@ -1,5 +1,7 @@
 // Reply Guy Content Script
-// Detects profile pages and prepares for scraping
+// Detects profile pages and scrapes profile data
+
+import { scrapeProfile } from '@/lib/scraper/strategy';
 
 export default defineContentScript({
   matches: ['*://x.com/*', '*://twitter.com/*', '*://www.linkedin.com/*'],
@@ -102,16 +104,52 @@ export default defineContentScript({
       console.log('[Reply Guy] Received message:', message);
 
       if (message.type === 'SCRAPE_PROFILE') {
-        // Future: Implement profile scraping
-        console.log('[Reply Guy] Scrape request received (not yet implemented)');
+        const platform = detectPlatform();
 
-        sendResponse({
-          success: false,
-          error: 'Scraping not yet implemented',
-          platform: detectPlatform()
-        });
+        if (!platform) {
+          sendResponse({
+            success: false,
+            error: 'Platform not detected',
+            platform: null
+          });
+          return true;
+        }
 
-        return true;
+        console.log(`[Reply Guy] Starting profile scrape for ${platform}...`);
+
+        // Call scraper and send result to background
+        scrapeProfile(platform)
+          .then((profileData) => {
+            console.log('[Reply Guy] Profile scraped successfully:', profileData);
+
+            // Send scraped data to background
+            chrome.runtime.sendMessage({
+              type: 'PROFILE_DATA',
+              data: profileData,
+              platform,
+              url: window.location.href,
+              timestamp: Date.now()
+            }).catch((error) => {
+              console.error('[Reply Guy] Failed to send profile data:', error);
+            });
+
+            sendResponse({
+              success: true,
+              data: profileData,
+              platform
+            });
+          })
+          .catch((error) => {
+            console.error('[Reply Guy] Scrape failed:', error);
+
+            sendResponse({
+              success: false,
+              error: error instanceof Error ? error.message : 'Unknown error',
+              platform
+            });
+          });
+
+        return true; // Async response
       }
 
       return false;
