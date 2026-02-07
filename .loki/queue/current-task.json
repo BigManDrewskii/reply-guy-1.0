@@ -1,19 +1,18 @@
 {
-  "id": "bootstrap-1",
+  "id": "bootstrap-2",
   "phase": "BOOTSTRAP",
-  "title": "Initialize project from WXT starter template",
-  "goal": "Set up project base using imtiger/wxt-react-shadcn-tailwindcss-chrome-extension",
+  "title": "Configure Vercel dark theme and Geist fonts",
+  "goal": "Apply Vercel design system to extension UI",
   "priority": "critical",
   "status": "in_progress",
-  "dependencies": [],
+  "dependencies": ["bootstrap-1"],
   "attempt": 1,
   "spec": {
-    "template": "https://github.com/imtiger/wxt-react-shadcn-tailwindcss-chrome-extension.git",
     "actions": [
-      "Clone starter template",
-      "Install dependencies",
-      "Verify WXT dev server runs",
-      "Commit initial state"
+      "Download Geist Sans + Geist Mono WOFF2 files",
+      "Add Vercel theme CSS variables to globals.css",
+      "Configure Tailwind with Vercel color tokens",
+      "Bundle fonts in /assets/fonts/"
     ]
   }
 }

@@ -6,7 +6,7 @@
       "title": "Initialize project from WXT starter template",
       "goal": "Set up project base using imtiger/wxt-react-shadcn-tailwindcss-chrome-extension",
       "priority": "critical",
-      "status": "pending",
+      "status": "completed",
       "dependencies": [],
       "spec": {
         "template": "https://github.com/imtiger/wxt-react-shadcn-tailwindcss-chrome-extension.git",
@@ -25,7 +25,9 @@
       "goal": "Apply Vercel design system to extension UI",
       "priority": "critical",
       "status": "pending",
-      "dependencies": ["bootstrap-1"],
+      "dependencies": [
+        "bootstrap-1"
+      ],
       "spec": {
         "actions": [
           "Download Geist Sans + Geist Mono WOFF2 files",
@@ -42,12 +44,31 @@
       "goal": "Set up lib/, components/, and entrypoints/ structure per PRD",
       "priority": "high",
       "status": "pending",
-      "dependencies": ["bootstrap-2"],
+      "dependencies": [
+        "bootstrap-2"
+      ],
       "spec": {
         "structure": {
-          "lib/": ["db.ts", "openrouter.ts", "store.ts", "scraper/", "voice/", "utils/"],
-          "components/": ["ui/", "ProfileCard.tsx", "ConfidenceBar.tsx", "MessageTab.tsx"],
-          "entrypoints/": ["background.ts", "content.ts", "sidepanel/", "options/"]
+          "lib/": [
+            "db.ts",
+            "openrouter.ts",
+            "store.ts",
+            "scraper/",
+            "voice/",
+            "utils/"
+          ],
+          "components/": [
+            "ui/",
+            "ProfileCard.tsx",
+            "ConfidenceBar.tsx",
+            "MessageTab.tsx"
+          ],
+          "entrypoints/": [
+            "background.ts",
+            "content.ts",
+            "sidepanel/",
+            "options/"
+          ]
         }
       }
     }

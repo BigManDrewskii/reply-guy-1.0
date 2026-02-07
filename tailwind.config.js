@@ -40,6 +40,10 @@ module.exports = {
             },
         },
         extend: {
+            fontFamily: {
+                sans: ["var(--font-sans)", ...defaultTheme.fontFamily.sans],
+                mono: ["var(--font-mono)", ...defaultTheme.fontFamily.mono],
+            },
             fontSize: {
                 base: '16px',
             },
@@ -77,6 +81,13 @@ module.exports = {
                     DEFAULT: "hsl(var(--card))",
                     foreground: "hsl(var(--card-foreground))",
                 },
+                // Vercel custom colors
+                vercel: {
+                    blue: "#0070f3",
+                    green: "#00c853",
+                    amber: "#f5a623",
+                    red: "#ee0000",
+                }
             },
             borderRadius: {
                 lg: "var(--radius)",

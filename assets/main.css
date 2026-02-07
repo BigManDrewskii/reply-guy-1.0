@@ -1,62 +1,85 @@
+/* Reply Guy - Vercel Dark Theme */
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-
-@layer base {
-    :root {
-        --background: 0 0% 100%;
-        --foreground: 224 71.4% 4.1%;
-        --card: 0 0% 100%;
-        --card-foreground: 224 71.4% 4.1%;
-        --popover: 0 0% 100%;
-        --popover-foreground: 224 71.4% 4.1%;
-        --primary: 262.1 83.3% 57.8%;
-        --primary-foreground: 210 20% 98%;
-        --secondary: 220 14.3% 95.9%;
-        --secondary-foreground: 220.9 39.3% 11%;
-        --muted: 220 14.3% 95.9%;
-        --muted-foreground: 220 8.9% 46.1%;
-        --accent: 220 14.3% 95.9%;
-        --accent-foreground: 220.9 39.3% 11%;
-        --destructive: 0 84.2% 60.2%;
-        --destructive-foreground: 210 20% 98%;
-        --border: 220 13% 91%;
-        --input: 220 13% 91%;
-        --ring: 262.1 83.3% 57.8%;
-        --radius: 0.5rem;
-    }
-
-    .dark {
-        --background: 224 71.4% 4.1%;
-        --foreground: 210 20% 98%;
-        --card: 224 71.4% 4.1%;
-        --card-foreground: 210 20% 98%;
-        --popover: 224 71.4% 4.1%;
-        --popover-foreground: 210 20% 98%;
-        --primary: 263.4 70% 50.4%;
-        --primary-foreground: 210 20% 98%;
-        --secondary: 215 27.9% 16.9%;
-        --secondary-foreground: 210 20% 98%;
-        --muted: 215 27.9% 16.9%;
-        --muted-foreground: 217.9 10.6% 64.9%;
-        --accent: 215 27.9% 16.9%;
-        --accent-foreground: 210 20% 98%;
-        --destructive: 0 62.8% 30.6%;
-        --destructive-foreground: 210 20% 98%;
-        --border: 215 27.9% 16.9%;
-        --input: 215 27.9% 16.9%;
-        --ring: 263.4 70% 50.4%;
-    }
+/* Geist Font Family */
+:root {
+  --font-sans: 'Geist', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', monospace;
 }
 
-
 @layer base {
-    * {
-        @apply border-border;
-    }
+  :root {
+    /* Vercel Dark Theme Tokens */
+    --background: 0 0% 0%;           /* #000000 - Pure black */
+    --foreground: 0 0% 93%;          /* #ededed - Primary text */
+    --card: 0 0% 7%;                 /* #111111 - Cards */
+    --card-foreground: 0 0% 93%;     /* #ededed */
+    --popover: 0 0% 4%;              /* #0a0a0a - Elevated */
+    --popover-foreground: 0 0% 93%;  /* #ededed */
+    --primary: 211 100% 47%;         /* #0070f3 - Vercel blue */
+    --primary-foreground: 0 0% 0%;   /* #000000 */
+    --secondary: 0 0% 4%;            /* #0a0a0a */
+    --secondary-foreground: 0 0% 93%; /* #ededed */
+    --muted: 0 0% 4%;                /* #0a0a0a */
+    --muted-foreground: 0 0% 63%;    /* #a1a1a1 - Secondary */
+    --accent: 0 0% 4%;               /* #0a0a0a */
+    --accent-foreground: 0 0% 93%;   /* #ededed */
+    --destructive: 0 84% 60%;        /* Red */
+    --destructive-foreground: 0 0% 93%;
+    --border: 0 0% 15%;              /* #262626 - Vercel border */
+    --input: 0 0% 15%;               /* #262626 */
+    --ring: 211 100% 47%;            /* #0070f3 */
+    --radius: 0.5rem;                /* 8px */
 
-    body {
-        @apply bg-background text-foreground;
-    }
+    /* Custom Vercel tokens */
+    --vercel-bg-primary: #000000;
+    --vercel-bg-secondary: #0a0a0a;
+    --vercel-bg-tertiary: #111111;
+    --vercel-bg-hover: #1a1a1a;
+    --vercel-border: #262626;
+    --vercel-border-hover: #333333;
+    --vercel-border-focus: #ffffff;
+    --vercel-text-primary: #ededed;
+    --vercel-text-secondary: #a1a1a1;
+    --vercel-text-tertiary: #666666;
+    --vercel-blue: #0070f3;
+    --vercel-green: #00c853;
+    --vercel-amber: #f5a623;
+    --vercel-red: #ee0000;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    background-color: #000000;
+  }
+}
+
+/* Shimmer animation for skeleton loading */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.skeleton {
+  animation: shimmer 2s infinite linear;
+  background: linear-gradient(
+    to right,
+    #111111 4%,
+    #1a1a1a 25%,
+    #111111 36%
+  );
+  background-size: 1000px 100%;
 }

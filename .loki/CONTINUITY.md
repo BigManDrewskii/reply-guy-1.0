@@ -26,10 +26,14 @@ Reply Guy is a Chrome sidebar extension that transforms profile browsing on X (T
 ## Progress Tracking
 
 ### Completed Tasks
-_None yet - fresh session_
+- **bootstrap-1:** WXT starter template initialized successfully
+  - Cloned imtiger/wxt-react-shadcn-tailwindcss-chrome-extension
+  - Installed 677 packages (19 vulnerabilities noted - will address later)
+  - Build verified: 981KB output, all entrypoints functional
+  - Initial commit created
 
 ### Current Task
-Initializing Loki Mode and parsing PRD
+bootstrap-2: Configure Vercel dark theme and Geist fonts
 
 ### Next Tasks
 1. Clone WXT starter template
