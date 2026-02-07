@@ -1,23 +1,16 @@
-// Reply Guy Side Panel App - Phase 1: Skeleton
+// Reply Guy Side Panel App - Phase 2: Real Profile Data
 import React, { useEffect, useState } from 'react';
 import '@/assets/main.css';
-
-interface ProfileData {
-  name: string;
-  handle: string;
-  bio?: string;
-  location?: string;
-  followers?: number;
-  verified: boolean;
-}
+import type { ProfileData } from '@/lib/db';
 
 export default function App() {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [confidence, setConfidence] = useState(0);
 
   useEffect(() => {
     // Listen for messages from background script
-    chrome.runtime.onMessage.addListener((message) => {
+    const handleMessage = (message: any) => {
       console.log('[Side Panel] Received message:', message);
 
       if (message.type === 'PROFILE_DATA') {
@@ -25,14 +18,13 @@ export default function App() {
         setProfile(message.data);
         setLoading(false);
       }
-    });
+    };
 
-    // Simulate loading for Phase 1 (will be removed in Phase 2)
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 2000);
+    chrome.runtime.onMessage.addListener(handleMessage);
 
-    return () => clearTimeout(timer);
+    return () => {
+      chrome.runtime.onMessage.removeListener(handleMessage);
+    };
   }, []);
 
   return (
@@ -91,42 +83,62 @@ export default function App() {
             </div>
           </div>
         ) : profile ? (
-          // Phase 1: Show hardcoded profile data (will be real in Phase 2)
+          // Phase 2: Show real profile data
           <div className="p-4 space-y-4">
             {/* Profile Card */}
             <div className="border-b border-[#262626] p-4">
               <div className="flex items-start space-x-3">
                 {/* Avatar */}
                 <div className="h-12 w-12 rounded-full bg-[#111] border border-[#262626] flex items-center justify-center">
-                  <span className="text-[#ededed] font-semibold">R</span>
+                  <span className="text-[#ededed] font-semibold">
+                    {profile.name.charAt(0).toUpperCase()}
+                  </span>
                 </div>
 
                 {/* Profile Info */}
                 <div className="flex-1">
                   <div className="flex items-center space-x-2">
-                    <h3 className="text-[#ededed] font-semibold">Reply Guy</h3>
+                    <h3 className="text-[#ededed] font-semibold">{profile.name}</h3>
+                    {profile.verified && (
+                      <span className="text-[#1d9bf0] text-xs" title="Verified">✓</span>
+                    )}
                   </div>
-                  <p className="text-[#a1a1a1] text-sm">@replyguy</p>
-                  <p className="text-[#666] text-xs mt-1">San Francisco</p>
+                  <p className="text-[#a1a1a1] text-sm">{profile.handle}</p>
+                  {profile.location && (
+                    <p className="text-[#666] text-xs mt-1">{profile.location}</p>
+                  )}
+                  {profile.followers && (
+                    <p className="text-[#666] text-xs mt-1">
+                      {profile.followers.toLocaleString()} followers
+                    </p>
+                  )}
                 </div>
               </div>
+              {profile.bio && (
+                <p className="text-[#a1a1a1] text-sm mt-3 line-clamp-2">{profile.bio}</p>
+              )}
             </div>
 
             {/* Confidence Bar */}
             <div className="border-b border-[#262626] px-4 py-3">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[#a1a1a1] text-sm">Confidence</span>
-                <span className="text-[#ededed] font-mono text-sm">82%</span>
+                <span className="text-[#ededed] font-mono text-sm">
+                  {Math.round(confidence * 100)}%
+                </span>
               </div>
               <div className="h-2 bg-[#111] rounded-full overflow-hidden">
-                <div className="h-full bg-[#00c853] rounded-full" style={{ width: '82%' }}></div>
+                <div
+                  className="h-full bg-[#00c853] rounded-full transition-all duration-300"
+                  style={{ width: `${confidence * 100}%` }}
+                ></div>
               </div>
             </div>
 
             {/* Placeholder for messages */}
             <div className="px-4 py-3">
               <p className="text-[#666] text-sm text-center">
-                Messages will appear here in Phase 3
+                Analysis in progress... (Phase 2)
               </p>
             </div>
           </div>

@@ -1,19 +1,20 @@
 {
-  "id": "dev-2-5",
+  "id": "dev-2-6",
   "phase": "DEVELOPMENT",
-  "title": "Profile Analysis Prompt (Phase 2.5)",
-  "goal": "Define analysis prompt for Claude Sonnet 4.5",
+  "title": "Side Panel State Integration (Phase 2.6)",
+  "goal": "Display real analysis in ProfileCard + ConfidenceBar",
   "priority": "high",
   "status": "in_progress",
-  "dependencies": ["dev-2-4"],
+  "dependencies": ["dev-2-3", "dev-2-5"],
   "attempt": 1,
   "spec": {
-    "complexity": "C2",
-    "file": "lib/openrouter.ts",
+    "complexity": "C3",
+    "file": "entrypoints/sidepanel/App.tsx",
     "actions": [
-      "Write prompt requesting JSON output",
-      "Request: summary, pain points, outreach angles, confidence",
-      "Test prompt format with sample data"
+      "Replace hardcoded data with chrome.runtime messages",
+      "Update ProfileCard to display scraped data",
+      "Update ConfidenceBar to show LLM confidence score",
+      "Test: Side panel shows real profile data and analysis"
     ]
   }
 }
