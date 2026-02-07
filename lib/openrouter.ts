@@ -1,5 +1,7 @@
 // Reply Guy - OpenRouter SDK Client
 import { OpenRouter } from '@openrouter/sdk';
+import { db } from './db';
+import type { ProfileAnalysis, AnalysisCache } from './db';
 
 // Initialize OpenRouter client
 let client: OpenRouter | null = null;
@@ -73,8 +75,19 @@ Return JSON array:
 ]
 `;
 
-// Analyze profile (streaming)
-export async function* analyzeProfile(profileData: any) {
+// Analyze profile with 24hr cache
+export async function* analyzeProfile(profileData: any, profileUrl: string) {
+  const cacheKey = profileUrl;
+
+  // Check cache first
+  const cached = await db.analysisCache.get(cacheKey);
+  if (cached && isCacheValid(cached.timestamp)) {
+    console.log('[OpenRouter] Cache hit, returning cached analysis');
+    yield JSON.stringify(cached.analysis);
+    return;
+  }
+
+  console.log('[OpenRouter] Cache miss, calling API...');
   const client = await getClient();
 
   const stream = await client.chat.send({
@@ -90,10 +103,36 @@ export async function* analyzeProfile(profileData: any) {
     }
   });
 
+  let fullResponse = '';
+
   for await (const chunk of stream) {
     const content = chunk.choices[0]?.delta?.content ?? '';
-    if (content) yield content;
+    if (content) {
+      fullResponse += content;
+      yield content;
+    }
   }
+
+  // Store in cache
+  try {
+    const analysis: ProfileAnalysis = JSON.parse(fullResponse);
+    await db.analysisCache.put({
+      profileUrl: cacheKey,
+      analysis,
+      timestamp: new Date()
+    });
+    console.log('[OpenRouter] Analysis cached successfully');
+  } catch (error) {
+    console.warn('[OpenRouter] Failed to cache analysis:', error);
+  }
+}
+
+// Check if cache is valid (< 24hr)
+function isCacheValid(timestamp: Date): boolean {
+  const now = new Date();
+  const cacheAge = now.getTime() - timestamp.getTime();
+  const twentyFourHours = 24 * 60 * 60 * 1000;
+  return cacheAge < twentyFourHours;
 }
 
 // Generate messages (streaming)

@@ -1,20 +1,20 @@
 {
-  "id": "dev-2-6",
+  "id": "dev-2-7",
   "phase": "DEVELOPMENT",
-  "title": "Side Panel State Integration (Phase 2.6)",
-  "goal": "Display real analysis in ProfileCard + ConfidenceBar",
-  "priority": "high",
+  "title": "24hr Analysis Cache (Phase 2.7)",
+  "goal": "Implement Dexie cache for profile analyses",
+  "priority": "medium",
   "status": "in_progress",
-  "dependencies": ["dev-2-3", "dev-2-5"],
+  "dependencies": ["dev-2-6"],
   "attempt": 1,
   "spec": {
-    "complexity": "C3",
-    "file": "entrypoints/sidepanel/App.tsx",
+    "complexity": "C2",
+    "files": ["lib/db.ts", "lib/openrouter.ts"],
     "actions": [
-      "Replace hardcoded data with chrome.runtime messages",
-      "Update ProfileCard to display scraped data",
-      "Update ConfidenceBar to show LLM confidence score",
-      "Test: Side panel shows real profile data and analysis"
+      "Check cache before calling OpenRouter API",
+      "Store analysis with timestamp",
+      "Return cached analysis if < 24hr old",
+      "Test: Cache hit reduces API calls"
     ]
   }
 }
