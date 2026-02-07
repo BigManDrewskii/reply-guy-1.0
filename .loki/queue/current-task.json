@@ -1,20 +1,20 @@
 {
-  "id": "dev-2-7",
+  "id": "dev-3-1",
   "phase": "DEVELOPMENT",
-  "title": "24hr Analysis Cache (Phase 2.7)",
-  "goal": "Implement Dexie cache for profile analyses",
-  "priority": "medium",
+  "title": "Message Generation Prompt (Phase 3.1)",
+  "goal": "Define message generation prompt",
+  "priority": "high",
   "status": "in_progress",
-  "dependencies": ["dev-2-6"],
+  "dependencies": [],
   "attempt": 1,
   "spec": {
-    "complexity": "C2",
-    "files": ["lib/db.ts", "lib/openrouter.ts"],
+    "complexity": "C3",
+    "file": "lib/openrouter.ts",
     "actions": [
-      "Check cache before calling OpenRouter API",
-      "Store analysis with timestamp",
-      "Return cached analysis if < 24hr old",
-      "Test: Cache hit reduces API calls"
+      "Write prompt for 3-5 DM variants",
+      "Request JSON array with angle, content, whyItWorks",
+      "Include voice profile context",
+      "Test prompt format"
     ]
   }
 }
