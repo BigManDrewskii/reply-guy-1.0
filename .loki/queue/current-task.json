@@ -1,18 +1,17 @@
 {
-  "id": "bootstrap-2",
+  "id": "bootstrap-3",
   "phase": "BOOTSTRAP",
-  "title": "Configure Vercel dark theme and Geist fonts",
-  "goal": "Apply Vercel design system to extension UI",
-  "priority": "critical",
+  "title": "Create project directory structure",
+  "goal": "Set up lib/, components/, and entrypoints/ structure per PRD",
+  "priority": "high",
   "status": "in_progress",
-  "dependencies": ["bootstrap-1"],
+  "dependencies": ["bootstrap-2"],
   "attempt": 1,
   "spec": {
-    "actions": [
-      "Download Geist Sans + Geist Mono WOFF2 files",
-      "Add Vercel theme CSS variables to globals.css",
-      "Configure Tailwind with Vercel color tokens",
-      "Bundle fonts in /assets/fonts/"
-    ]
+    "structure": {
+      "lib/": ["db.ts", "openrouter.ts", "store.ts", "scraper/", "voice/", "utils/"],
+      "components/": ["ui/", "ProfileCard.tsx", "ConfidenceBar.tsx", "MessageTab.tsx"],
+      "entrypoints/": ["background.ts", "content.ts", "sidepanel/", "options/"]
+    }
   }
 }

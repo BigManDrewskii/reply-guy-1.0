@@ -32,8 +32,16 @@ Reply Guy is a Chrome sidebar extension that transforms profile browsing on X (T
   - Build verified: 981KB output, all entrypoints functional
   - Initial commit created
 
+- **bootstrap-2:** Vercel dark theme and Geist fonts configured
+  - Applied Vercel color tokens (pure black #000, 1px #262626 borders)
+  - Added Geist Sans + Mono via Google Fonts CDN
+  - Custom Vercel colors (blue, green, amber, red) in Tailwind
+  - Shimmer animation for skeleton loading states
+  - Font bundling setup with offline bundle instructions
+  - Build verified: 981.59KB (within budget)
+
 ### Current Task
-bootstrap-2: Configure Vercel dark theme and Geist fonts
+bootstrap-3: Create project directory structure
 
 ### Next Tasks
 1. Clone WXT starter template

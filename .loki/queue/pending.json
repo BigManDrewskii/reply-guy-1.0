@@ -24,7 +24,7 @@
       "title": "Configure Vercel dark theme and Geist fonts",
       "goal": "Apply Vercel design system to extension UI",
       "priority": "critical",
-      "status": "pending",
+      "status": "completed",
       "dependencies": [
         "bootstrap-1"
       ],
