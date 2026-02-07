@@ -1,20 +1,20 @@
 {
-  "id": "dev-2-2",
+  "id": "dev-2-3",
   "phase": "DEVELOPMENT",
-  "title": "Content Script Integration (Phase 2.2)",
-  "goal": "Wire scraper into content script",
+  "title": "Background Messaging Relay (Phase 2.3)",
+  "goal": "Relay profile data to side panel",
   "priority": "critical",
   "status": "in_progress",
-  "dependencies": ["dev-2-1"],
+  "dependencies": ["dev-2-2"],
   "attempt": 1,
   "spec": {
     "complexity": "C3",
-    "file": "entrypoints/content.ts",
+    "file": "entrypoints/background.ts",
     "actions": [
-      "Import and call scrapeXProfile()",
-      "Send ProfileData to background via chrome.runtime",
-      "Handle errors gracefully",
-      "Test: Data flows from content → background"
+      "Receive ProfileData from content script",
+      "Open side panel",
+      "Forward data via port messaging",
+      "Test: Side panel receives profile data"
     ]
   }
 }

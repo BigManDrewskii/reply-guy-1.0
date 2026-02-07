@@ -70,7 +70,7 @@ export default defineBackground(() => {
     });
 
     // Handle messages from content scripts
-    browser.runtime.onMessage.addListener(async (message: ExtMessage | { type: string; platform?: string; url?: string; timestamp?: number }, sender, sendResponse) => {
+    browser.runtime.onMessage.addListener(async (message: ExtMessage | { type: string; platform?: string; url?: string; timestamp?: number; data?: any }, sender, sendResponse) => {
       console.log('[Message] Received:', message);
 
       // Handle Reply Guy profile detection
@@ -81,8 +81,41 @@ export default defineBackground(() => {
           timestamp: message.timestamp
         });
 
-        // Future: Trigger scraping, check cache, send to side panel
-        // For now: Just log the detection
+        // Trigger scraping by sending SCRAPE_PROFILE to content script
+        if (sender.tab?.id) {
+          try {
+            await browser.tabs.sendMessage(sender.tab.id, { type: 'SCRAPE_PROFILE' });
+            console.log('[Profile Detection] Sent SCRAPE_PROFILE to content script');
+          } catch (error) {
+            console.error('[Profile Detection] Failed to send SCRAPE_PROFILE:', error);
+          }
+        }
+
+        return true;
+      }
+
+      // Handle scraped profile data from content script
+      if (message.type === 'PROFILE_DATA') {
+        console.log('[Profile Data] Received profile data:', {
+          platform: message.platform,
+          url: message.url,
+          data: message.data
+        });
+
+        // Forward to side panel
+        try {
+          // Send to side panel (and all extension pages)
+          await chrome.runtime.sendMessage({
+            type: 'PROFILE_DATA',
+            data: message.data,
+            platform: message.platform,
+            url: message.url,
+            timestamp: message.timestamp
+          });
+          console.log('[Profile Data] Forwarded to side panel');
+        } catch (error) {
+          console.error('[Profile Data] Failed to forward to side panel:', error);
+        }
 
         return true;
       }
