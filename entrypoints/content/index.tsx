@@ -38,6 +38,7 @@ export default defineContentScript({
 
         // LinkedIn profiles
         if (urlObj.hostname === 'www.linkedin.com') {
+          const pathname = urlObj.pathname;
           return pathname.startsWith('/in/') && pathname.split('/').filter(Boolean).length === 2;
         }
 

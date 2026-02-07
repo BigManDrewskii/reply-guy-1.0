@@ -1,24 +1,22 @@
 {
-  "id": "dev-6-1",
+  "id": "dev-6-2",
   "phase": "DEVELOPMENT",
   "subPhase": 6,
-  "title": "LinkedIn DOM Scraper (Phase 6.1)",
-  "goal": "Implement LinkedIn profile scraper with class selector map",
+  "title": "LinkedIn Content Script Integration (Phase 6.2)",
+  "goal": "Wire LinkedIn scraper into content script",
   "priority": "critical",
   "status": "in_progress",
-  "dependencies": [],
+  "dependencies": ["dev-6-1"],
   "attempt": 1,
   "spec": {
-    "complexity": "C4",
-    "files": ["lib/scraper/linkedin-scraper.ts", "lib/scraper/selectors/linkedin.ts"],
+    "complexity": "C3",
+    "file": "entrypoints/content.ts",
     "actions": [
-      "Implement scrapeLinkedInProfile() function",
-      "Extract: name, headline, location, profileUrl",
-      "Extract: followerCount, connectionCount, experience",
-      "Extract: recent posts (text, reactions, comments)",
-      "Return typed ProfileData object",
-      "Add parseNumber helper for '1,234' and '1.2K' formats",
-      "Test: Works on 10 real LinkedIn profiles"
+      "Add LinkedIn platform detection",
+      "Call scrapeLinkedInProfile() on LinkedIn URLs",
+      "Send ProfileData to background via chrome.runtime",
+      "Handle errors gracefully",
+      "Test: Data flows from LinkedIn → background"
     ]
   }
 }

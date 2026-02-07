@@ -30,7 +30,7 @@
       "title": "LinkedIn Content Script Integration (Phase 6.2)",
       "goal": "Wire LinkedIn scraper into content script",
       "priority": "critical",
-      "status": "pending",
+      "status": "completed",
       "dependencies": ["dev-6-1"],
       "spec": {
         "complexity": "C3",
