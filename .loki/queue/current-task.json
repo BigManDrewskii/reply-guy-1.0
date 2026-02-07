@@ -1,22 +1,21 @@
 {
-  "id": "dev-6-2",
+  "id": "dev-6-3",
   "phase": "DEVELOPMENT",
   "subPhase": 6,
-  "title": "LinkedIn Content Script Integration (Phase 6.2)",
-  "goal": "Wire LinkedIn scraper into content script",
-  "priority": "critical",
+  "title": "Keyboard Shortcut (Phase 6.3)",
+  "goal": "Add Cmd+Shift+R to toggle side panel",
+  "priority": "high",
   "status": "in_progress",
-  "dependencies": ["dev-6-1"],
+  "dependencies": [],
   "attempt": 1,
   "spec": {
-    "complexity": "C3",
-    "file": "entrypoints/content.ts",
+    "complexity": "C2",
+    "file": "entrypoints/background.ts",
     "actions": [
-      "Add LinkedIn platform detection",
-      "Call scrapeLinkedInProfile() on LinkedIn URLs",
-      "Send ProfileData to background via chrome.runtime",
-      "Handle errors gracefully",
-      "Test: Data flows from LinkedIn → background"
+      "Add commands manifest: '_execute_action' → Cmd+Shift+R",
+      "Implement toggleSidePanel() function",
+      "Handle keyboard shortcut in background script",
+      "Test: Cmd+Shift+R opens/closes side panel"
     ]
   }
 }

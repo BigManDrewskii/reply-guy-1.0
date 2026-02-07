@@ -39,6 +39,30 @@ export default defineBackground(() => {
       console.error('[SidePanel] Failed to set behavior:', error);
     });
 
+    // Handle keyboard shortcut: Cmd+Shift+R / Ctrl+Shift+R
+    browser.commands.onCommand.addListener(async (command) => {
+      if (command === 'toggle-side-panel') {
+        console.log('[Command] Toggle side panel command received');
+
+        try {
+          // Get current active tab
+          const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+
+          if (!tab.id) {
+            console.warn('[Command] No active tab found');
+            return;
+          }
+
+          // Toggle side panel by opening it
+          // Note: Chrome doesn't have a close() method, so we just open it
+          await browser.sidePanel.open({ tabId: tab.id });
+          console.log('[Command] Side panel opened');
+        } catch (error) {
+          console.error('[Command] Failed to toggle side panel:', error);
+        }
+      }
+    });
+
     // Auto-open side panel on profile navigation
     browser.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
       // Only run when page is fully loaded

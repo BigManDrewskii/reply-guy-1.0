@@ -9,7 +9,16 @@ export default defineConfig({
         action: {},
         name: '__MSG_extName__',
         description: '__MSG_extDescription__',
-        default_locale: "en"
+        default_locale: "en",
+        commands: {
+            "toggle-side-panel": {
+                suggested_key: {
+                    default: "Ctrl+Shift+R",
+                    mac: "Command+Shift+R"
+                },
+                description: "Toggle Reply Guy side panel"
+            }
+        }
     },
     vite: () => ({
         plugins: [react()],

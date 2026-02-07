@@ -51,7 +51,7 @@
       "title": "Keyboard Shortcut (Phase 6.3)",
       "goal": "Add Cmd+Shift+R to toggle side panel",
       "priority": "high",
-      "status": "pending",
+      "status": "in_progress",
       "dependencies": [],
       "spec": {
         "complexity": "C2",
