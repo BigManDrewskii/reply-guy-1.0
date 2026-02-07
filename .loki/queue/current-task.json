@@ -1,19 +1,21 @@
 {
-  "id": "dev-1-3",
+  "id": "dev-2-1",
   "phase": "DEVELOPMENT",
-  "title": "Phase 1 Verification",
-  "goal": "Verify Phase 1 success criteria",
-  "priority": "high",
+  "title": "X DOM Scraper (Phase 2.1)",
+  "goal": "Implement X profile scraper with data-testid selectors",
+  "priority": "critical",
   "status": "in_progress",
-  "dependencies": ["dev-1-2"],
+  "dependencies": [],
   "attempt": 1,
   "spec": {
+    "complexity": "C4",
+    "files": ["lib/scraper/x-scraper.ts", "selectors/x.ts"],
     "actions": [
-      "Test: Extension installs in Chrome",
-      "Test: Side panel opens on x.com/* profiles",
-      "Test: Loading shimmer displays correctly",
-      "Test: Vercel theme applied everywhere",
-      "Commit: 'Phase 1 complete: Skeleton'"
+      "Implement scrapeXProfile() function",
+      "Extract: name, handle, bio, location, followers, verified",
+      "Extract recent posts (text, likes, retweets, timestamp)",
+      "Return typed ProfileData object",
+      "Test: Works on 10 real X profiles"
     ]
   }
 }
