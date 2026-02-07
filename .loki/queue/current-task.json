@@ -1,21 +1,22 @@
 {
-  "id": "dev-3-7",
+  "id": "dev-3-8",
   "phase": "DEVELOPMENT",
-  "title": "Send Confirmation (Phase 3.7)",
-  "goal": "Track sent messages in history",
-  "priority": "medium",
+  "title": "Testing & Verification (Phase 3.8)",
+  "goal": "Verify all Phase 3 features work end-to-end",
+  "priority": "high",
   "status": "pending",
-  "dependencies": ["dev-3-4"],
+  "dependencies": ["dev-3-1", "dev-3-2", "dev-3-3", "dev-3-4", "dev-3-5", "dev-3-6", "dev-3-7"],
   "attempt": 1,
   "spec": {
-    "complexity": "C2",
-    "file": "entrypoints/sidepanel/App.tsx",
+    "complexity": "C3",
     "actions": [
-      "After copy toast, show confirmation: \"Did you send this?\"",
-      "If yes: log to conversation history (IndexedDB)",
-      "If no: dismiss",
-      "Store: profile URL, message content, timestamp",
-      "Test: Sent messages appear in history"
+      "Test message generation on 10 real X/LinkedIn profiles",
+      "Verify voice scores are reasonable (60-100 range)",
+      "Verify copy button works and shows confirmation",
+      "Verify regenerate generates new variations",
+      "Verify sent messages appear in conversation history",
+      "Check build size < 1.1 MB",
+      "Commit: 'Phase 3 complete: Message Generation'"
     ]
   }
 }

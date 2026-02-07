@@ -1,7 +1,8 @@
 // Reply Guy Side Panel App - Phase 3: Message Generation
 import React, { useEffect, useState } from 'react';
 import '@/assets/main.css';
-import type { ProfileData } from '@/lib/db';
+import type { ProfileData, Conversation, Message } from '@/lib/db';
+import { db } from '@/lib/db';
 import { MessageTabs } from '@/components/MessageTabs';
 import { useToast } from '@/components/ui/toast';
 import { generateMessages } from '@/lib/openrouter';
@@ -30,12 +31,77 @@ export default function App() {
     return '#f44336'; // Red
   };
 
-  // Handle copy action
-  const handleCopy = (message: GeneratedMessage) => {
-    navigator.clipboard.writeText(message.content).then(() => {
-      console.log('[Side Panel] Message copied to clipboard');
-      showToast('Message copied to clipboard!');
-    });
+  // Handle copy action with send confirmation
+  const handleCopy = async (message: GeneratedMessage) => {
+    await navigator.clipboard.writeText(message.content);
+    console.log('[Side Panel] Message copied to clipboard');
+
+    // Show confirmation toast with Yes/No buttons
+    showToast('Message copied! Did you send it?', [
+      {
+        label: 'No',
+        onClick: () => {
+          console.log('[Side Panel] User did not send message');
+        }
+      },
+      {
+        label: 'Yes',
+        primary: true,
+        onClick: async () => {
+          console.log('[Side Panel] User confirmed sending message');
+          await logSentMessage(message);
+        }
+      }
+    ]);
+  };
+
+  // Log sent message to conversation history
+  const logSentMessage = async (message: GeneratedMessage) => {
+    if (!profile) return;
+
+    try {
+      // Get current conversation or create new one
+      let conversation = await db.conversations.where('profileUrl').equals(window.location.href).first();
+
+      const newMessage: Message = {
+        id: message.id,
+        content: message.content,
+        angle: message.angle as any,
+        voiceMatchScore: message.voiceMatchScore,
+        timestamp: new Date(),
+        sent: true
+      };
+
+      if (conversation) {
+        // Update existing conversation
+        await db.conversations.update(conversation.id, {
+          messages: [...conversation.messages, newMessage],
+          lastContact: new Date()
+        });
+      } else {
+        // Create new conversation
+        const newConversation: Conversation = {
+          id: Date.now().toString(),
+          platform: window.location.hostname.includes('x.com') || window.location.hostname.includes('twitter.com') ? 'x' : 'linkedin',
+          profileUrl: window.location.href,
+          profileName: profile.name,
+          profileHandle: profile.handle,
+          profileSnapshot: profile,
+          messages: [newMessage],
+          firstContact: new Date(),
+          lastContact: new Date(),
+          status: 'sent',
+          tags: []
+        };
+        await db.conversations.add(newConversation);
+      }
+
+      console.log('[Side Panel] Message logged to conversation history');
+      showToast('Saved to history!');
+    } catch (error) {
+      console.error('[Side Panel] Error logging sent message:', error);
+      showToast('Failed to save to history');
+    }
   };
 
   // Handle regenerate messages

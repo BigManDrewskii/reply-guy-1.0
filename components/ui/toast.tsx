@@ -1,23 +1,33 @@
 // Toast Notification Component
 import React, { useEffect, useState } from 'react';
 
+interface ToastAction {
+  label: string;
+  onClick: () => void;
+  primary?: boolean;
+}
+
 interface ToastProps {
   message: string;
   duration?: number;
   onClose: () => void;
+  actions?: ToastAction[];
 }
 
-export const Toast: React.FC<ToastProps> = ({ message, duration = 3000, onClose }) => {
+export const Toast: React.FC<ToastProps> = ({ message, duration = 3000, onClose, actions }) => {
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
+    // If there are actions, don't auto-dismiss
+    if (actions && actions.length > 0) return;
+
     const timer = setTimeout(() => {
       setVisible(false);
       setTimeout(onClose, 300); // Wait for fade out animation
     }, duration);
 
     return () => clearTimeout(timer);
-  }, [duration, onClose]);
+  }, [duration, onClose, actions]);
 
   return (
     <div
@@ -32,7 +42,32 @@ export const Toast: React.FC<ToastProps> = ({ message, duration = 3000, onClose 
       `}
       style={{ maxWidth: '340px' }}
     >
-      {message}
+      <div className="flex flex-col gap-2">
+        <div>{message}</div>
+        {actions && actions.length > 0 && (
+          <div className="flex gap-2 justify-end">
+            {actions.map((action, index) => (
+              <button
+                key={index}
+                onClick={() => {
+                  action.onClick();
+                  onClose();
+                }}
+                className={`
+                  px-3 py-1.5 text-xs font-medium rounded-md
+                  transition-colors duration-200
+                  ${action.primary
+                    ? 'bg-[#0070f3] text-white hover:bg-[#0060df]'
+                    : 'bg-[#262626] text-[#ededed] hover:bg-[#333]'
+                  }
+                `}
+              >
+                {action.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
@@ -41,14 +76,15 @@ export const Toast: React.FC<ToastProps> = ({ message, duration = 3000, onClose 
 interface ToastItem {
   id: string;
   message: string;
+  actions?: ToastAction[];
 }
 
 export const useToast = () => {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
-  const showToast = (message: string) => {
+  const showToast = (message: string, actions?: ToastAction[]) => {
     const id = Date.now().toString();
-    setToasts((prev) => [...prev, { id, message }]);
+    setToasts((prev) => [...prev, { id, message, actions }]);
   };
 
   const removeToast = (id: string) => {
@@ -64,6 +100,7 @@ export const useToast = () => {
           <Toast
             key={toast.id}
             message={toast.message}
+            actions={toast.actions}
             onClose={() => removeToast(toast.id)}
           />
         ))}
