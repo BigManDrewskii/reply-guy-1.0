@@ -94,16 +94,31 @@ Reply Guy is a Chrome sidebar extension that transforms profile browsing on X (T
   - Safe query helper with error handling
   - Note: Manual testing required on real X profiles
 
-### Current Task
-**dev-2-2:** Content Script Integration (Phase 2.2) - IN PROGRESS ⏳
+**Phase 3: Message Generation (IN PROGRESS)** ⏳
 
-**Goal:** Wire scraper into content script
+- **dev-3-1:** Message Generation Prompt (Phase 3.1) ✓
+  - Verified MESSAGE_GENERATION_PROMPT from BOOTSTRAP
+  - 3-5 DM variants with JSON output
+  - Angles: service, partner, community, value_first
+  - Concise (30-60 words), authentic, personalized
+
+- **dev-3-2:** Message Generation API (Phase 3.2) ✓
+  - Verified generateMessages() from BOOTSTRAP
+  - Async generator with streaming (token-by-token)
+  - Accepts: profileData, profileAnalysis, voiceProfile
+  - Claude Sonnet 4.5 with zero data retention
+
+### Current Task
+**dev-3-3:** Message Tabs Component (Phase 3.3) - PENDING
+
+**Goal:** Build tabbed interface for message angles
 
 **Actions:**
-- Import and call scrapeXProfile()
-- Send ProfileData to background via chrome.runtime
-- Handle errors gracefully
-- Test: Data flows from content → background
+- Create tab navigation (Service, Partner, Community)
+- Display message content with Vercel styling
+- Show voice match score
+- Show word count
+- Test: Tabs switch correctly
 
 **Summary:**
 - PRD analyzed: 892 lines, all sections complete
@@ -120,12 +135,12 @@ Reply Guy is a Chrome sidebar extension that transforms profile browsing on X (T
 - Recommendation: Skip ARCHITECTURE, proceed to DEVELOPMENT (Phase 1: Skeleton)
 
 ### Next Tasks
-1. dev-2-2: Content Script Integration
-2. dev-2-3: Background Messaging Relay
-3. dev-2-4: OpenRouter SDK Integration
-4. dev-2-5: Profile Analysis Prompt
-5. dev-2-6: Side Panel State Integration
-6. dev-2-7: 24hr Analysis Cache
+1. dev-3-3: Message Tabs Component
+2. dev-3-4: Copy Button Implementation
+3. dev-3-5: Voice Scoring
+4. dev-3-6: Regenerate Functionality
+5. dev-3-7: Send Confirmation
+6. dev-3-8: Testing & Verification
 
 ---
 

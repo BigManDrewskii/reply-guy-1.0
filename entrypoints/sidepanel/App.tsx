@@ -1,18 +1,37 @@
-// Reply Guy Side Panel App - Phase 2: Real Profile Data
+// Reply Guy Side Panel App - Phase 3: Message Generation
 import React, { useEffect, useState } from 'react';
 import '@/assets/main.css';
 import type { ProfileData } from '@/lib/db';
+import { MessageTabs } from '@/components/MessageTabs';
+
+interface GeneratedMessage {
+  id: string;
+  angle: string;
+  content: string;
+  voiceMatchScore: number;
+  whyItWorks: string;
+}
 
 export default function App() {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [confidence, setConfidence] = useState(0);
+  const [messages, setMessages] = useState<GeneratedMessage[]>([]);
+  const [analyzing, setAnalyzing] = useState(false);
 
   // Get confidence bar color
   const getConfidenceColor = (score: number): string => {
     if (score >= 0.8) return '#00c853'; // Green
     if (score >= 0.6) return '#ffc107'; // Amber
     return '#f44336'; // Red
+  };
+
+  // Handle copy action
+  const handleCopy = (message: GeneratedMessage) => {
+    navigator.clipboard.writeText(message.content).then(() => {
+      console.log('[Side Panel] Message copied to clipboard');
+      // TODO: Show confirmation toast
+    });
   };
 
   useEffect(() => {
@@ -145,12 +164,16 @@ export default function App() {
               </div>
             </div>
 
-            {/* Placeholder for messages */}
-            <div className="px-4 py-3">
-              <p className="text-[#666] text-sm text-center">
-                Analysis in progress... (Phase 2)
-              </p>
-            </div>
+            {/* Messages Section */}
+            {messages.length > 0 ? (
+              <MessageTabs messages={messages} onCopy={handleCopy} />
+            ) : (
+              <div className="px-4 py-3">
+                <p className="text-[#666] text-sm text-center">
+                  {analyzing ? 'Generating messages...' : 'Analysis complete. Generate messages to get started.'}
+                </p>
+              </div>
+            )}
           </div>
         ) : (
           // Empty state

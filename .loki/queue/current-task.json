@@ -1,21 +1,21 @@
 {
-  "id": "dev-3-2",
+  "id": "dev-3-3",
   "phase": "DEVELOPMENT",
-  "title": "Message Generation API (Phase 3.2)",
-  "goal": "Implement streaming message generation",
+  "title": "Message Tabs Component (Phase 3.3)",
+  "goal": "Build tabbed interface for message angles",
   "priority": "high",
-  "status": "in_progress",
-  "dependencies": ["dev-3-1", "dev-2-4"],
+  "status": "pending",
+  "dependencies": ["dev-3-2"],
   "attempt": 1,
   "spec": {
     "complexity": "C3",
-    "file": "lib/openrouter.ts",
+    "files": ["components/MessageTab.tsx", "MessageTabs.tsx"],
     "actions": [
-      "Create generateMessages() generator",
-      "Accept profile data, analysis, voice profile",
-      "Stream responses token-by-token",
-      "Parse JSON output",
-      "Test: Generates 3-5 messages"
+      "Create tab navigation (Service, Partner, Community)",
+      "Display message content with Vercel styling",
+      "Show voice match score",
+      "Show word count",
+      "Test: Tabs switch correctly"
     ]
   }
 }
