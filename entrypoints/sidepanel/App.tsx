@@ -1,73 +1,144 @@
-import React, {useEffect, useRef, useState} from 'react';
-import './App.module.css';
-import '../../assets/main.css'
-import Sidebar, {SidebarType} from "@/entrypoints/sidebar.tsx";
-import {browser} from "wxt/browser";
-import ExtMessage, {MessageType} from "@/entrypoints/types.ts";
-import {Button} from "@/components/ui/button.tsx";
-import {Card} from "@/components/ui/card.tsx";
-import {Home} from "@/entrypoints/sidepanel/home.tsx";
-import {SettingsPage} from "@/entrypoints/sidepanel/settings.tsx";
-import {useTheme} from "@/components/theme-provider.tsx";
-import {useTranslation} from 'react-i18next';
-import Header from "@/entrypoints/sidepanel/header.tsx";
+// Reply Guy Side Panel App - Phase 1: Skeleton
+import React, { useEffect, useState } from 'react';
+import '@/assets/main.css';
 
-export default () => {
-    const [showButton, setShowButton] = useState(false)
-    const [showCard, setShowCard] = useState(false)
-    const [sidebarType, setSidebarType] = useState<SidebarType>(SidebarType.home);
-    const [headTitle, setHeadTitle] = useState("home")
-    const [buttonStyle, setButtonStyle] = useState<any>();
-    const [cardStyle, setCardStyle] = useState<any>();
-    const cardRef = useRef<HTMLDivElement>(null);
-    const {theme, toggleTheme} = useTheme();
-    const {t, i18n} = useTranslation();
+interface ProfileData {
+  name: string;
+  handle: string;
+  bio?: string;
+  location?: string;
+  followers?: number;
+  verified: boolean;
+}
 
-    async function initI18n() {
-        let data = await browser.storage.local.get('i18n');
-        if (data.i18n) {
-            await i18n.changeLanguage(data.i18n)
-        }
-    }
+export default function App() {
+  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<ProfileData | null>(null);
 
-    useEffect(() => {
-        browser.runtime.onMessage.addListener((message: ExtMessage, sender, sendResponse) => {
-            console.log('sidepanel:')
-            console.log(message)
-            if (message.messageType == MessageType.changeLocale) {
-                i18n.changeLanguage(message.content)
-            } else if (message.messageType == MessageType.changeTheme) {
-                toggleTheme(message.content)
-            }
-        });
+  useEffect(() => {
+    // Listen for messages from background script
+    chrome.runtime.onMessage.addListener((message) => {
+      console.log('[Side Panel] Received message:', message);
 
-        initI18n();
-    }, []);
+      if (message.type === 'PROFILE_DATA') {
+        console.log('[Side Panel] Profile data received:', message.data);
+        setProfile(message.data);
+        setLoading(false);
+      }
+    });
 
-    return (
-        <div className={theme}>
-            {<div
-                className="fixed top-0 right-0 h-screen w-full bg-background z-[1000000000000] rounded-l-xl shadow-2xl">
-                <Header headTitle={headTitle}/>
-                <Sidebar sideNav={(sidebarType: SidebarType) => {
-                    setSidebarType(sidebarType);
-                    setHeadTitle(sidebarType);
-                }}/>
-                <main className="mr-14 grid gap-4 p-4 md:gap-8 md:p-8">
-                    {sidebarType === SidebarType.home && <Home/>}
-                    {sidebarType === SidebarType.settings && <SettingsPage/>}
-                </main>
-            </div>
-            }
-            {showButton &&
-                <Button className="absolute z-[100000]" style={buttonStyle}>send Message</Button>
-            }
-            {
-                <Card ref={cardRef}
-                      className={`absolute z-[100000] w-[300px] h-[200px] ${showCard ? 'block' : 'hidden'}`}
-                      style={cardStyle}></Card>
-            }
+    // Simulate loading for Phase 1 (will be removed in Phase 2)
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <div className="w-[380px] h-screen bg-black text-[#ededed] flex flex-col font-sans">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[#262626]">
+        <h1 className="text-[16px] font-semibold">⚡ Reply Guy</h1>
+        <div className="flex items-center space-x-2">
+          <button className="text-[#a1a1a1] hover:text-[#ededed]">
+            ⚙
+          </button>
+          <button className="text-[#a1a1a1] hover:text-[#ededed]">
+            ···
+          </button>
         </div>
+      </div>
 
-    )
-};
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto">
+        {loading ? (
+          // Loading shimmer (Phase 1: Skeleton)
+          <div className="p-4 space-y-4">
+            {/* Profile Card Skeleton */}
+            <div className="border-b border-[#262626] p-4">
+              <div className="flex items-start space-x-3">
+                {/* Avatar Skeleton */}
+                <div className="skeleton h-12 w-12 rounded-full bg-[#111] border border-[#262626]" />
+
+                {/* Profile Info Skeleton */}
+                <div className="flex-1 space-y-2">
+                  <div className="skeleton h-4 w-32 bg-[#111] rounded" />
+                  <div className="skeleton h-3 w-24 bg-[#111] rounded" />
+                  <div className="skeleton h-3 w-16 bg-[#111] rounded" />
+                </div>
+              </div>
+            </div>
+
+            {/* Confidence Bar Skeleton */}
+            <div className="border-b border-[#262626] px-4 py-3">
+              <div className="flex items-center justify-between mb-2">
+                <div className="skeleton h-4 w-24 bg-[#111] rounded" />
+                <div className="skeleton h-4 w-12 bg-[#111] rounded" />
+              </div>
+              <div className="skeleton h-2 w-full bg-[#111] rounded-full" />
+            </div>
+
+            {/* Message Tabs Skeleton */}
+            <div className="px-4 py-3 space-y-3">
+              <div className="skeleton h-6 w-32 bg-[#111] rounded" />
+              <div className="bg-[#111] border border-[#262626] rounded-lg p-4">
+                <div className="skeleton h-4 w-full bg-[#111] rounded mb-2" />
+                <div className="skeleton h-4 w-48 bg-[#111] rounded mb-2" />
+                <div className="skeleton h-4 w-24 bg-[#111] rounded mb-4" />
+                <div className="skeleton h-8 w-full bg-[#262626] rounded" />
+              </div>
+            </div>
+          </div>
+        ) : profile ? (
+          // Phase 1: Show hardcoded profile data (will be real in Phase 2)
+          <div className="p-4 space-y-4">
+            {/* Profile Card */}
+            <div className="border-b border-[#262626] p-4">
+              <div className="flex items-start space-x-3">
+                {/* Avatar */}
+                <div className="h-12 w-12 rounded-full bg-[#111] border border-[#262626] flex items-center justify-center">
+                  <span className="text-[#ededed] font-semibold">R</span>
+                </div>
+
+                {/* Profile Info */}
+                <div className="flex-1">
+                  <div className="flex items-center space-x-2">
+                    <h3 className="text-[#ededed] font-semibold">Reply Guy</h3>
+                  </div>
+                  <p className="text-[#a1a1a1] text-sm">@replyguy</p>
+                  <p className="text-[#666] text-xs mt-1">San Francisco</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Confidence Bar */}
+            <div className="border-b border-[#262626] px-4 py-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[#a1a1a1] text-sm">Confidence</span>
+                <span className="text-[#ededed] font-mono text-sm">82%</span>
+              </div>
+              <div className="h-2 bg-[#111] rounded-full overflow-hidden">
+                <div className="h-full bg-[#00c853] rounded-full" style={{ width: '82%' }}></div>
+              </div>
+            </div>
+
+            {/* Placeholder for messages */}
+            <div className="px-4 py-3">
+              <p className="text-[#666] text-sm text-center">
+                Messages will appear here in Phase 3
+              </p>
+            </div>
+          </div>
+        ) : (
+          // Empty state
+          <div className="flex flex-col items-center justify-center h-full text-center px-4">
+            <p className="text-[#a1a1a1] text-sm">
+              Navigate to an X or LinkedIn profile to get started
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

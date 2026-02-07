@@ -1,20 +1,19 @@
 {
-  "id": "dev-1-2",
+  "id": "dev-1-3",
   "phase": "DEVELOPMENT",
-  "title": "Content Script Detection (Phase 1.2)",
-  "goal": "Detect when user lands on profile page",
-  "priority": "critical",
+  "title": "Phase 1 Verification",
+  "goal": "Verify Phase 1 success criteria",
+  "priority": "high",
   "status": "in_progress",
-  "dependencies": ["dev-1-1"],
+  "dependencies": ["dev-1-2"],
   "attempt": 1,
   "spec": {
-    "complexity": "C2",
-    "file": "entrypoints/content.ts",
     "actions": [
-      "Implement URL pattern detection",
-      "Add MutationObserver for SPA navigation",
-      "Send detection message to background",
-      "Test: Detection works on navigate and page load"
+      "Test: Extension installs in Chrome",
+      "Test: Side panel opens on x.com/* profiles",
+      "Test: Loading shimmer displays correctly",
+      "Test: Vercel theme applied everywhere",
+      "Commit: 'Phase 1 complete: Skeleton'"
     ]
   }
 }

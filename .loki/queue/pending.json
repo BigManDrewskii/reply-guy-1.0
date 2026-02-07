@@ -25,7 +25,7 @@
       "title": "Content Script Detection (Phase 1.2)",
       "goal": "Detect when user lands on profile page",
       "priority": "critical",
-      "status": "pending",
+      "status": "completed",
       "dependencies": [
         "dev-1-1"
       ],
