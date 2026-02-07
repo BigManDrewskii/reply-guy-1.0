@@ -1,21 +1,19 @@
 {
-  "id": "dev-2-4",
+  "id": "dev-2-5",
   "phase": "DEVELOPMENT",
-  "title": "OpenRouter SDK Integration (Phase 2.4)",
-  "goal": "Set up OpenRouter client with streaming",
-  "priority": "critical",
+  "title": "Profile Analysis Prompt (Phase 2.5)",
+  "goal": "Define analysis prompt for Claude Sonnet 4.5",
+  "priority": "high",
   "status": "in_progress",
-  "dependencies": [],
+  "dependencies": ["dev-2-4"],
   "attempt": 1,
   "spec": {
-    "complexity": "C3",
+    "complexity": "C2",
     "file": "lib/openrouter.ts",
     "actions": [
-      "Implement getClient() with API key from storage",
-      "Create analyzeProfile() generator function",
-      "Add streaming response handling",
-      "Set provider.data_collection: 'deny'",
-      "Test: Connects to OpenRouter API"
+      "Write prompt requesting JSON output",
+      "Request: summary, pain points, outreach angles, confidence",
+      "Test prompt format with sample data"
     ]
   }
 }
