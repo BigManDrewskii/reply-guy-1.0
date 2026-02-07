@@ -1,136 +1,173 @@
 {
   "queue": [
     {
-      "id": "dev-2-1",
+      "id": "dev-6-1",
       "phase": "DEVELOPMENT",
-      "title": "X DOM Scraper (Phase 2.1)",
-      "goal": "Implement X profile scraper with data-testid selectors",
+      "subPhase": 6,
+      "title": "LinkedIn DOM Scraper (Phase 6.1)",
+      "goal": "Implement LinkedIn profile scraper with class selector map",
       "priority": "critical",
-      "status": "in_progress",
+      "status": "pending",
       "dependencies": [],
       "spec": {
         "complexity": "C4",
-        "files": ["lib/scraper/x-scraper.ts", "selectors/x.ts"],
+        "files": ["lib/scraper/linkedin-scraper.ts", "lib/scraper/selectors/linkedin.ts"],
         "actions": [
-          "Implement scrapeXProfile() function",
-          "Extract: name, handle, bio, location, followers, verified",
-          "Extract recent posts (text, likes, retweets, timestamp)",
+          "Implement scrapeLinkedInProfile() function",
+          "Extract: name, headline, location, profileUrl",
+          "Extract: followerCount, connectionCount, experience",
+          "Extract: recent posts (text, reactions, comments)",
           "Return typed ProfileData object",
-          "Test: Works on 10 real X profiles"
+          "Add parseNumber helper for '1,234' and '1.2K' formats",
+          "Test: Works on 10 real LinkedIn profiles"
         ]
       }
     },
     {
-      "id": "dev-2-2",
+      "id": "dev-6-2",
       "phase": "DEVELOPMENT",
-      "title": "Content Script Integration (Phase 2.2)",
-      "goal": "Wire scraper into content script",
+      "subPhase": 6,
+      "title": "LinkedIn Content Script Integration (Phase 6.2)",
+      "goal": "Wire LinkedIn scraper into content script",
       "priority": "critical",
       "status": "pending",
-      "dependencies": ["dev-2-1"],
+      "dependencies": ["dev-6-1"],
       "spec": {
         "complexity": "C3",
         "file": "entrypoints/content.ts",
         "actions": [
-          "Import and call scrapeXProfile()",
+          "Add LinkedIn platform detection",
+          "Call scrapeLinkedInProfile() on LinkedIn URLs",
           "Send ProfileData to background via chrome.runtime",
           "Handle errors gracefully",
-          "Test: Data flows from content → background"
+          "Test: Data flows from LinkedIn → background"
         ]
       }
     },
     {
-      "id": "dev-2-3",
+      "id": "dev-6-3",
       "phase": "DEVELOPMENT",
-      "title": "Background Messaging Relay (Phase 2.3)",
-      "goal": "Relay profile data to side panel",
-      "priority": "critical",
+      "subPhase": 6,
+      "title": "Keyboard Shortcut (Phase 6.3)",
+      "goal": "Add Cmd+Shift+R to toggle side panel",
+      "priority": "high",
       "status": "pending",
-      "dependencies": ["dev-2-2"],
+      "dependencies": [],
       "spec": {
-        "complexity": "C3",
+        "complexity": "C2",
         "file": "entrypoints/background.ts",
         "actions": [
-          "Receive ProfileData from content script",
-          "Open side panel",
-          "Forward data via port messaging",
-          "Test: Side panel receives profile data"
+          "Add commands manifest: '_execute_action' → Cmd+Shift+R",
+          "Implement toggleSidePanel() function",
+          "Handle keyboard shortcut in background script",
+          "Test: Cmd+Shift+R opens/closes side panel"
         ]
       }
     },
     {
-      "id": "dev-2-4",
+      "id": "dev-6-4",
       "phase": "DEVELOPMENT",
-      "title": "OpenRouter SDK Integration (Phase 2.4)",
-      "goal": "Set up OpenRouter client with streaming",
-      "priority": "critical",
+      "subPhase": 6,
+      "title": "Global Error Handling (Phase 6.4)",
+      "goal": "Add error boundaries and API failure handlers",
+      "priority": "high",
       "status": "pending",
       "dependencies": [],
       "spec": {
         "complexity": "C3",
-        "file": "lib/openrouter.ts",
+        "files": ["entrypoints/sidepanel/App.tsx", "lib/openrouter.ts"],
         "actions": [
-          "Implement getClient() with API key from storage",
-          "Create analyzeProfile() generator function",
-          "Add streaming response handling",
-          "Set provider.data_collection: 'deny'",
-          "Test: Connects to OpenRouter API"
+          "Add React ErrorBoundary to sidepanel App",
+          "Catch OpenRouter API errors, show user-friendly messages",
+          "Catch scraping errors, show 'try again' UI",
+          "Log errors to console for debugging",
+          "Test: Errors don't crash extension"
         ]
       }
     },
     {
-      "id": "dev-2-5",
+      "id": "dev-6-5",
       "phase": "DEVELOPMENT",
-      "title": "Profile Analysis Prompt (Phase 2.5)",
-      "goal": "Define analysis prompt for Claude Sonnet 4.5",
+      "subPhase": 6,
+      "title": "Rate Limiting (Phase 6.5)",
+      "goal": "Implement 1 request per 5 second rate limiter",
       "priority": "high",
       "status": "pending",
-      "dependencies": ["dev-2-4"],
+      "dependencies": [],
       "spec": {
         "complexity": "C2",
-        "file": "lib/openrouter.ts",
+        "file": "lib/utils/rate-limiter.ts",
         "actions": [
-          "Write prompt requesting JSON output",
-          "Request: summary, pain points, outreach angles, confidence",
-          "Test prompt format with sample data"
+          "Implement token bucket or sliding window rate limiter",
+          "Apply to analyzeProfile() and generateMessages() calls",
+          "Show countdown when rate limited",
+          "Test: Requests respect 5s minimum interval"
         ]
       }
     },
     {
-      "id": "dev-2-6",
+      "id": "dev-6-6",
       "phase": "DEVELOPMENT",
-      "title": "Side Panel State Integration (Phase 2.6)",
-      "goal": "Display real analysis in ProfileCard + ConfidenceBar",
-      "priority": "high",
-      "status": "pending",
-      "dependencies": ["dev-2-3", "dev-2-5"],
-      "spec": {
-        "complexity": "C3",
-        "file": "entrypoints/sidepanel/App.tsx",
-        "actions": [
-          "Replace hardcoded data with chrome.runtime messages",
-          "Update ProfileCard to display scraped data",
-          "Update ConfidenceBar to show LLM confidence score",
-          "Test: Side panel shows real profile data and analysis"
-        ]
-      }
-    },
-    {
-      "id": "dev-2-7",
-      "phase": "DEVELOPMENT",
-      "title": "24hr Analysis Cache (Phase 2.7)",
-      "goal": "Implement Dexie cache for profile analyses",
+      "subPhase": 6,
+      "title": "Skeleton Loading States (Phase 6.6)",
+      "goal": "Add shimmer skeletons for all async operations",
       "priority": "medium",
       "status": "pending",
-      "dependencies": ["dev-2-6"],
+      "dependencies": [],
       "spec": {
         "complexity": "C2",
-        "files": ["lib/db.ts", "lib/openrouter.ts"],
+        "files": ["components/ui/skeleton.tsx", "components/ProfileCard.tsx"],
         "actions": [
-          "Check cache before calling OpenRouter API",
-          "Store analysis with timestamp",
-          "Return cached analysis if < 24hr old",
-          "Test: Cache hit reduces API calls"
+          "Create reusable Skeleton component (Vercel shimmer)",
+          "Add skeleton for ProfileCard loading",
+          "Add skeleton for MessageTabs loading",
+          "Add skeleton for ConfidenceBar loading",
+          "Test: Skeletons show immediately, smooth transition"
+        ]
+      }
+    },
+    {
+      "id": "dev-6-7",
+      "phase": "DEVELOPMENT",
+      "subPhase": 6,
+      "title": "Empty States (Phase 6.7)",
+      "goal": "Add first-time user empty states",
+      "priority": "medium",
+      "status": "pending",
+      "dependencies": [],
+      "spec": {
+        "complexity": "C2",
+        "file": "entrypoints/sidepanel/App.tsx",
+        "actions": [
+          "Add 'navigate to profile' empty state",
+          "Add 'no API key' empty state (with settings link)",
+          "Add 'no voice profile' empty state (with train link)",
+          "Add 'no messages' empty state",
+          "Test: Empty states guide users to first action"
+        ]
+      }
+    },
+    {
+      "id": "dev-6-8",
+      "phase": "DEVELOPMENT",
+      "subPhase": 6,
+      "title": "E2E Testing (Phase 6.8)",
+      "goal": "Test on 100 real profiles across both platforms",
+      "priority": "critical",
+      "status": "pending",
+      "dependencies": ["dev-6-1", "dev-6-2", "dev-6-3", "dev-6-4", "dev-6-5", "dev-6-6", "dev-6-7"],
+      "spec": {
+        "complexity": "C5",
+        "actions": [
+          "Test on 50 X profiles (variety: verified, unverified, different follower counts)",
+          "Test on 50 LinkedIn profiles (variety: connections, experience levels)",
+          "Verify scraper accuracy: 95%+ data extraction success",
+          "Verify message generation: all angles produce valid DMs",
+          "Verify voice matching: trained voice produces >80% match",
+          "Verify performance: <2 min from profile load to message copy",
+          "Verify error handling: network failures, rate limits, invalid profiles",
+          "Document any edge cases or failures",
+          "Fix critical bugs found during testing"
         ]
       }
     }

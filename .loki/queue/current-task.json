@@ -1,21 +1,24 @@
 {
-  "id": "dev-5-2",
+  "id": "dev-6-1",
   "phase": "DEVELOPMENT",
-  "title": "Metrics Integration (Phase 5.2)",
-  "goal": "Wire tracking into app workflows",
-  "priority": "high",
-  "status": "pending",
-  "dependencies": ["dev-5-1"],
+  "subPhase": 6,
+  "title": "LinkedIn DOM Scraper (Phase 6.1)",
+  "goal": "Implement LinkedIn profile scraper with class selector map",
+  "priority": "critical",
+  "status": "in_progress",
+  "dependencies": [],
   "attempt": 1,
   "spec": {
-    "complexity": "C2",
-    "file": "entrypoints/sidepanel/App.tsx",
+    "complexity": "C4",
+    "files": ["lib/scraper/linkedin-scraper.ts", "lib/scraper/selectors/linkedin.ts"],
     "actions": [
-      "Call trackMessageGenerated() after generating messages",
-      "Call trackMessageSent() after user confirms sending",
-      "Call trackConversion() when status changes to 'converted'",
-      "Detect platform from URL (X vs LinkedIn)",
-      "Test: Metrics increment correctly on each action"
+      "Implement scrapeLinkedInProfile() function",
+      "Extract: name, headline, location, profileUrl",
+      "Extract: followerCount, connectionCount, experience",
+      "Extract: recent posts (text, reactions, comments)",
+      "Return typed ProfileData object",
+      "Add parseNumber helper for '1,234' and '1.2K' formats",
+      "Test: Works on 10 real LinkedIn profiles"
     ]
   }
 }
