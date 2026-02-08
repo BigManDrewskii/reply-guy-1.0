@@ -77,7 +77,7 @@ export default function HistoryScreen() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <Input
         placeholder="Search conversations..."
         variant="bordered"
@@ -135,7 +135,7 @@ export default function HistoryScreen() {
                 }
               >
                 <CardContent className="p-3">
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-start gap-2">
                     <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-numerical">
                       {getPlatformIcon(conv.platform)}
                     </div>

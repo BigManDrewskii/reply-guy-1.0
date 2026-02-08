@@ -56,11 +56,11 @@ export default function OnboardingScreen() {
         <Key size={32} className="text-foreground" />
       </div>
 
-      <h1 className="text-2xl font-semibold text-foreground mb-2">
+      <h1 className="text-2xl font-semibold text-foreground mb-3">
         Set up your API key
       </h1>
 
-      <p className="text-sm text-muted-foreground mb-8 text-center leading-relaxed">
+      <p className="text-sm text-muted-foreground mb-6 text-center leading-relaxed">
         Reply Guy uses OpenRouter to analyze pages and generate outreach messages.
       </p>
 

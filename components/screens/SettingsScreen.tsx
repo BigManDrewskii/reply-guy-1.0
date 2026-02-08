@@ -115,10 +115,10 @@ export default function SettingsScreen() {
   }
 
   return (
-    <div className="p-4 space-y-6">
+    <div className="p-4 space-y-4">
       {/* API Key Section */}
       <div>
-        <h2 className="text-lg font-semibold text-foreground mb-4">API Key</h2>
+        <h2 className="text-lg font-semibold text-foreground mb-3">API Key</h2>
 
         {!isEditing ? (
           <div className="space-y-3">
@@ -193,8 +193,8 @@ export default function SettingsScreen() {
         )}
       </div>
 
-      <div className="border-t border-border pt-6">
-        <h2 className="text-lg font-semibold text-foreground mb-4">Voice Training</h2>
+      <div className="border-t border-border pt-4">
+        <h2 className="text-lg font-semibold text-foreground mb-3">Voice Training</h2>
         <Button
           onClick={handleVoiceTraining}
           variant="secondary"
@@ -215,8 +215,8 @@ export default function SettingsScreen() {
         )}
       </div>
 
-      <div className="border-t border-border pt-6">
-        <h2 className="text-lg font-semibold text-foreground mb-4">Appearance</h2>
+      <div className="border-t border-border pt-4">
+        <h2 className="text-lg font-semibold text-foreground mb-3">Appearance</h2>
         <Button
           onClick={toggleTheme}
           variant="secondary"
@@ -227,8 +227,8 @@ export default function SettingsScreen() {
         </Button>
       </div>
 
-      <div className="border-t border-border pt-6">
-        <h2 className="text-lg font-semibold text-foreground mb-4">Data</h2>
+      <div className="border-t border-border pt-4">
+        <h2 className="text-lg font-semibold text-foreground mb-3">Data</h2>
         <div className="space-y-2">
           <Button
             onClick={() => setShowClearCacheDialog(true)}
@@ -262,7 +262,7 @@ export default function SettingsScreen() {
         </div>
       </div>
 
-      <div className="border-t border-border pt-6 text-center">
+      <div className="border-t border-border pt-4 text-center">
         <p className="text-xs text-muted-foreground">v0.1.0 · Studio Drewskii</p>
       </div>
 
