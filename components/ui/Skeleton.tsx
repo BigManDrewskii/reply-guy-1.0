@@ -1,13 +1,21 @@
-import React from 'react';
-import { cn } from '../../lib/utils/cn';
+interface SkeletonProps {
+  className?: string;
+  variant?: 'pulse' | 'text' | 'avatar';
+}
 
-export interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {}
+export default function Skeleton({ className = '', variant = 'pulse' }: SkeletonProps) {
+  const baseClasses = 'bg-muted animate-shimmer';
+  const variantClasses = {
+    pulse: 'rounded-lg',
+    text: 'rounded h-4 w-full',
+    avatar: 'rounded-full'
+  };
 
-export function Skeleton({ className, ...props }: SkeletonProps) {
   return (
     <div
-      className={cn('animate-pulse rounded-md bg-bg-150', className)}
-      {...props}
+      role="status"
+      aria-label="Loading content"
+      className={`${baseClasses} ${variantClasses[variant]} ${className}`}
     />
   );
 }
