@@ -31,7 +31,7 @@ function ScreenLoader() {
 export default function App() {
   const [screen, setScreen] = useState<Screen>('outreach');
   const [displayScreen, setDisplayScreen] = useState<Screen>('outreach');
-  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [animationClass, setAnimationClass] = useState('');
   const [pageData, setPageData] = useState<PageData | null>(null);
   const apiKey = useStore((state) => state.apiKey);
   const { toasts, remove } = useToast();
@@ -54,14 +54,31 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (screen !== displayScreen) {
-      setIsTransitioning(true);
-      setTimeout(() => {
+    // Check for reduced motion preference
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (screen !== displayScreen && !prefersReducedMotion) {
+      // Apply slide-out animation
+      setAnimationClass('animate-slide-out-right');
+
+      const timeout1 = setTimeout(() => {
         setDisplayScreen(screen);
-        setIsTransitioning(false);
+        setAnimationClass('animate-slide-in-left');
       }, 250);
+
+      const timeout2 = setTimeout(() => {
+        setAnimationClass('');
+      }, 500);
+
+      return () => {
+        clearTimeout(timeout1);
+        clearTimeout(timeout2);
+      };
+    } else if (screen !== displayScreen && prefersReducedMotion) {
+      // Instant switch for users who prefer reduced motion
+      setDisplayScreen(screen);
     }
-  }, [screen]);
+  }, [screen, displayScreen]);
 
   // If no API key, show onboarding
   if (!apiKey) {
@@ -134,13 +151,7 @@ export default function App() {
         <span className="text-sm font-semibold">Reply Guy</span>
       </header>
 
-      <main
-        className={cn(
-          'flex-1 overflow-y-auto p-4',
-          isTransitioning && 'animate-slide-out-right',
-          !isTransitioning && 'animate-slide-in-left'
-        )}
-      >
+      <main className={cn('flex-1 overflow-y-auto p-4', animationClass)}>
         {renderMainContent()}
       </main>
 
