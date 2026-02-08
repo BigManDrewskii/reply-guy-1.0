@@ -1,63 +1,61 @@
-## CLAUDE.md
-
-```markdown
 # CLAUDE.md — Reply Guy
 
-## Identity
-Chrome sidebar extension for AI outreach. Works on ANY website, not just X/LinkedIn. See docs/prd.md for full spec.
+## What This Is
+Chrome Side Panel extension for AI-powered outreach. Works on ANY website. See `docs/prd.md` for the full spec.
 
-## Critical: Extension Must Load
-The PRD contains EXACT working code for wxt.config.ts, background.ts, content.ts, sidepanel/index.html, sidepanel/main.tsx, and sidepanel/App.tsx. Use that code verbatim as your starting point. Do NOT improvise the extension config. The side panel MUST open when clicking the extension icon.
+## Phase 1 Priority: THE EXTENSION MUST LOAD
+Previous attempts failed because the extension wouldn't install in Chrome. The PRD contains exact working code for every bootstrap file. Use that code verbatim. Do not improvise wxt.config.ts, background.ts, or sidepanel entry points.
 
-Key requirements:
-- side_panel.default_path must be "sidepanel.html" (matches WXT entrypoint folder name)
-- Permission is "sidePanel" (camelCase)
-- manifest.action must be {} (empty, enables icon click → side panel)
-- content script matches: ["<all_urls>"] — runs everywhere
-- Use chrome.storage.session (not ports) for content→sidepanel data relay
+## Tech Stack (Locked)
+- **WXT** framework with `@wxt-dev/module-react`
+- React 19 + TypeScript 5
+- Tailwind CSS v4 with custom CSS variables (dark mode only)
+- shadcn/ui components (customized dark theme)
+- Lucide React icons via centralized `lib/icons.ts`
+- Geist Sans + Mono fonts bundled as WOFF2
+- Dexie.js 4.x for IndexedDB (NOT idb, NOT localStorage)
+- @openrouter/sdk — always stream, always `data_collection: 'deny'`
+- Zustand 5.x persisted to chrome.storage.local
 
-## Hard Constraints
-- WXT from scratch. NO starter templates. NO Plasmo.
-- React 19 + TypeScript 5 + Tailwind CSS v4
-- Custom components with CVA + clsx + tailwind-merge
-- Icons ONLY via lib/icons.ts (centralized registry). No direct lucide-react imports.
-- Dexie.js 4.x (NOT idb). useLiveQuery() for reactive UI.
-- @openrouter/sdk (NOT OpenAI SDK). Always stream. Always data_collection: 'deny'.
-- Zustand 5.x. Persist to chrome.storage.local.
-- Geist fonts bundled WOFF2 in assets/fonts/. No CDN.
-- Dark only. No light mode.
-- No TensorFlow.js. No analytics. No auto-sending.
-- Full-width sidebar (width: 100%).
-- No shadows. No gradients. 1px #262626 borders only.
-- Bundle: <250KB gzipped (ex fonts).
+## WXT Critical Rules
+1. `manifest.action` must be `{}` (empty object) — enables side panel on icon click
+2. WXT auto-adds `sidePanel` permission — do NOT add it manually
+3. NO popup entrypoint — you can't have popup + sidepanel on icon click
+4. Use `chrome.sidePanel` (not `browser.sidePanel`) — WXT types don't cover it
+5. Background file must be `entrypoints/background.ts` — not nested in subdirectory
+6. Side panel entrypoint: `entrypoints/sidepanel/index.html` — folder name matters
 
-## Phase Priority
-1. Working extension that loads and opens side panel (use exact bootstrap code from PRD)
-2. Page scraping on all URLs (generic + enhanced for X/LI/GH)
-3. LLM analysis with streaming
-4. Message generation with 4 angles
-5. Voice training
-6. History + polish
+## Design Rules
+- Design for **320px width** (Chrome's default side panel width)
+- All content stacks **vertically** — never side-by-side columns
+- Dark mode only: #000 base, #111 cards, #262626 borders
+- No shadows, no gradients, no glows
+- 1px borders only
+- Geist Mono for ALL numerical data (scores, counts, timestamps)
+- Inverted CTA pattern: white bg (#ededed), black text (#000)
+- Skeleton shimmer for loading — never spinners
+- 8px border-radius on interactive elements
+- 150ms ease transitions
+
+## Architecture
+- Content script runs on `<all_urls>` — scrapes every page
+- Platform detection: X, LinkedIn, GitHub get enhanced scrapers; everything else gets generic scraping (meta tags + OG data + body text)
+- Data flow: content script → chrome.runtime.sendMessage → background → chrome.storage.session → side panel subscribes
+- LLM analysis cached in Dexie with 24hr TTL
+- All LLM prompts centralized in `lib/prompts.ts`
+
+## Commands
+```bash
+npm run dev          # WXT dev mode with HMR
+npm run build        # Production build
+npm run zip          # Package for Chrome Web Store
 ```
 
----
-
-## Intervention
-
-| Action | Command |
-|--------|---------|
-| Pause | `touch .loki/PAUSE` |
-| Resume | `rm .loki/PAUSE` |
-| Status | `cat .loki/CONTINUITY.md` |
-| Focus | `echo "Phase 1 only — make it load" > .loki/HUMAN_INPUT.md` |
-
----
-
-## Pre-launch checklist
-
-```
-~/reply-guy/
-├── CLAUDE.md
-└── docs/
-    └── prd.md     ← reply-guy-prd-v4.md
-```
+## Phase Sequence
+1. Extension loads + side panel opens on click
+2. Content script scrapes pages + data flows to side panel
+3. Onboarding (API key) + Settings screen
+4. LLM analysis with streaming
+5. Message generation with 4 angle tabs
+6. Voice training wizard
+7. History + search + polish

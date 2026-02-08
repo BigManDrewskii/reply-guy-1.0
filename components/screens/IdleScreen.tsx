@@ -1,38 +1,38 @@
-import React from 'react';
-import { ConfidenceIcon } from '../../lib/icons';
-import { ICON_SIZE, ICON_DEFAULTS } from '../../lib/icons';
-import { Badge } from '../ui/Badge';
+import { Target } from '@/lib/icons';
+import { PLATFORM_ICONS } from '@/lib/icons';
 
 export default function IdleScreen() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[600px] px-6">
-      {/* Icon */}
-      <ConfidenceIcon {...ICON_DEFAULTS} size={ICON_SIZE.xxl} className="text-text-tertiary mb-6" />
-
-      {/* Heading */}
-      <h1 className="text-xl font-semibold text-text-primary mb-2">
-        Browse any page
-      </h1>
-
-      {/* Description */}
-      <p className="text-sm text-text-secondary text-center mb-8 max-w-xs">
-        Navigate to any profile or page and Reply Guy will read it and help you craft the perfect outreach message.
-      </p>
-
-      {/* Platform badges */}
-      <div className="space-y-4">
-        <p className="text-xs text-text-tertiary">Works best on:</p>
-        <div className="flex gap-2">
-          <Badge variant="platform" className="px-3 py-1.5">𝕏 X</Badge>
-          <Badge variant="platform" className="px-3 py-1.5">in LI</Badge>
-          <Badge variant="platform" className="px-3 py-1.5">GH</Badge>
-        </div>
+    <div className="flex flex-col items-center justify-center h-full text-center p-6">
+      <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-6">
+        <Target size={32} className="text-foreground" />
       </div>
 
-      {/* Additional info */}
-      <p className="text-xs text-text-tertiary mt-4 max-w-xs text-center">
-        ...and any website with profile info.
+      <h1 className="text-2xl font-semibold text-foreground mb-2">
+        Navigate to any page
+      </h1>
+
+      <p className="text-sm text-muted-foreground mb-8 leading-relaxed">
+        Browse a profile, portfolio, or company page —<br />
+        Reply Guy will read it and help you<br />
+        craft a message.
       </p>
+
+      <div className="border-t border-border pt-6 w-full">
+        <p className="text-xs text-muted-foreground mb-3">Enhanced on:</p>
+        <div className="flex justify-center gap-2 mb-3">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-muted text-xs text-muted-foreground">
+            <PLATFORM_ICONS.x size={14} />
+          </span>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-muted text-xs text-muted-foreground">
+            <PLATFORM_ICONS.linkedin size={14} />
+          </span>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-muted text-xs text-muted-foreground">
+            <PLATFORM_ICONS.github size={14} />
+          </span>
+        </div>
+        <p className="text-xs text-muted-foreground">Works on any site.</p>
+      </div>
     </div>
   );
 }

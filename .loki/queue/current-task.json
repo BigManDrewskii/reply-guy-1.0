@@ -1,8 +1,0 @@
-{
-  "id": "dev-1-7",
-  "phase": "DEVELOPMENT",
-  "goal": "Build verification and Chrome load test",
-  "status": "in_progress",
-  "priority": 7,
-  "dependencies": []
-}

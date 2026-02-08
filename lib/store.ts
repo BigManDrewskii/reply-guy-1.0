@@ -1,87 +1,107 @@
 import { create } from 'zustand';
-import type {
-  Tab,
-  ScrapedData,
-  Analysis,
-  GeneratedMessage,
-  VoiceProfile,
-  OutreachAngle,
-  Toast,
-} from '../types';
+import { persist } from 'zustand/middleware';
 
 interface AppState {
+  // API Key
+  apiKey: string | null;
+  setApiKey: (key: string) => void;
+  clearApiKey: () => void;
+
   // UI State
-  activeTab: Tab;
-  setActiveTab: (tab: Tab) => void;
+  activeScreen: 'outreach' | 'history' | 'settings';
+  setActiveScreen: (screen: 'outreach' | 'history' | 'settings') => void;
 
-  // Onboarding
-  hasApiKey: boolean;
-  setHasApiKey: (has: boolean) => void;
+  // Error handling
+  lastError: string | null;
+  setLastError: (error: string | null) => void;
+  clearError: () => void;
 
-  // Page Data
-  pageData: ScrapedData | null;
-  setPageData: (data: ScrapedData | null) => void;
+  // Offline state
+  isOnline: boolean;
+  setIsOnline: (online: boolean) => void;
 
-  // Analysis
-  analysis: Analysis | null;
-  setAnalysis: (analysis: Analysis | null) => void;
-  isAnalyzing: boolean;
-  setIsAnalyzing: (is: boolean) => void;
+  // Voice profile
+  voiceProfileLoaded: boolean;
+  setVoiceProfileLoaded: (loaded: boolean) => void;
 
-  // Messages
-  messages: GeneratedMessage[];
-  setMessages: (messages: GeneratedMessage[]) => void;
-  activeAngle: OutreachAngle['angle'] | null;
-  setActiveAngle: (angle: OutreachAngle['angle'] | null) => void;
-
-  // Voice Profile
-  voiceProfile: VoiceProfile | null;
-  setVoiceProfile: (profile: VoiceProfile | null) => void;
-
-  // Toasts
-  toasts: Toast[];
-  addToast: (toast: Omit<Toast, 'id'>) => void;
-  removeToast: (id: string) => void;
+  // Pending actions (for offline queue)
+  pendingActions: Array<{
+    type: 'analyze' | 'generate' | 'log';
+    data: any;
+    timestamp: number;
+  }>;
+  addPendingAction: (action: { type: string; data: any }) => void;
+  clearPendingActions: () => void;
 }
 
-export const useStore = create<AppState>((set) => ({
-  // UI State
-  activeTab: 'outreach',
-  setActiveTab: (tab) => set({ activeTab: tab }),
+export const useStore = create<AppState>()(
+  persist(
+    (set) => ({
+      // API Key
+      apiKey: null,
+      setApiKey: (key) => set({ apiKey: key }),
+      clearApiKey: () => set({ apiKey: null }),
 
-  // Onboarding
-  hasApiKey: false,
-  setHasApiKey: (has) => set({ hasApiKey: has }),
+      // UI State
+      activeScreen: 'outreach',
+      setActiveScreen: (screen) => set({ activeScreen: screen }),
 
-  // Page Data
-  pageData: null,
-  setPageData: (data) => set({ pageData: data }),
+      // Error handling
+      lastError: null,
+      setLastError: (error) => set({ lastError: error }),
+      clearError: () => set({ lastError: null }),
 
-  // Analysis
-  analysis: null,
-  setAnalysis: (analysis) => set({ analysis }),
-  isAnalyzing: false,
-  setIsAnalyzing: (is) => set({ isAnalyzing: is }),
+      // Offline state
+      isOnline: navigator.onLine,
+      setIsOnline: (online) => set({ isOnline: online }),
 
-  // Messages
-  messages: [],
-  setMessages: (messages) => set({ messages }),
-  activeAngle: null,
-  setActiveAngle: (angle) => set({ activeAngle: angle }),
+      // Voice profile
+      voiceProfileLoaded: false,
+      setVoiceProfileLoaded: (loaded) => set({ voiceProfileLoaded: loaded }),
 
-  // Voice Profile
-  voiceProfile: null,
-  setVoiceProfile: (profile) => set({ voiceProfile: profile }),
-
-  // Toasts
-  toasts: [],
-  addToast: (toast) => set((state) => ({
-    toasts: [
-      ...state.toasts,
-      { ...toast, id: crypto.randomUUID() },
-    ],
-  })),
-  removeToast: (id) => set((state) => ({
-    toasts: state.toasts.filter((t) => t.id !== id),
-  })),
-}));
+      // Pending actions
+      pendingActions: [],
+      addPendingAction: (action) =>
+        set((state) => ({
+          pendingActions: [
+            ...state.pendingActions,
+            { ...action, timestamp: Date.now() },
+          ],
+        })),
+      clearPendingActions: () => set({ pendingActions: [] }),
+    }),
+    {
+      name: 'reply-guy-storage',
+      partialize: (state) => ({
+        // Only persist these fields
+        apiKey: state.apiKey,
+        activeScreen: state.activeScreen,
+        voiceProfileLoaded: state.voiceProfileLoaded,
+        // Don't persist: lastError, isOnline, pendingActions
+      }),
+      storage: {
+        getItem: (name) => {
+          return new Promise((resolve) => {
+            chrome.storage.local.get([name], (result) => {
+              resolve(result[name]);
+            });
+          });
+        },
+        setItem: (name, value) => {
+          return new Promise((resolve) => {
+            chrome.storage.local.set({ [name]: value }, () => {
+              resolve();
+            });
+          });
+        },
+        removeItem: (name) => {
+          return new Promise((resolve) => {
+            chrome.storage.local.remove([name], () => {
+              resolve();
+            });
+          });
+        },
+      },
+    }
+  )
+);

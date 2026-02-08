@@ -129,7 +129,7 @@ export default function App() {
         <div className="relative flex flex-1">
           {/* Sliding indicator */}
           <div
-            className="absolute top-0 h-[2px] bg-accent transition-all duration-250 ease-out"
+            className="absolute top-0 h-[2px] bg-accent transition-all duration-[250ms] ease-out"
             style={{
               left: screen === 'outreach' ? '0%' : screen === 'history' ? '33.33%' : '66.66%',
               width: '33.33%'

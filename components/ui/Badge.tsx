@@ -1,27 +1,56 @@
-import React from 'react';
-import { cn } from '../../lib/utils/cn';
+import { HTMLAttributes } from 'react';
+import { cn } from '@/lib/utils/cn';
 
-export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: 'default' | 'platform';
+export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
+  variant?: 'default' | 'success' | 'warning' | 'error' | 'info';
+  size?: 'sm' | 'md';
+  dot?: boolean;
+  children: React.ReactNode;
 }
 
-export const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
-  ({ className, variant = 'default', ...props }, ref) => {
-    return (
-      <div
-        ref={ref}
-        className={cn(
-          'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-border-focus focus:ring-offset-2',
-          {
-            'border-border bg-bg-100 text-text-secondary': variant === 'default',
-            'border-border bg-bg-150 text-text-primary': variant === 'platform',
-          },
-          className
-        )}
-        {...props}
-      />
-    );
-  }
-);
+export function Badge({
+  className,
+  variant = 'default',
+  size = 'md',
+  dot = false,
+  children,
+  ...props
+}: BadgeProps) {
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-full font-medium transition-colors',
+        {
+          // Variants - backgrounds with 15% opacity
+          'bg-muted text-muted-foreground': variant === 'default',
+          'bg-success/15 text-success': variant === 'success',
+          'bg-warning/15 text-warning': variant === 'warning',
+          'bg-destructive/15 text-destructive': variant === 'error',
+          'bg-info/15 text-info': variant === 'info',
 
-Badge.displayName = 'Badge';
+          // Sizes
+          'px-2 py-0.5 text-xs': size === 'sm',
+          'px-3 py-1 text-sm': size === 'md',
+        },
+        className
+      )}
+      {...props}
+    >
+      {dot && (
+        <span
+          className={cn(
+            'w-2 h-2 rounded-full',
+            {
+              'bg-muted-foreground': variant === 'default',
+              'bg-success': variant === 'success',
+              'bg-warning': variant === 'warning',
+              'bg-destructive': variant === 'error',
+              'bg-info': variant === 'info',
+            }
+          )}
+        />
+      )}
+      {children}
+    </span>
+  );
+}

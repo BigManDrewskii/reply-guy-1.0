@@ -1,77 +1,108 @@
-import React, { useState } from 'react';
-import { ApiKeyIcon } from '../../lib/icons';
-import { ICON_SIZE } from '../../lib/icons';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
-import { useStore } from '../../lib/store';
+import { useState } from 'react';
+import { useStore } from '@/lib/store';
+import { Key, ExternalLink } from '@/lib/icons';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Alert } from '@/components/ui/alert';
 
 export default function OnboardingScreen() {
   const [apiKey, setApiKey] = useState('');
-  const setHasApiKey = useStore((state) => state.setHasApiKey);
-  const addToast = useStore((state) => state.addToast);
+  const [isValidating, setIsValidating] = useState(false);
+  const [error, setError] = useState('');
+  const setStoredApiKey = useStore((state) => state.setApiKey);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const validateApiKey = async () => {
     if (!apiKey.trim()) {
-      addToast({
-        message: 'Please enter an API key',
-        type: 'error',
-        duration: 3000,
-      });
+      setError('Please enter an API key');
       return;
     }
 
-    // Save to chrome.storage.local
-    await chrome.storage.local.set({ apiKey: apiKey.trim() });
-    setHasApiKey(true);
+    setIsValidating(true);
+    setError('');
 
-    addToast({
-      message: 'API key saved!',
-      type: 'success',
-      duration: 2000,
-    });
+    try {
+      const response = await fetch('https://openrouter.ai/api/v1/auth/key', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${apiKey.trim()}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.data) {
+          setStoredApiKey(apiKey.trim());
+        } else {
+          setError('Invalid API key');
+        }
+      } else {
+        setError('Invalid API key');
+      }
+    } catch {
+      setError('Failed to validate API key. Please try again.');
+    } finally {
+      setIsValidating(false);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    validateApiKey();
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[600px] px-6">
-      {/* Icon */}
-      <ApiKeyIcon {...ICON_DEFAULTS} size={ICON_SIZE.xxl} className="text-text-tertiary mb-6" />
+    <div className="flex flex-col items-center justify-center h-full p-6">
+      <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-6">
+        <Key size={32} className="text-foreground" />
+      </div>
 
-      {/* Heading */}
-      <h1 className="text-xl font-semibold text-text-primary mb-2">
+      <h1 className="text-2xl font-semibold text-foreground mb-2">
         Set up your API key
       </h1>
 
-      {/* Description */}
-      <p className="text-sm text-text-secondary text-center mb-8 max-w-xs">
+      <p className="text-sm text-muted-foreground mb-8 text-center leading-relaxed">
         Reply Guy uses OpenRouter to analyze pages and generate outreach messages.
       </p>
 
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="w-full max-w-xs space-y-4">
-        <Input
-          type="password"
-          placeholder="Enter your OpenRouter key"
-          value={apiKey}
-          onChange={(e) => setApiKey(e.target.value)}
-          className="w-full"
-        />
+      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
+        <div>
+          <Input
+            type="password"
+            value={apiKey}
+            onChange={(e) => setApiKey(e.target.value)}
+            placeholder="sk-or-..."
+            variant="bordered"
+            size="md"
+            error={!!error}
+            disabled={isValidating}
+          />
+          {error && (
+            <p className="text-xs text-destructive mt-2">{error}</p>
+          )}
+        </div>
 
-        <Button type="submit" variant="inverted" size="md" className="w-full">
-          Get Started →
+        <Button
+          type="submit"
+          variant="primary"
+          size="md"
+          disabled={!apiKey.trim() || isValidating}
+          className="w-full"
+        >
+          {isValidating ? 'Validating...' : 'Get Started →'}
         </Button>
       </form>
 
-      {/* Help link */}
-      <a
-        href="https://openrouter.ai"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-xs text-text-secondary hover:text-text-primary mt-6 underline"
-      >
-        Get a key at openrouter.ai ↗
-      </a>
+      <div className="mt-8">
+        <a
+          href="https://openrouter.ai/keys"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-primary hover:underline inline-flex items-center"
+        >
+          Get a key at openrouter.ai
+          <ExternalLink size={12} className="ml-1" />
+        </a>
+      </div>
     </div>
   );
 }

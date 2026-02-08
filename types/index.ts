@@ -1,67 +1,34 @@
-// Page Data Types
 export interface PageData {
   url: string;
   hostname: string;
-  platform: Platform;
+  platform: 'x' | 'linkedin' | 'github' | 'generic';
   title: string;
   metaDescription: string;
   ogTitle: string;
   ogDescription: string;
   ogImage: string;
-  author: string;
   scrapedAt: string;
+  isReady: boolean;
+  // X (Twitter) specific
+  name?: string;
+  bio?: string;
+  location?: string;
+  followers?: string;
+  recentPosts?: string[];
+  isProfile?: boolean;
+  // LinkedIn specific
+  headline?: string;
+  about?: string;
+  // GitHub specific
+  company?: string;
+  // Generic site specific
+  h1?: string;
+  bodyText?: string;
+  socialLinks?: string[];
+  email?: string;
 }
 
-export interface XProfileData {
-  name: string;
-  handle: string;
-  bio: string;
-  location: string;
-  website: string;
-  followers: string;
-  following: string;
-  verified: boolean;
-  recentPosts: string[];
-  isProfile: true;
-}
-
-export interface LinkedInProfileData {
-  name: string;
-  headline: string;
-  location: string;
-  about: string;
-  company: string;
-  connections: string;
-  isProfile: true;
-}
-
-export interface GitHubProfileData {
-  name: string;
-  handle: string;
-  bio: string;
-  location: string;
-  company: string;
-  website: string;
-  repos: string;
-  followers: string;
-  isProfile: true;
-}
-
-export interface GenericPageData {
-  h1: string;
-  h2: string;
-  bodyText: string;
-  socialLinks: string[];
-  email: string;
-  isProfile: false;
-}
-
-export type ScrapedData = PageData & (XProfileData | LinkedInProfileData | GitHubProfileData | GenericPageData);
-
-export type Platform = 'x' | 'linkedin' | 'github' | 'dribbble' | 'behance' | 'generic';
-
-// LLM Types
-export interface Analysis {
+export interface AnalysisResult {
   personName: string;
   summary: string;
   interests: string[];
@@ -76,20 +43,8 @@ export interface OutreachAngle {
   relevance: string;
 }
 
-export interface GeneratedMessage {
-  angle: OutreachAngle['angle'];
-  content: string;
-  voiceScore: number;
-  wordCount: number;
-  hook: string;
-}
-
-// Voice Profile Types
 export interface VoiceProfile {
   id: string;
-  avgMessageLength: number;
-  emojiFrequency: number;
-  emojiTypes: string[];
   tone: number;
   openingPatterns: string[];
   closingPatterns: string[];
@@ -97,32 +52,17 @@ export interface VoiceProfile {
   avoidPhrases: string[];
   vocabularySignature: string[];
   exampleMessages: string[];
-  lastUpdated: Date;
+  lastUpdated: number;
 }
 
-// Conversation Types
-export interface Conversation {
-  id: string;
-  platform: Platform;
-  pageUrl: string;
-  pageName: string;
-  pageHandle: string;
-  pageSnapshot: ScrapedData;
-  sentMessage: string;
-  angle: string;
-  firstContact: Date;
-  lastContact: Date;
-  status: ConversationStatus;
-}
-
-export type ConversationStatus = 'sent' | 'responded' | 'no_response' | 'converted';
-
-// UI Types
-export type Tab = 'outreach' | 'history' | 'settings';
-
-export interface Toast {
-  id: string;
+export interface GeneratedMessage {
   message: string;
-  type: 'success' | 'error' | 'info';
-  duration?: number;
+  wordCount: number;
+  hook: string;
+  voiceScore: number;
+}
+
+export interface CachedAnalysis {
+  analysis: AnalysisResult;
+  timestamp: number;
 }
