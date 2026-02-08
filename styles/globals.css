@@ -148,3 +148,30 @@ button.bg-\[\#ededed\]:focus-visible {
 .animate-shake {
   animation: shake 300ms ease-in-out;
 }
+
+/* Page transition animations */
+@keyframes slide-in-left {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-out-right {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.25s ease-out;
+}
+
+.animate-slide-out-right {
+  animation: slide-out-right 0.25s ease-in;
+}
