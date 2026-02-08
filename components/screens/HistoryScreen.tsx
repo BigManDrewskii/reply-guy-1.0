@@ -63,6 +63,8 @@ export default function HistoryScreen() {
 
   const grouped = groupByDate(filtered);
 
+  // Flatten conversations for stagger animation index
+  const flatConversations = filtered;
   const getPlatformIcon = (platform: string) => {
     switch (platform) {
       case 'x':
@@ -123,17 +125,23 @@ export default function HistoryScreen() {
             <h3 className="text-sm font-semibold leading-tight text-muted-foreground px-1">
               {date === new Date().toLocaleDateString() ? 'Today' : date}
             </h3>
-            {convs.map((conv) => (
-              <Card
-                key={conv.id}
-                variant="default"
-                className={`cursor-pointer transition-all ${
-                  expandedId === conv.id ? 'ring-2 ring-primary' : ''
-                }`}
-                onClick={() =>
-                  setExpandedId(expandedId === conv.id ? null : conv.id)
-                }
-              >
+            {convs.map((conv, convIndex) => {
+              const globalIndex = flatConversations.findIndex(c => c.id === conv.id);
+              return (
+                <Card
+                  key={conv.id}
+                  variant="default"
+                  className={`cursor-pointer transition-all ${
+                    expandedId === conv.id ? 'ring-2 ring-primary' : ''
+                  }`}
+                  style={{
+                    animation: `fade-in-up 0.3s ease-out ${globalIndex * 30}ms forwards`,
+                    opacity: 0,
+                  }}
+                  onClick={() =>
+                    setExpandedId(expandedId === conv.id ? null : conv.id)
+                  }
+                >
                 <CardContent className="p-3">
                   <div className="flex items-start gap-2">
                     <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center text-[10px] leading-normal font-numerical">
@@ -200,7 +208,8 @@ export default function HistoryScreen() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+            );
+            })}
           </div>
         ))
       )}
