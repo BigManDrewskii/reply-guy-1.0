@@ -43,8 +43,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           // Base styles
           'relative inline-flex items-center justify-center font-semibold',
           'transition-all duration-150 ease-out',
-          'rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50',
-          'active:scale-95 data-[state=pressed]:scale-95',
+          'rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary/50',
+          'active:scale-95 data-[state=pressed]:scale-95 active:duration-100 active:ease-in',
           'disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100',
 
           // Sizes using spacing tokens
@@ -72,11 +72,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
               variant === 'primary' || variant === 'cta',
 
             // Secondary - card background
-            'bg-card text-card-foreground border border-border hover:bg-card-hover hover:border-border hover:text-foreground active:bg-accent':
+            'bg-card text-card-foreground border border-border hover:bg-card-hover active:bg-accent':
               variant === 'secondary',
 
             // Ghost - transparent with hover
-            'bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground active:bg-muted-hover':
+            'bg-transparent text-muted-foreground hover:bg-muted/50 hover:text-foreground active:bg-muted-hover':
               variant === 'ghost',
 
             // Danger
