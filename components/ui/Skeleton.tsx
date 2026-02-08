@@ -4,7 +4,7 @@ interface SkeletonProps {
 }
 
 export default function Skeleton({ className = '', variant = 'pulse' }: SkeletonProps) {
-  const baseClasses = 'bg-muted animate-shimmer';
+  const baseClasses = 'skeleton-shimmer animate-shimmer';
   const variantClasses = {
     pulse: 'rounded-lg',
     text: 'rounded h-4 w-full',

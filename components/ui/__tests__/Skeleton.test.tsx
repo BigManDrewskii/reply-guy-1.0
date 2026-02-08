@@ -1,20 +1,35 @@
-import { render, screen } from '@testing-library/react'
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, afterEach } from 'vitest'
+import { render, screen, cleanup } from '@testing-library/react'
 import Skeleton from '../Skeleton'
 
 describe('Skeleton', () => {
+  afterEach(() => {
+    cleanup()
+  })
+
   it('renders pulse variant by default', () => {
     render(<Skeleton />)
-    expect(screen.getByRole('status')).toHaveClass('bg-muted')
+    const skeleton = screen.getByRole('status')
+
+    expect(skeleton.className).toContain('skeleton-shimmer')
+    expect(skeleton.className).toContain('animate-shimmer')
+    expect(skeleton.getAttribute('aria-label')).toBe('Loading content')
   })
 
   it('renders avatar variant with rounded-full', () => {
     render(<Skeleton variant="avatar" />)
-    expect(screen.getByRole('status')).toHaveClass('rounded-full')
+    expect(screen.getByRole('status').className).toContain('rounded-full')
   })
 
   it('renders text variant with varying widths', () => {
     render(<Skeleton variant="text" />)
-    expect(screen.getByRole('status')).toHaveClass('h-4', 'w-full')
+    const skeleton = screen.getByRole('status')
+    expect(skeleton.className).toContain('h-4')
+    expect(skeleton.className).toContain('w-full')
+  })
+
+  it('merges custom className', () => {
+    render(<Skeleton className="w-full" />)
+    expect(screen.getByRole('status').className).toContain('w-full')
   })
 })
