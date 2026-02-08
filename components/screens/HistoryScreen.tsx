@@ -12,6 +12,9 @@ export default function HistoryScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  const STAGGER_DELAY = 30; // ms per item
 
   useEffect(() => {
     const loadConversations = async () => {
@@ -23,6 +26,16 @@ export default function HistoryScreen() {
       setConversations(all);
     };
     loadConversations();
+  }, []);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setPrefersReducedMotion(mediaQuery.matches);
+
+    const handleChange = () => setPrefersReducedMotion(mediaQuery.matches);
+    mediaQuery.addEventListener('change', handleChange);
+
+    return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
   useEffect(() => {
@@ -63,8 +76,6 @@ export default function HistoryScreen() {
 
   const grouped = groupByDate(filtered);
 
-  // Flatten conversations for stagger animation index
-  const flatConversations = filtered;
   const getPlatformIcon = (platform: string) => {
     switch (platform) {
       case 'x':
@@ -125,8 +136,8 @@ export default function HistoryScreen() {
             <h3 className="text-sm font-semibold leading-tight text-muted-foreground px-1">
               {date === new Date().toLocaleDateString() ? 'Today' : date}
             </h3>
-            {convs.map((conv, convIndex) => {
-              const globalIndex = flatConversations.findIndex(c => c.id === conv.id);
+            {convs.map((conv) => {
+              const globalIndex = filtered.findIndex(c => c.id === conv.id);
               return (
                 <Card
                   key={conv.id}
@@ -134,10 +145,14 @@ export default function HistoryScreen() {
                   className={`cursor-pointer transition-all ${
                     expandedId === conv.id ? 'ring-2 ring-primary' : ''
                   }`}
-                  style={{
-                    animation: `fade-in-up 0.3s ease-out ${globalIndex * 30}ms forwards`,
-                    opacity: 0,
-                  }}
+                  style={
+                    prefersReducedMotion
+                      ? { opacity: 1 }
+                      : {
+                          animation: `fade-in-up ${globalIndex * STAGGER_DELAY}ms forwards`,
+                          opacity: 0,
+                        }
+                  }
                   onClick={() =>
                     setExpandedId(expandedId === conv.id ? null : conv.id)
                   }
