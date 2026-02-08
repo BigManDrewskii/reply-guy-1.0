@@ -64,7 +64,7 @@ export default function OnboardingScreen() {
         Reply Guy uses OpenRouter to analyze pages and generate outreach messages.
       </p>
 
-      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
+      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-6">
         <div>
           <Input
             type="password"
