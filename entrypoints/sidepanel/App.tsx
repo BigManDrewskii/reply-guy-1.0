@@ -125,37 +125,43 @@ export default function App() {
         {renderMainContent()}
       </main>
 
-      <nav className="h-12 flex items-center justify-around border-t border-border bg-card px-2 shrink-0">
-        {(['outreach', 'history', 'settings'] as Screen[]).map((s) => {
-          const icons = {
-            outreach: Home,
-            history: Clock,
-            settings: Settings,
-          } as const;
+      <nav className="h-12 flex flex-col border-t border-border bg-card px-2 shrink-0">
+        <div className="relative flex flex-1">
+          {/* Sliding indicator */}
+          <div
+            className="absolute top-0 h-0.5 bg-accent transition-all duration-250 ease-out"
+            style={{
+              left: screen === 'outreach' ? '0%' : screen === 'history' ? '33.33%' : '66.66%',
+              width: '33.33%'
+            }}
+          />
+          {(['outreach', 'history', 'settings'] as Screen[]).map((s) => {
+            const icons = {
+              outreach: Home,
+              history: Clock,
+              settings: Settings,
+            } as const;
 
-          const Icon = icons[s];
-          const isActive = screen === s;
+            const Icon = icons[s];
+            const isActive = screen === s;
 
-          return (
-            <button
-              key={s}
-              onClick={() => setScreen(s)}
-              className={`
-                relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full
-                transition-all duration-200
-                ${isActive ? 'text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'}
-                focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary/50
-              `}
-            >
-              {/* Active indicator dot */}
-              {isActive && (
-                <span className="absolute top-0 w-8 h-0.5 bg-primary rounded-full" />
-              )}
-              <Icon size={16} className={isActive ? 'scale-105' : 'scale-100 transition-transform'} />
-              <span className="text-[10px] capitalize font-medium">{s}</span>
-            </button>
-          );
-        })}
+            return (
+              <button
+                key={s}
+                onClick={() => setScreen(s)}
+                className={`
+                  relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full
+                  transition-all duration-150
+                  ${isActive ? 'bg-cta text-cta-foreground' : 'text-muted-foreground hover:bg-muted/30'}
+                  focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary/50
+                `}
+              >
+                <Icon size={16} className={isActive ? 'scale-105' : 'scale-100 transition-transform'} />
+                <span className="text-[10px] capitalize font-medium">{s}</span>
+              </button>
+            );
+          })}
+        </div>
       </nav>
 
       {toasts.map((toast, index) => (
