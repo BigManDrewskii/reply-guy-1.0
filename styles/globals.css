@@ -111,7 +111,7 @@ button.bg-\[\#ededed\]:focus-visible {
   letter-spacing: -0.02em;
 }
 
-/* Skeleton shimmer animation */
+/* Skeleton shimmer animation - refined for smoother effect */
 .skeleton-shimmer {
   background: linear-gradient(
     90deg,
@@ -120,6 +120,17 @@ button.bg-\[\#ededed\]:focus-visible {
     oklch(var(--color-muted)) 100%
   );
   background-size: 200% 100%;
+}
+
+/* Respect prefers-reduced-motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .animate-shimmer {
+    animation: none;
+  }
+
+  .skeleton-shimmer {
+    background: oklch(var(--color-muted));
+  }
 }
 
 /* Toast slide-up animation */
