@@ -13,11 +13,11 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
         className={cn(
           'rounded-lg bg-card',
           'transition-all duration-150 ease-out',
-          'hover:border-border/80 active:scale-[0.98]',
-          'focus-visible:ring-2 focus-visible:ring-primary/50',
+          'active:scale-[0.98]',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50',
           {
-            'border border-border': variant === 'default' || variant === 'elevated',
-            'border-2 border-border': variant === 'bordered',
+            'border border-border hover:border-border/80': variant === 'default' || variant === 'elevated',
+            'border-2 border-border hover:border-2 hover:border-border/80': variant === 'bordered',
           },
           className
         )}
