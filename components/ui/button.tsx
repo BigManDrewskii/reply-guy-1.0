@@ -37,13 +37,14 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         ref={ref}
+        type="button"
         disabled={disabled || loading}
         aria-busy={loading}
         className={cn(
           // Base styles
           'relative inline-flex items-center justify-center font-semibold',
           'transition-all duration-150 ease-out',
-          'rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary/50',
+          'rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:ring-primary/50',
           'active:scale-95 data-[state=pressed]:scale-95 active:duration-100 active:ease-in',
           'disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100',
 
@@ -106,7 +107,18 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       >
         {loading && (
           <span
-            className="absolute inset-0 flex items-center justify-center bg-inherit rounded-lg"
+            className={cn(
+              'absolute inset-0 flex items-center justify-center rounded-lg',
+              {
+                'bg-cta': variant === 'primary' || variant === 'cta',
+                'bg-card': variant === 'secondary',
+                'bg-transparent': variant === 'ghost' || variant === 'outline',
+                'bg-destructive': variant === 'danger',
+                'bg-success': variant === 'success',
+                'bg-warning': variant === 'warning',
+                'bg-info': variant === 'info',
+              }
+            )}
             aria-hidden="true"
           >
             <Loader2
