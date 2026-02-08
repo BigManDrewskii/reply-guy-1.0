@@ -17,7 +17,10 @@ function ProfileCard({ data }: ProfileCardProps) {
   };
 
   return (
-    <Card variant="default">
+    <Card
+      variant="default"
+      className="hover:scale-[1.02] hover:border-border/80"
+    >
       <CardContent className="p-4">
         {/* Header with platform icon */}
         <div className="flex items-start gap-3 mb-3">
