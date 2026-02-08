@@ -5,6 +5,7 @@ import { Zap, Home, Clock, Settings } from '@/lib/icons';
 import { ErrorBoundary } from '@/components/error/ErrorBoundary';
 import { useToast } from '@/components/ui/useToast';
 import Toast from '@/components/ui/Toast';
+import { cn } from '@/lib/utils/cn';
 
 // Lazy load screens to reduce initial bundle size
 const OnboardingScreen = lazy(() => import('@/components/screens/OnboardingScreen'));
@@ -29,6 +30,8 @@ function ScreenLoader() {
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('outreach');
+  const [displayScreen, setDisplayScreen] = useState<Screen>('outreach');
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const [pageData, setPageData] = useState<PageData | null>(null);
   const apiKey = useStore((state) => state.apiKey);
   const { toasts, remove } = useToast();
@@ -50,6 +53,16 @@ export default function App() {
     return () => chrome.storage.session.onChanged.removeListener(listener);
   }, []);
 
+  useEffect(() => {
+    if (screen !== displayScreen) {
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setDisplayScreen(screen);
+        setIsTransitioning(false);
+      }, 250);
+    }
+  }, [screen]);
+
   // If no API key, show onboarding
   if (!apiKey) {
     return (
@@ -70,7 +83,7 @@ export default function App() {
   }
 
   const renderMainContent = () => {
-    if (screen === 'outreach') {
+    if (displayScreen === 'outreach') {
       // If no page data yet, show idle screen
       if (!pageData) {
         return (
@@ -91,7 +104,7 @@ export default function App() {
       );
     }
 
-    if (screen === 'history') {
+    if (displayScreen === 'history') {
       return (
         <ErrorBoundary>
           <Suspense fallback={<ScreenLoader />}>
@@ -101,7 +114,7 @@ export default function App() {
       );
     }
 
-    if (screen === 'settings') {
+    if (displayScreen === 'settings') {
       return (
         <ErrorBoundary>
           <Suspense fallback={<ScreenLoader />}>
@@ -121,7 +134,13 @@ export default function App() {
         <span className="text-sm font-semibold">Reply Guy</span>
       </header>
 
-      <main className="flex-1 overflow-y-auto p-4">
+      <main
+        className={cn(
+          'flex-1 overflow-y-auto p-4',
+          isTransitioning && 'animate-slide-out-right',
+          !isTransitioning && 'animate-slide-in-left'
+        )}
+      >
         {renderMainContent()}
       </main>
 
