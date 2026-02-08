@@ -58,4 +58,26 @@ describe('CopyButton feedback', () => {
 
     expect(onCopy).toHaveBeenCalled()
   })
+
+  it('has accessible label that updates on copy', async () => {
+    render(<CopyButton text="test" />)
+    const button = screen.getByRole('button')
+
+    // Initial state
+    expect(button).toHaveAttribute('aria-label', 'Copy to clipboard')
+
+    // After copy
+    await fireEvent.click(button)
+    await waitFor(() => {
+      expect(button).toHaveAttribute('aria-label', 'Copied!')
+    })
+
+    // After timeout
+    await waitFor(
+      () => {
+        expect(button).toHaveAttribute('aria-label', 'Copy to clipboard')
+      },
+      { timeout: 1500 }
+    )
+  })
 })

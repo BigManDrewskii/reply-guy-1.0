@@ -30,6 +30,7 @@ function CopyButton({ text, onCopy }: CopyButtonProps) {
     <Button
       variant={copied ? 'success' : 'primary'}
       onClick={handleCopy}
+      aria-label={copied ? "Copied!" : "Copy to clipboard"}
       className="w-full"
     >
       {copied ? (
