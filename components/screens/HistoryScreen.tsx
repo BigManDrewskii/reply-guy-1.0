@@ -110,7 +110,7 @@ export default function HistoryScreen() {
       {filtered.length === 0 ? (
         <Card variant="default">
           <CardContent className="p-8 text-center">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-[13px] leading-relaxed text-muted-foreground">
               {searchQuery || activeFilter !== 'all'
                 ? 'No conversations match your search'
                 : 'No conversations yet'}
@@ -120,7 +120,7 @@ export default function HistoryScreen() {
       ) : (
         Object.entries(grouped).map(([date, convs]) => (
           <div key={date} className="space-y-2">
-            <h3 className="text-xs font-medium text-muted-foreground px-1">
+            <h3 className="text-sm font-semibold leading-tight text-muted-foreground px-1">
               {date === new Date().toLocaleDateString() ? 'Today' : date}
             </h3>
             {convs.map((conv) => (
@@ -136,16 +136,16 @@ export default function HistoryScreen() {
               >
                 <CardContent className="p-3">
                   <div className="flex items-start gap-2">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-numerical">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center text-[10px] leading-normal font-numerical">
                       {getPlatformIcon(conv.platform)}
                     </div>
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
-                        <h4 className="text-sm font-medium text-foreground truncate">
+                        <h4 className="text-sm font-semibold leading-tight text-foreground truncate">
                           {conv.pageName}
                         </h4>
-                        <span className="text-xs text-muted-foreground font-numerical flex-shrink-0">
+                        <span className="text-xs leading-normal text-muted-foreground font-numerical flex-shrink-0">
                           {new Date(conv.sentAt).toLocaleTimeString([], {
                             hour: '2-digit',
                             minute: '2-digit',
@@ -154,7 +154,7 @@ export default function HistoryScreen() {
                       </div>
 
                       {!expandedId && (
-                        <p className="text-xs text-muted-foreground truncate mt-1">
+                        <p className="text-[13px] leading-relaxed text-muted-foreground truncate mt-1">
                           {conv.sentMessage}
                         </p>
                       )}
@@ -169,18 +169,18 @@ export default function HistoryScreen() {
                                 : 'bg-muted-foreground'
                           }`}
                         />
-                        <span className="text-xs text-muted-foreground capitalize">
+                        <span className="text-xs leading-normal text-muted-foreground capitalize">
                           {conv.status.replace('_', ' ')}
                         </span>
                       </div>
 
                       {expandedId === conv.id && (
                         <div className="mt-3 pt-3 border-t border-border">
-                          <p className="text-sm text-foreground whitespace-pre-wrap">
+                          <p className="text-[13px] leading-relaxed text-foreground whitespace-pre-wrap">
                             {conv.sentMessage}
                           </p>
                           <div className="flex items-center justify-between mt-3">
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-xs leading-normal text-muted-foreground">
                               Angle: {conv.angle}
                             </span>
                             <button

@@ -76,7 +76,7 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
   if (!pageData) {
     return (
       <div className="text-center py-8">
-        <p className="text-sm text-muted-foreground">Waiting for page data...</p>
+        <p className="text-[13px] leading-relaxed text-muted-foreground">Waiting for page data...</p>
       </div>
     );
   }
@@ -104,10 +104,10 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
             <div className="mb-4 flex justify-center">
               <Badge variant="info" size="md">Ready to analyze</Badge>
             </div>
-            <h3 className="text-sm font-semibold text-foreground mb-2">
+            <h3 className="text-sm font-semibold leading-tight text-foreground mb-2">
               {pageData.name || pageData.ogTitle || pageData.hostname}
             </h3>
-            <p className="text-sm text-muted-foreground mb-6">
+            <p className="text-[13px] leading-relaxed text-muted-foreground mb-6">
               We'll analyze this {pageData.isProfile ? 'profile' : 'page'} and generate personalized outreach messages.
             </p>
             <Button
@@ -129,7 +129,7 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
             <div className="flex items-center justify-center gap-2 mb-2">
               <Badge variant="info" size="sm">Starting analysis...</Badge>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs leading-normal text-muted-foreground">
               Analyzing in {debounceCountdown} second{debounceCountdown !== 1 ? 's' : ''}
             </p>
             <Button
@@ -158,12 +158,12 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
             <CardContent className="p-4">
               <div className="mb-3">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs text-muted-foreground">Confidence</span>
+                  <span className="text-xs leading-normal text-muted-foreground">Confidence</span>
                 </div>
                 <Progress value={analysis.confidence} showValue size="md" />
               </div>
               {analysis.confidenceReason && (
-                <p className="text-xs text-muted-foreground mt-2">{analysis.confidenceReason}</p>
+                <p className="text-xs leading-normal text-muted-foreground mt-2">{analysis.confidenceReason}</p>
               )}
             </CardContent>
           </Card>
@@ -172,8 +172,8 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
           {analysis.summary && (
             <Card variant="default">
               <CardContent className="p-4">
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">Summary</h3>
-                <p className="text-sm text-muted-foreground">{analysis.summary}</p>
+                <h3 className="text-sm font-semibold leading-tight text-muted-foreground mb-2">Summary</h3>
+                <p className="text-[13px] leading-relaxed text-muted-foreground">{analysis.summary}</p>
               </CardContent>
             </Card>
           )}
@@ -182,7 +182,7 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
           {analysis.interests && analysis.interests.length > 0 && (
             <Card variant="default">
               <CardContent className="p-4">
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">Interests</h3>
+                <h3 className="text-sm font-semibold leading-tight text-muted-foreground mb-2">Interests</h3>
                 <div className="flex flex-wrap gap-2">
                   {analysis.interests.map((interest, i) => (
                     <Badge key={i} variant="default" size="sm">

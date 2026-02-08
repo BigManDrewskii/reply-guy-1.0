@@ -56,11 +56,11 @@ export default function OnboardingScreen() {
         <Key size={32} className="text-foreground" />
       </div>
 
-      <h1 className="text-2xl font-semibold text-foreground mb-3">
+      <h1 className="text-base font-semibold leading-tight text-foreground mb-3">
         Set up your API key
       </h1>
 
-      <p className="text-sm text-muted-foreground mb-6 text-center leading-relaxed">
+      <p className="text-[13px] leading-relaxed text-muted-foreground mb-6 text-center">
         Reply Guy uses OpenRouter to analyze pages and generate outreach messages.
       </p>
 
@@ -77,7 +77,7 @@ export default function OnboardingScreen() {
             disabled={isValidating}
           />
           {error && (
-            <p className="text-xs text-destructive mt-2">{error}</p>
+            <p className="text-xs leading-normal text-destructive mt-2">{error}</p>
           )}
         </div>
 
@@ -97,7 +97,7 @@ export default function OnboardingScreen() {
           href="https://openrouter.ai/keys"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs text-primary hover:underline inline-flex items-center"
+          className="text-xs leading-normal text-primary hover:underline inline-flex items-center"
         >
           Get a key at openrouter.ai
           <ExternalLink size={12} className="ml-1" />

@@ -118,13 +118,13 @@ export default function SettingsScreen() {
     <div className="p-4 space-y-4">
       {/* API Key Section */}
       <div>
-        <h2 className="text-lg font-semibold text-foreground mb-3">API Key</h2>
+        <h2 className="text-base font-semibold leading-tight text-foreground mb-3">API Key</h2>
 
         {!isEditing ? (
           <div className="space-y-3">
             <Card variant="default">
               <CardContent className="px-4 py-3 flex items-center justify-between">
-                <span className="text-sm text-foreground font-mono">
+                <span className="text-[13px] leading-relaxed text-foreground font-mono">
                   {showKey ? apiKey : maskedKey}
                 </span>
                 <button
@@ -165,7 +165,7 @@ export default function SettingsScreen() {
               disabled={isValidating}
             />
             {error && (
-              <p className="text-xs text-destructive">{error}</p>
+              <p className="text-xs leading-normal text-destructive">{error}</p>
             )}
 
             <div className="flex gap-2">
@@ -194,7 +194,7 @@ export default function SettingsScreen() {
       </div>
 
       <div className="border-t border-border pt-4">
-        <h2 className="text-lg font-semibold text-foreground mb-3">Voice Training</h2>
+        <h2 className="text-base font-semibold leading-tight text-foreground mb-3">Voice Training</h2>
         <Button
           onClick={handleVoiceTraining}
           variant="secondary"
@@ -211,12 +211,12 @@ export default function SettingsScreen() {
             </Badge>
           </div>
         ) : (
-          <p className="text-xs text-muted-foreground mt-2 text-center">No examples yet</p>
+          <p className="text-xs leading-normal text-muted-foreground mt-2 text-center">No examples yet</p>
         )}
       </div>
 
       <div className="border-t border-border pt-4">
-        <h2 className="text-lg font-semibold text-foreground mb-3">Appearance</h2>
+        <h2 className="text-base font-semibold leading-tight text-foreground mb-3">Appearance</h2>
         <Button
           onClick={toggleTheme}
           variant="secondary"
@@ -228,7 +228,7 @@ export default function SettingsScreen() {
       </div>
 
       <div className="border-t border-border pt-4">
-        <h2 className="text-lg font-semibold text-foreground mb-3">Data</h2>
+        <h2 className="text-base font-semibold leading-tight text-foreground mb-3">Data</h2>
         <div className="space-y-2">
           <Button
             onClick={() => setShowClearCacheDialog(true)}
@@ -263,7 +263,7 @@ export default function SettingsScreen() {
       </div>
 
       <div className="border-t border-border pt-4 text-center">
-        <p className="text-xs text-muted-foreground">v0.1.0 · Studio Drewskii</p>
+        <p className="text-[10px] leading-normal text-muted-foreground">v0.1.0 · Studio Drewskii</p>
       </div>
 
       {showClearCacheDialog && (

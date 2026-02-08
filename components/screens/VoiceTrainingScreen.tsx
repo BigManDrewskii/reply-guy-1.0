@@ -49,10 +49,10 @@ export default function VoiceTrainingScreen() {
         )}
 
         <div>
-          <h2 className="text-lg font-semibold text-foreground mb-2">
+          <h2 className="text-base font-semibold leading-tight text-foreground mb-2">
             Step 1: Add Your Messages
           </h2>
-          <p className="text-sm text-muted-foreground mb-4">
+          <p className="text-[13px] leading-relaxed text-muted-foreground mb-4">
             Paste 10-20 example DMs you've sent. Separate each message with "---".
           </p>
         </div>
@@ -69,20 +69,20 @@ That's really interesting. I've been...
 ---
 
 Would love to chat more about...`}
-          className="w-full h-64 px-4 py-3 bg-card border border-border rounded-lg text-sm text-foreground placeholder-[#666] focus:outline-none focus:border-[#0070f3] resize-none font-mono"
+          className="w-full h-64 px-4 py-3 bg-card border border-border rounded-lg text-[13px] leading-relaxed text-foreground placeholder-[#666] focus:outline-none focus:border-[#0070f3] resize-none font-mono"
         />
 
         <div className="flex items-center justify-between">
-          <span className="text-xs text-muted-foreground font-numerical">
+          <span className="text-xs leading-normal text-muted-foreground font-numerical">
             {messageCount} message{messageCount !== 1 ? 's' : ''} detected
           </span>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs leading-normal text-muted-foreground">
             Min: 5 · Recommended: 10-20
           </span>
         </div>
 
         {error && (
-          <p className="text-xs text-destructive">{error}</p>
+          <p className="text-xs leading-normal text-destructive">{error}</p>
         )}
 
         <Button
@@ -103,10 +103,10 @@ Would love to chat more about...`}
     return (
       <div className="p-4 space-y-6">
         <div>
-          <h2 className="text-lg font-semibold text-foreground mb-2">
+          <h2 className="text-base font-semibold leading-tight text-foreground mb-2">
             Step 2: Analyzing Your Voice
           </h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-[13px] leading-relaxed text-muted-foreground">
             Extracting your unique writing style...
           </p>
         </div>
@@ -163,10 +163,10 @@ Would love to chat more about...`}
     return (
       <div className="p-4 space-y-6">
         <div>
-          <h2 className="text-lg font-semibold text-foreground mb-2">
+          <h2 className="text-base font-semibold leading-tight text-foreground mb-2">
             Step 3: Review Your Voice Profile
           </h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-[13px] leading-relaxed text-muted-foreground">
             Review and edit your voice fingerprint before saving.
           </p>
         </div>
@@ -175,7 +175,7 @@ Would love to chat more about...`}
           {/* Tone */}
           <Card variant="default">
             <CardContent className="p-4">
-              <label className="text-xs text-muted-foreground block mb-2">Tone</label>
+              <label className="text-xs leading-normal text-muted-foreground block mb-2">Tone</label>
               <div className="flex items-center gap-3">
                 <input
                   type="range"
@@ -185,11 +185,11 @@ Would love to chat more about...`}
                   readOnly
                   className="flex-1"
                 />
-                <span className="text-sm font-numerical text-foreground w-8 text-right">
+                <span className="text-[13px] leading-relaxed font-numerical text-foreground w-8 text-right">
                   {voiceProfile.tone}/10
                 </span>
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
+              <p className="text-xs leading-normal text-muted-foreground mt-2">
                 {voiceProfile.tone <= 3 ? 'Formal & Professional' : voiceProfile.tone <= 7 ? 'Balanced' : 'Casual & Friendly'}
               </p>
             </CardContent>
@@ -198,10 +198,10 @@ Would love to chat more about...`}
           {/* Opening patterns */}
           <Card variant="default">
             <CardContent className="p-4">
-              <label className="text-xs text-muted-foreground block mb-2">Opening Patterns</label>
+              <label className="text-xs leading-normal text-muted-foreground block mb-2">Opening Patterns</label>
               <div className="space-y-1">
                 {voiceProfile.openingPatterns.map((pattern, i) => (
-                  <p key={i} className="text-xs text-muted-foreground font-mono">
+                  <p key={i} className="text-xs leading-normal text-muted-foreground font-mono">
                     "{pattern}"
                   </p>
                 ))}
@@ -212,7 +212,7 @@ Would love to chat more about...`}
           {/* Personality markers */}
           <Card variant="default">
             <CardContent className="p-4">
-              <label className="text-xs text-muted-foreground block mb-2">Personality Markers</label>
+              <label className="text-xs leading-normal text-muted-foreground block mb-2">Personality Markers</label>
               <div className="flex flex-wrap gap-2">
                 {voiceProfile.personalityMarkers.map((marker, i) => (
                   <Badge key={i} variant="default" size="sm">
@@ -226,7 +226,7 @@ Would love to chat more about...`}
           {/* Vocabulary signature */}
           <Card variant="default">
             <CardContent className="p-4">
-              <label className="text-xs text-muted-foreground block mb-2">Vocabulary Signature</label>
+              <label className="text-xs leading-normal text-muted-foreground block mb-2">Vocabulary Signature</label>
               <div className="flex flex-wrap gap-2">
                 {voiceProfile.vocabularySignature.map((word, i) => (
                   <Badge key={i} variant="info" size="sm">
