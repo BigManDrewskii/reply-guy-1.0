@@ -158,8 +158,8 @@ export default function App() {
         })}
       </nav>
 
-      {toasts.map(toast => (
-        <Toast key={toast.id} toast={toast} onRemove={remove} />
+      {toasts.map((toast, index) => (
+        <Toast key={toast.id} toast={{ ...toast, index }} onRemove={remove} />
       ))}
     </div>
   );
