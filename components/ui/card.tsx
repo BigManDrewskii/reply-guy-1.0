@@ -14,7 +14,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
           'rounded-lg bg-card',
           'transition-all duration-150 ease-out',
           'hover:border-border/80 active:scale-[0.98]',
-          'focus-within:ring-2 focus-within:ring-primary/50',
+          'focus-visible:ring-2 focus-visible:ring-primary/50',
           {
             'border border-border': variant === 'default' || variant === 'elevated',
             'border-2 border-border': variant === 'bordered',
