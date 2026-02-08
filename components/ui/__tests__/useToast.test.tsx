@@ -41,4 +41,38 @@ describe('useToast', () => {
     expect(result.current.toasts).toHaveLength(3)
     expect(result.current.toasts[0].message).toBe('2') // First dropped
   })
+
+  it('does not auto-dismiss error toasts', () => {
+    const { result } = renderHook(() => useToast())
+    act(() => {
+      result.current.toast({ message: 'Error', type: 'error' })
+    })
+    act(() => {
+      vi.advanceTimersByTime(10000)
+    })
+    expect(result.current.toasts).toHaveLength(1)
+  })
+
+  it('dismisses info toasts after 2s', () => {
+    const { result } = renderHook(() => useToast())
+    act(() => {
+      result.current.toast({ message: 'Info', type: 'info' })
+    })
+    act(() => {
+      vi.advanceTimersByTime(2000)
+    })
+    expect(result.current.toasts).toHaveLength(0)
+  })
+
+  it('manually removes toast', () => {
+    const { result } = renderHook(() => useToast())
+    act(() => {
+      result.current.toast({ message: 'Test', type: 'success' })
+    })
+    const toastId = result.current.toasts[0].id
+    act(() => {
+      result.current.remove(toastId)
+    })
+    expect(result.current.toasts).toHaveLength(0)
+  })
 })
