@@ -8,7 +8,6 @@ interface SkeletonProps {
 export default function Skeleton({ className, variant = 'pulse' }: SkeletonProps) {
   const baseClasses = cn(
     'skeleton-shimmer animate-shimmer',
-    'bg-gradient-to-r from-muted via-muted-hover to-muted',
     'bg-[length:200%_100%]',
   );
 

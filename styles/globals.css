@@ -112,6 +112,7 @@ button.bg-\[\#ededed\]:focus-visible {
 }
 
 /* Skeleton shimmer animation - refined for smoother effect */
+/* Note: @keyframes shimmer defined in tailwind.config.ts */
 .skeleton-shimmer {
   background: linear-gradient(
     90deg,

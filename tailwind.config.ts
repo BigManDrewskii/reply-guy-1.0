@@ -244,7 +244,7 @@ export default {
         'fade-out': 'fade-out 0.15s ease-in forwards',
         'slide-up': 'slide-up 0.3s ease-out',
         'slide-down': 'slide-down 0.3s ease-in',
-        shimmer: 'shimmer 1.5s infinite',
+        shimmer: 'shimmer 1.5s linear infinite',
         pulse: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'slide-in-left': 'slide-in-left 0.25s ease-out',
         'slide-out-right': 'slide-out-right 0.25s ease-in',
