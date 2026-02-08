@@ -156,7 +156,7 @@ export default function App() {
                   focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary/50
                 `}
               >
-                <Icon size={16} className={isActive ? 'scale-105' : 'scale-100 transition-transform'} />
+                <Icon size={16} />
                 <span className="text-[10px] capitalize font-medium">{s}</span>
               </button>
             );
