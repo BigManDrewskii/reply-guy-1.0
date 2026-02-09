@@ -1,4 +1,4 @@
-import{c,X as e}from"./sidepanel-DBKoi8z6.js";/**
+import{c,X as e}from"./sidepanel-D7LXy8vl.js";/**
  * @license lucide-react v0.460.0 - ISC
  *
  * This source code is licensed under the ISC license.

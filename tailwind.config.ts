@@ -17,16 +17,14 @@ export default {
     },
     extend: {
       colors: {
-        // Core colors — using var() directly since design-tokens.css defines oklch values via @theme
+        // Core — mapped to design-tokens.css via @theme
         background: 'var(--color-background)',
         foreground: 'var(--color-foreground)',
-
-        // Interactive surfaces
         border: 'var(--color-border)',
         input: 'var(--color-input)',
         ring: 'var(--color-ring)',
 
-        // Semantic color variants
+        // Semantic surfaces
         card: {
           DEFAULT: 'var(--color-card)',
           hover: 'var(--color-card-hover)',
@@ -60,7 +58,7 @@ export default {
           hover: 'var(--color-accent-hover)',
         },
 
-        // CTA (inverted)
+        // CTA (inverted high-emphasis)
         cta: {
           DEFAULT: 'var(--color-cta-background)',
           foreground: 'var(--color-cta-foreground)',
@@ -68,7 +66,7 @@ export default {
           active: 'var(--color-cta-active)',
         },
 
-        // Semantic colors
+        // Status colors
         destructive: {
           DEFAULT: 'var(--color-destructive)',
           foreground: 'var(--color-destructive-foreground)',
@@ -92,6 +90,15 @@ export default {
           foreground: 'var(--color-info-foreground)',
           hover: 'var(--color-info-hover)',
           subtle: 'var(--color-info-subtle)',
+        },
+
+        // Chart colors (from tweakcn theme)
+        chart: {
+          1: 'var(--color-chart-1)',
+          2: 'var(--color-chart-2)',
+          3: 'var(--color-chart-3)',
+          4: 'var(--color-chart-4)',
+          5: 'var(--color-chart-5)',
         },
 
         // Sidebar
@@ -146,7 +153,7 @@ export default {
         '12': 'var(--spacing-12)',
       },
 
-      // Border radius
+      // Border radius (tweakcn base: 0.625rem)
       borderRadius: {
         none: 'var(--radius-none)',
         sm: 'var(--radius-sm)',
@@ -166,7 +173,7 @@ export default {
         inner: 'var(--shadow-inner)',
       },
 
-      // Transition utilities
+      // Transitions
       transitionDuration: {
         instant: 'var(--duration-instant)',
         fast: 'var(--duration-fast)',
@@ -183,9 +190,9 @@ export default {
 
       // Font families
       fontFamily: {
-        sans: ['var(--font-sans)', 'sans-serif'],
-        serif: ['var(--font-serif)', 'serif'],
-        mono: ['var(--font-mono)', 'monospace'],
+        sans: ['var(--font-sans)'],
+        serif: ['var(--font-serif)'],
+        mono: ['var(--font-mono)'],
       },
 
       // Keyframes
@@ -214,7 +221,7 @@ export default {
           '0%': { transform: 'translateY(0)' },
           '100%': { transform: 'translateY(100%)' },
         },
-        'shimmer': {
+        shimmer: {
           '0%': { backgroundPosition: '-200% 0' },
           '100%': { backgroundPosition: '200% 0' },
         },

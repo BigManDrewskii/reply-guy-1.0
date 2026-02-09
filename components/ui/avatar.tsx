@@ -48,10 +48,10 @@ export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
     }[size];
 
     const statusColors = {
-      online: 'hsl(var(--success))',
-      offline: 'hsl(var(--muted-foreground))',
-      away: 'hsl(var(--warning))',
-      busy: 'hsl(var(--destructive))',
+      online: 'var(--color-success)',
+      offline: 'var(--color-muted-foreground)',
+      away: 'var(--color-warning)',
+      busy: 'var(--color-destructive)',
     };
 
     const hasError = error || imgError;

@@ -1,116 +1,132 @@
 @import "tailwindcss";
 
-/* Design tokens for the extension */
+/* ============================================
+ * REPLY GUY DESIGN SYSTEM
+ * Based on tweakcn theme: cmleznb3y000104l1eowp0t5n
+ * shadcn/ui compatible · oklch color space
+ * ============================================ */
+
 @theme {
   /* ============================================
-   * CORE PALETTE (Dark theme - default)
+   * CORE PALETTE — Dark theme (default)
+   * Source: tweakcn "reply-guy" dark mode
    * ============================================ */
 
   /* Backgrounds */
-  --color-background: oklch(0 0 0);                    /* #000 - Pure black */
-  --color-card: oklch(0.0670 0 0);                    /* #111 - Cards, elevated surfaces */
-  --color-card-hover: oklch(0.1000 0 0);              /* Slightly lighter card hover */
-  --color-popover: oklch(0.1800 0 0);                 /* Popovers, tooltips */
-  --color-popover-foreground: oklch(1 0 0);
+  --color-background: oklch(0.145 0 0);
+  --color-card: oklch(0.205 0 0);
+  --color-card-hover: oklch(0.245 0 0);
+  --color-card-foreground: oklch(0.985 0 0);
+  --color-popover: oklch(0.269 0 0);
+  --color-popover-foreground: oklch(0.985 0 0);
 
   /* Foregrounds */
-  --color-foreground: oklch(1 0 0);                   /* #fff - Primary text */
-  --color-card-foreground: oklch(1 0 0);              /* Text on cards */
-  --color-muted-foreground: oklch(0.7200 0 0);        /* #a1a1a1 - Secondary text */
-  --color-muted: oklch(0.2300 0 0);                   /* #262626 - Muted backgrounds */
-  --color-muted-hover: oklch(0.2800 0 0);             /* Muted hover state */
+  --color-foreground: oklch(0.985 0 0);
+  --color-muted: oklch(0.269 0 0);
+  --color-muted-hover: oklch(0.32 0 0);
+  --color-muted-foreground: oklch(0.708 0 0);
 
-  /* Primary (CTA - inverted) */
-  --color-primary: oklch(1 0 0);                       /* #fff - CTA text */
-  --color-primary-foreground: oklch(0 0 0);           /* #000 - CTA bg */
-  --color-primary-hover: oklch(0.9300 0 0);           /* #ededed - CTA hover */
-  --color-primary-active: oklch(0.9100 0 0);          /* CTA active/pressed */
+  /* Primary */
+  --color-primary: oklch(0.922 0 0);
+  --color-primary-foreground: oklch(0.205 0 0);
+  --color-primary-hover: oklch(0.87 0 0);
+  --color-primary-active: oklch(0.84 0 0);
 
   /* Secondary */
-  --color-secondary: oklch(0.2500 0 0);               /* #262626 - Secondary bg */
-  --color-secondary-foreground: oklch(1 0 0);          /* Secondary text */
-  --color-secondary-hover: oklch(0.3000 0 0);          /* Secondary hover */
+  --color-secondary: oklch(0.269 0 0);
+  --color-secondary-foreground: oklch(0.985 0 0);
+  --color-secondary-hover: oklch(0.32 0 0);
 
   /* Accent */
-  --color-accent: oklch(0.3200 0 0);                  /* Accent backgrounds */
-  --color-accent-foreground: oklch(1 0 0);             /* Accent text */
-  --color-accent-hover: oklch(0.3800 0 0);             /* Accent hover */
+  --color-accent: oklch(0.371 0 0);
+  --color-accent-foreground: oklch(0.985 0 0);
+  --color-accent-hover: oklch(0.42 0 0);
 
   /* Borders & Inputs */
-  --color-border: oklch(0.2600 0 0);                  /* #262626 - All borders */
-  --color-border-hover: oklch(0.3200 0 0);             /* Border hover */
-  --color-input: oklch(0.3200 0 0);                   /* Input backgrounds */
-  --color-input-hover: oklch(0.3800 0 0);              /* Input hover */
+  --color-border: oklch(0.275 0 0);
+  --color-border-hover: oklch(0.35 0 0);
+  --color-input: oklch(0.325 0 0);
+  --color-input-hover: oklch(0.38 0 0);
 
   /* Focus Ring */
-  --color-ring: oklch(0.7200 0 0);                    /* Focus ring color */
-  --color-ring-offset: oklch(0 0 0);                  /* Ring offset */
+  --color-ring: oklch(0.556 0 0);
+  --color-ring-offset: oklch(0.145 0 0);
 
   /* ============================================
    * SEMANTIC COLORS (Status & Feedback)
    * ============================================ */
 
+  /* Destructive */
+  --color-destructive: oklch(0.704 0.191 22.216);
+  --color-destructive-foreground: oklch(0.985 0 0);
+  --color-destructive-hover: oklch(0.65 0.191 22.216);
+  --color-destructive-subtle: oklch(0.704 0.191 22.216 / 0.15);
+
   /* Success */
-  --color-success: oklch(0.6900 0.2000 150.0);        /* Green */
-  --color-success-foreground: oklch(1 0 0);           /* White text */
-  --color-success-hover: oklch(0.6400 0.2000 150.0);   /* Darker green hover */
-  --color-success-subtle: oklch(0.6900 0.2000 150.0 / 0.15); /* Subtle bg */
+  --color-success: oklch(0.69 0.2 150.0);
+  --color-success-foreground: oklch(1 0 0);
+  --color-success-hover: oklch(0.64 0.2 150.0);
+  --color-success-subtle: oklch(0.69 0.2 150.0 / 0.15);
 
   /* Warning */
-  --color-warning: oklch(0.7500 0.1500 65.0);         /* Orange/amber */
-  --color-warning-foreground: oklch(0 0 0);           /* Black text */
-  --color-warning-hover: oklch(0.7000 0.1500 65.0);   /* Darker orange hover */
-  --color-warning-subtle: oklch(0.7500 0.1500 65.0 / 0.15); /* Subtle bg */
-
-  /* Error/Danger */
-  --color-destructive: oklch(0.6900 0.2000 23.9100);  /* Red */
-  --color-destructive-foreground: oklch(1 0 0);       /* White text */
-  --color-destructive-hover: oklch(0.6400 0.2000 23.9100); /* Darker red hover */
-  --color-destructive-subtle: oklch(0.6900 0.2000 23.9100 / 0.15); /* Subtle bg */
+  --color-warning: oklch(0.75 0.15 65.0);
+  --color-warning-foreground: oklch(0 0 0);
+  --color-warning-hover: oklch(0.7 0.15 65.0);
+  --color-warning-subtle: oklch(0.75 0.15 65.0 / 0.15);
 
   /* Info */
-  --color-info: oklch(0.6200 0.1900 250.0);           /* Blue */
-  --color-info-foreground: oklch(1 0 0);              /* White text */
-  --color-info-hover: oklch(0.5700 0.1900 250.0);      /* Darker blue hover */
-  --color-info-subtle: oklch(0.6200 0.1900 250.0 / 0.15); /* Subtle bg */
+  --color-info: oklch(0.62 0.19 250.0);
+  --color-info-foreground: oklch(1 0 0);
+  --color-info-hover: oklch(0.57 0.19 250.0);
+  --color-info-subtle: oklch(0.62 0.19 250.0 / 0.15);
 
   /* ============================================
-   * INVERTED CTA (For high-emphasis actions)
+   * CTA (High-emphasis inverted actions)
    * ============================================ */
 
-  --color-cta: oklch(0.9300 0 0);                    /* #ededed - Light bg (primary) */
-  --color-cta-background: oklch(0.9300 0 0);          /* #ededed - Light bg */
-  --color-cta-foreground: oklch(0 0 0);              /* #000 - Dark text */
-  --color-cta-hover: oklch(0.9100 0 0);              /* Slightly darker hover */
-  --color-cta-active: oklch(0.8900 0 0);             /* Active state */
+  --color-cta: oklch(0.922 0 0);
+  --color-cta-background: oklch(0.922 0 0);
+  --color-cta-foreground: oklch(0.205 0 0);
+  --color-cta-hover: oklch(0.87 0 0);
+  --color-cta-active: oklch(0.84 0 0);
+
+  /* ============================================
+   * CHART COLORS (from tweakcn theme)
+   * ============================================ */
+
+  --color-chart-1: oklch(0.81 0.10 252);
+  --color-chart-2: oklch(0.62 0.19 260);
+  --color-chart-3: oklch(0.55 0.22 263);
+  --color-chart-4: oklch(0.49 0.22 264);
+  --color-chart-5: oklch(0.42 0.18 266);
 
   /* ============================================
    * SIDEBAR (Navigation & Panels)
    * ============================================ */
 
-  --color-sidebar: oklch(0.0800 0 0);                 /* Sidebar bg */
-  --color-sidebar-foreground: oklch(1 0 0);           /* Sidebar text */
-  --color-sidebar-primary: oklch(0.5 0.15 180);      /* Primary accent */
-  --color-sidebar-primary-foreground: oklch(1 0 0);   /* Text on primary */
-  --color-sidebar-accent: oklch(0.2800 0 0);          /* Accent bg */
-  --color-sidebar-accent-foreground: oklch(1 0 0);    /* Accent text */
-  --color-sidebar-border: oklch(0.1800 0 0);          /* Sidebar borders */
-  --color-sidebar-ring: oklch(0.7200 0 0);           /* Focus ring */
+  --color-sidebar: oklch(0.205 0 0);
+  --color-sidebar-foreground: oklch(0.985 0 0);
+  --color-sidebar-primary: oklch(0.488 0.243 264.376);
+  --color-sidebar-primary-foreground: oklch(0.985 0 0);
+  --color-sidebar-accent: oklch(0.269 0 0);
+  --color-sidebar-accent-foreground: oklch(0.985 0 0);
+  --color-sidebar-border: oklch(0.275 0 0);
+  --color-sidebar-ring: oklch(0.439 0 0);
 
   /* ============================================
    * TYPOGRAPHY
    * ============================================ */
 
-  --font-sans: Geist, system-ui, sans-serif;
-  --font-serif: Georgia, serif;
-  --font-mono: Geist Mono, monospace;
+  --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  --font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
 
   /* Font sizes */
-  --text-xs: 0.75rem;      /* 12px */
-  --text-sm: 0.875rem;     /* 14px */
-  --text-base: 1rem;       /* 16px */
-  --text-lg: 1.125rem;     /* 18px */
-  --text-xl: 1.25rem;      /* 20px */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
 
   /* Line heights */
   --leading-tight: 1.25;
@@ -123,66 +139,66 @@
   --font-semibold: 600;
   --font-bold: 700;
 
+  /* Letter spacing (from tweakcn) */
+  --tracking-normal: 0em;
+
   /* ============================================
-   * SPACING (8px base unit system)
+   * SPACING (tweakcn base: 0.25rem)
    * ============================================ */
 
   --spacing-0: 0;
   --spacing-px: 1px;
-  --spacing-0_5: 0.125rem;   /* 2px */
-  --spacing-1: 0.25rem;      /* 4px */
-  --spacing-1_5: 0.375rem;   /* 6px */
-  --spacing-2: 0.5rem;       /* 8px - base unit */
-  --spacing-2_5: 0.625rem;   /* 10px */
-  --spacing-3: 0.75rem;      /* 12px */
-  --spacing-3_5: 0.875rem;   /* 14px */
-  --spacing-4: 1rem;         /* 16px */
-  --spacing-5: 1.25rem;      /* 20px */
-  --spacing-6: 1.5rem;       /* 24px */
-  --spacing-8: 2rem;         /* 32px */
-  --spacing-10: 2.5rem;      /* 40px */
-  --spacing-12: 3rem;        /* 48px */
+  --spacing-0_5: 0.125rem;
+  --spacing-1: 0.25rem;
+  --spacing-1_5: 0.375rem;
+  --spacing-2: 0.5rem;
+  --spacing-2_5: 0.625rem;
+  --spacing-3: 0.75rem;
+  --spacing-3_5: 0.875rem;
+  --spacing-4: 1rem;
+  --spacing-5: 1.25rem;
+  --spacing-6: 1.5rem;
+  --spacing-8: 2rem;
+  --spacing-10: 2.5rem;
+  --spacing-12: 3rem;
 
   /* ============================================
-   * BORDER RADIUS
+   * BORDER RADIUS (tweakcn base: 0.625rem)
    * ============================================ */
 
   --radius-none: 0;
-  --radius-sm: 0.25rem;      /* 4px */
-  --radius-md: 0.375rem;     /* 6px */
-  --radius-lg: 0.5rem;       /* 8px - Interactive elements */
-  --radius-xl: 0.75rem;      /* 12px */
-  --radius-2xl: 1rem;        /* 16px */
+  --radius-sm: calc(0.625rem - 4px);
+  --radius-md: calc(0.625rem - 2px);
+  --radius-lg: 0.625rem;
+  --radius-xl: calc(0.625rem + 2px);
+  --radius-2xl: calc(0.625rem + 4px);
   --radius-full: 9999px;
 
   /* ============================================
-   * SHADOWS (Minimal, per design rules)
+   * SHADOWS (tweakcn-derived)
    * ============================================ */
 
-  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+  --shadow-xs: 0 1px 2px 0 oklch(0 0 0 / 0.1);
+  --shadow-sm: 0 1px 3px 0 oklch(0 0 0 / 0.1), 0 1px 2px -1px oklch(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px oklch(0 0 0 / 0.1), 0 2px 4px -2px oklch(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px oklch(0 0 0 / 0.1), 0 4px 6px -4px oklch(0 0 0 / 0.1);
+  --shadow-inner: inset 0 2px 4px 0 oklch(0 0 0 / 0.05);
 
   /* ============================================
    * ANIMATIONS
    * ============================================ */
 
-  /* Durations */
   --duration-instant: 0ms;
   --duration-fast: 100ms;
   --duration-normal: 150ms;
   --duration-slow: 200ms;
   --duration-slower: 300ms;
 
-  /* Easing */
   --ease-linear: linear;
   --ease-in: cubic-bezier(0.4, 0, 1, 1);
   --ease-out: cubic-bezier(0, 0, 0.2, 1);
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* Transitions */
   --transition-colors: color var(--duration-normal) var(--ease-in-out);
   --transition-transform: transform var(--duration-normal) var(--ease-in-out);
   --transition-opacity: opacity var(--duration-normal) var(--ease-in-out);
@@ -191,28 +207,49 @@
 }
 
 /* ============================================
- * LIGHT THEME (Alternative)
+ * LIGHT THEME (from tweakcn)
  * ============================================ */
 
 .light {
-  --color-background: oklch(0.9900 0 0);
-  --color-foreground: oklch(0 0 0);
+  --color-background: oklch(1 0 0);
+  --color-foreground: oklch(0.145 0 0);
   --color-card: oklch(1 0 0);
-  --color-card-foreground: oklch(0 0 0);
-  --color-popover: oklch(0.9900 0 0);
-  --color-popover-foreground: oklch(0 0 0);
-  --color-primary: oklch(0 0 0);
-  --color-primary-foreground: oklch(1 0 0);
-  --color-secondary: oklch(0.9400 0 0);
-  --color-secondary-foreground: oklch(0 0 0);
-  --color-muted: oklch(0.9700 0 0);
-  --color-muted-foreground: oklch(0.4400 0 0);
-  --color-accent: oklch(0.9400 0 0);
-  --color-accent-foreground: oklch(0 0 0);
-  --color-destructive: oklch(0.6300 0.1900 23.0300);
+  --color-card-hover: oklch(0.97 0 0);
+  --color-card-foreground: oklch(0.145 0 0);
+  --color-popover: oklch(1 0 0);
+  --color-popover-foreground: oklch(0.145 0 0);
+  --color-primary: oklch(0.205 0 0);
+  --color-primary-foreground: oklch(0.985 0 0);
+  --color-primary-hover: oklch(0.25 0 0);
+  --color-primary-active: oklch(0.28 0 0);
+  --color-secondary: oklch(0.97 0 0);
+  --color-secondary-foreground: oklch(0.205 0 0);
+  --color-secondary-hover: oklch(0.94 0 0);
+  --color-muted: oklch(0.97 0 0);
+  --color-muted-hover: oklch(0.94 0 0);
+  --color-muted-foreground: oklch(0.556 0 0);
+  --color-accent: oklch(0.97 0 0);
+  --color-accent-foreground: oklch(0.205 0 0);
+  --color-accent-hover: oklch(0.94 0 0);
+  --color-destructive: oklch(0.577 0.245 27.325);
   --color-destructive-foreground: oklch(1 0 0);
-  --color-border: oklch(0.9200 0 0);
-  --color-input: oklch(0.9400 0 0);
-  --color-ring: oklch(0 0 0);
+  --color-border: oklch(0.922 0 0);
+  --color-border-hover: oklch(0.88 0 0);
+  --color-input: oklch(0.922 0 0);
+  --color-input-hover: oklch(0.88 0 0);
+  --color-ring: oklch(0.708 0 0);
+  --color-ring-offset: oklch(1 0 0);
+  --color-cta: oklch(0.205 0 0);
+  --color-cta-background: oklch(0.205 0 0);
+  --color-cta-foreground: oklch(0.985 0 0);
+  --color-cta-hover: oklch(0.25 0 0);
+  --color-cta-active: oklch(0.28 0 0);
+  --color-sidebar: oklch(0.985 0 0);
+  --color-sidebar-foreground: oklch(0.145 0 0);
+  --color-sidebar-primary: oklch(0.205 0 0);
+  --color-sidebar-primary-foreground: oklch(0.985 0 0);
+  --color-sidebar-accent: oklch(0.97 0 0);
+  --color-sidebar-accent-foreground: oklch(0.205 0 0);
+  --color-sidebar-border: oklch(0.922 0 0);
+  --color-sidebar-ring: oklch(0.708 0 0);
 }
-

@@ -1,4 +1,4 @@
-import{d as y}from"./badge-CZaMXL-c.js";import{c as O,r as R,j as c,I as C,C as v,a as h}from"./sidepanel-DBKoi8z6.js";/**
+import{d as y}from"./badge-D08nYiI0.js";import{c as O,r as R,j as c,I as C,C as v,a as h}from"./sidepanel-D7LXy8vl.js";/**
  * @license lucide-react v0.460.0 - ISC
  *
  * This source code is licensed under the ISC license.

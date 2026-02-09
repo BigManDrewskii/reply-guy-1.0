@@ -54,39 +54,33 @@
   font-display: swap;
 }
 
-/* Legacy color variables for compatibility with existing components */
-:root {
-  --bg-base: var(--background);
-  --bg-card: var(--card);
-  --bg-hover: var(--muted);
-  --border: var(--border);
-  --text-1: var(--foreground);
-  --text-2: var(--muted-foreground);
-  --text-3: var(--muted-foreground);
-  --accent: var(--accent);
-  --success: var(--primary);
-  --danger: var(--destructive);
-}
+/* ============================================
+ * BASE STYLES
+ * ============================================ */
 
-/* Base styles */
 * {
   box-sizing: border-box;
+  border-color: var(--color-border);
 }
 
 body {
-  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
-  background-color: var(--bg-base);
-  color: var(--text-1);
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  letter-spacing: 0em;
 }
 
-/* Button base styles - minimal reset only */
+/* ============================================
+ * BUTTON RESETS
+ * ============================================ */
+
 button {
   font: inherit;
   cursor: pointer;
 }
 
-/* Only apply to plain buttons without classes (not Button component) */
 button:not([class*="bg-"]):not([class*="text-"]) {
   background: none;
   border: none;
@@ -101,7 +95,10 @@ button:not([class*="bg-"]):not([class*="text-"]):active:not(:disabled) {
   opacity: 0.6;
 }
 
-/* Input styles */
+/* ============================================
+ * INPUT STYLES
+ * ============================================ */
+
 input {
   font-family: inherit;
   font-size: inherit;
@@ -109,20 +106,42 @@ input {
 }
 
 input::placeholder {
-  color: var(--text-3);
+  color: var(--color-muted-foreground);
 }
 
 input:focus {
   outline: none;
 }
 
-/* Link styles */
+/* ============================================
+ * LINK STYLES
+ * ============================================ */
+
 a {
   color: inherit;
   text-decoration: none;
 }
 
-/* Line clamp utilities (not in default Tailwind) */
+/* ============================================
+ * FOCUS MANAGEMENT
+ * ============================================ */
+
+*:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+button:focus:not(:focus-visible),
+input:focus:not(:focus-visible),
+a:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ============================================
+ * UTILITIES
+ * ============================================ */
+
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -137,35 +156,16 @@ a {
   overflow: hidden;
 }
 
-/* Focus visible styles - only show when navigating with keyboard */
-*:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-/* Remove focus outline for mouse users */
-button:focus:not(:focus-visible),
-input:focus:not(:focus-visible),
-a:focus:not(:focus-visible) {
-  outline: none;
-}
-
-/* Special focus styles for inverted CTA buttons */
-button.bg-\[\#ededed\]:focus-visible {
-  outline: 2px solid #000;
-  outline-offset: 2px;
-}
-
-/* Numerical data utility */
 .font-numerical {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
 }
 
-/* Skeleton shimmer animation - refined for smoother effect */
-/* Note: @keyframes shimmer defined in tailwind.config.ts */
+/* ============================================
+ * SKELETON SHIMMER
+ * ============================================ */
+
 .skeleton-shimmer {
   background: linear-gradient(
     90deg,
@@ -176,7 +176,6 @@ button.bg-\[\#ededed\]:focus-visible {
   background-size: 200% 100%;
 }
 
-/* Respect prefers-reduced-motion for accessibility */
 @media (prefers-reduced-motion: reduce) {
   .animate-shimmer {
     animation: none;
@@ -187,7 +186,10 @@ button.bg-\[\#ededed\]:focus-visible {
   }
 }
 
-/* Toast slide-up animation */
+/* ============================================
+ * CUSTOM ANIMATIONS
+ * ============================================ */
+
 @keyframes slide-up {
   from {
     transform: translateY(100%);
@@ -203,7 +205,6 @@ button.bg-\[\#ededed\]:focus-visible {
   animation: slide-up 0.2s ease-out;
 }
 
-/* Shake animation for error states */
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-4px); }
@@ -214,23 +215,14 @@ button.bg-\[\#ededed\]:focus-visible {
   animation: shake 300ms ease-in-out;
 }
 
-/* Page transition animations */
 @keyframes slide-in-left {
-  from {
-    transform: translateX(100%);
-  }
-  to {
-    transform: translateX(0);
-  }
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
 }
 
 @keyframes slide-out-right {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-100%);
-  }
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
 }
 
 .animate-slide-in-left {
