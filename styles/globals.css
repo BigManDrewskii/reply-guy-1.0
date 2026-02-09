@@ -63,23 +63,28 @@
   border-color: var(--color-border);
 }
 
+html {
+  font-size: 14px;
+  text-rendering: optimizeLegibility;
+}
+
 body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--color-background);
   color: var(--color-foreground);
-  letter-spacing: -0.01em;
-  font-size: 14px;
-  line-height: 1.5;
+  letter-spacing: var(--tracking-normal);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
 }
 
 /* ============================================
- * SCROLLBAR
+ * SCROLLBAR — thin, minimal, warm
  * ============================================ */
 
 ::-webkit-scrollbar {
-  width: 4px;
+  width: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -88,11 +93,19 @@ body {
 
 ::-webkit-scrollbar-thumb {
   background: var(--color-border);
-  border-radius: 4px;
+  border-radius: var(--radius-full);
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-muted-foreground);
+}
+
+/* Hide scrollbar until hover on scrollable containers */
+.scrollbar-hidden::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+.scrollbar-hidden:hover::-webkit-scrollbar-thumb {
+  background: var(--color-border);
 }
 
 /* ============================================
@@ -122,7 +135,7 @@ input, textarea {
 input::placeholder,
 textarea::placeholder {
   color: var(--color-muted-foreground);
-  opacity: 0.5;
+  opacity: 0.6;
 }
 
 input:focus,
@@ -157,8 +170,24 @@ a:focus:not(:focus-visible) {
 }
 
 /* ============================================
+ * SELECTION
+ * ============================================ */
+
+::selection {
+  background: oklch(0.93 0.005 75 / 0.15);
+  color: var(--color-foreground);
+}
+
+/* ============================================
  * UTILITIES
  * ============================================ */
+
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 
 .line-clamp-2 {
   display: -webkit-box;
@@ -180,6 +209,20 @@ a:focus:not(:focus-visible) {
   letter-spacing: -0.02em;
 }
 
+/* Glass effect for overlays */
+.glass {
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+}
+
+/* Subtle text gradient */
+.text-gradient {
+  background: linear-gradient(135deg, var(--color-foreground) 0%, var(--color-muted-foreground) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
 /* ============================================
  * SKELETON SHIMMER
  * ============================================ */
@@ -188,7 +231,7 @@ a:focus:not(:focus-visible) {
   background: linear-gradient(
     90deg,
     var(--color-muted) 0%,
-    oklch(0.3 0 0) 50%,
+    oklch(0.26 0.005 75) 50%,
     var(--color-muted) 100%
   );
   background-size: 200% 100%;
@@ -206,11 +249,22 @@ a:focus:not(:focus-visible) {
 @keyframes fade-in-up {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes fade-in-scale {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
@@ -227,18 +281,30 @@ a:focus:not(:focus-visible) {
 
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-4px); }
-  75% { transform: translateX(4px); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
 }
 
 @keyframes slide-in-left {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
+  from {
+    transform: translateX(40px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 @keyframes slide-out-right {
-  from { transform: translateX(0); }
-  to { transform: translateX(-100%); }
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-40px);
+    opacity: 0;
+  }
 }
 
 @keyframes pulse-subtle {
@@ -256,16 +322,30 @@ a:focus:not(:focus-visible) {
   50% { opacity: 0; }
 }
 
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes progress-indeterminate {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
+
 .animate-fade-in {
-  animation: fade-in 0.2s ease-out;
+  animation: fade-in 0.25s ease-out;
 }
 
 .animate-fade-in-up {
-  animation: fade-in-up 0.3s ease-out;
+  animation: fade-in-up 0.35s ease-out;
+}
+
+.animate-fade-in-scale {
+  animation: fade-in-scale 0.3s ease-out;
 }
 
 .animate-slide-up {
-  animation: slide-up 0.2s ease-out;
+  animation: slide-up 0.3s ease-out;
 }
 
 .animate-shake {
@@ -273,7 +353,7 @@ a:focus:not(:focus-visible) {
 }
 
 .animate-slide-in-left {
-  animation: slide-in-left 0.25s ease-out;
+  animation: slide-in-left 0.3s ease-out;
 }
 
 .animate-slide-out-right {
@@ -292,6 +372,23 @@ a:focus:not(:focus-visible) {
   animation: blink 0.8s ease-in-out infinite;
 }
 
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Staggered children animation */
+.stagger-children > * {
+  animation: fade-in-up 0.35s ease-out both;
+}
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 50ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 100ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 150ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 200ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 250ms; }
+.stagger-children > *:nth-child(7) { animation-delay: 300ms; }
+.stagger-children > *:nth-child(8) { animation-delay: 350ms; }
+
 /* ============================================
  * REDUCED MOTION
  * ============================================ */
@@ -300,12 +397,15 @@ a:focus:not(:focus-visible) {
   .animate-shimmer,
   .animate-fade-in,
   .animate-fade-in-up,
+  .animate-fade-in-scale,
   .animate-slide-up,
   .animate-shake,
   .animate-slide-in-left,
   .animate-slide-out-right,
   .animate-pulse-subtle,
-  .animate-blink {
+  .animate-blink,
+  .animate-spin,
+  .stagger-children > * {
     animation: none !important;
   }
 

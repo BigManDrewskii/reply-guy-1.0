@@ -54,7 +54,7 @@ export const TabsList = forwardRef<HTMLDivElement, TabsListProps>(
         role="tablist"
         aria-orientation="horizontal"
         className={cn(
-          'inline-flex w-full items-center gap-0.5 rounded-lg bg-muted/40 p-0.5',
+          'inline-flex w-full items-center gap-1 rounded-xl bg-muted/50 p-1',
           className
         )}
       >
@@ -129,12 +129,12 @@ export const TabsTrigger = forwardRef<HTMLButtonElement, TabsTriggerProps>(
           }
         }}
         className={cn(
-          'relative flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-150 ease-in-out',
+          'relative flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-[200ms] ease-out',
           'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background',
-          'disabled:opacity-50 disabled:cursor-not-allowed',
+          'disabled:opacity-40 disabled:cursor-not-allowed',
           {
             'bg-card text-foreground shadow-xs': isActive,
-            'text-muted-foreground hover:text-foreground': !isActive,
+            'text-muted-foreground hover:text-foreground/80': !isActive,
           },
           className
         )}
@@ -174,7 +174,7 @@ export const TabsContent = forwardRef<HTMLDivElement, TabsContentProps>(
         id={`panel-${value}`}
         aria-labelledby={`tab-${value}`}
         tabIndex={0}
-        className={className}
+        className={cn('animate-fade-in', className)}
       >
         {children}
       </div>

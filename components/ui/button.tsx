@@ -43,18 +43,19 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         className={cn(
           // Base
           'relative inline-flex items-center justify-center font-medium',
-          'transition-all duration-150 ease-out',
-          'rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-background focus-visible:ring-ring',
-          'active:scale-[0.97] active:duration-75',
-          'disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100',
+          'transition-all duration-[180ms] ease-out',
+          'rounded-lg',
+          'focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-background focus-visible:ring-ring',
+          'active:scale-[0.98] active:duration-75',
+          'disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100',
 
           // Sizes
           {
-            'h-7 px-2.5 text-xs gap-1.5': size === 'xs',
-            'h-8 px-3 text-xs gap-1.5': size === 'sm',
+            'h-7 px-2.5 text-xs gap-1.5 rounded-md': size === 'xs',
+            'h-8 px-3 text-xs gap-1.5 rounded-md': size === 'sm',
             'h-9 px-4 text-sm gap-2': size === 'md',
             'h-10 px-5 text-sm gap-2': size === 'lg',
-            'h-11 px-6 text-base gap-2.5': size === 'xl',
+            'h-11 px-6 text-base gap-2.5 rounded-xl': size === 'xl',
           },
 
           // Icon button
@@ -68,20 +69,20 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
           // Variants
           {
-            // Primary / CTA — high contrast
+            // Primary / CTA — high contrast, clean
             'bg-primary text-primary-foreground hover:bg-primary-hover active:bg-primary-active':
               variant === 'primary' || variant === 'cta',
 
-            // Secondary
-            'bg-card text-card-foreground border border-border/60 hover:bg-card-hover':
+            // Secondary — subtle surface
+            'bg-card text-card-foreground border border-border/50 hover:bg-card-hover hover:border-border-hover':
               variant === 'secondary',
 
-            // Ghost
-            'bg-transparent text-muted-foreground hover:bg-muted/50 hover:text-foreground':
+            // Ghost — invisible until hover
+            'bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground':
               variant === 'ghost',
 
-            // Outline
-            'bg-transparent text-foreground border border-border hover:bg-muted':
+            // Outline — border emphasis
+            'bg-transparent text-foreground border border-border hover:bg-muted/50 hover:border-border-hover':
               variant === 'outline',
 
             // Danger
@@ -129,7 +130,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             />
           </span>
         )}
-        <span className={cn('inline-flex items-center gap-1.5 transition-opacity', loading && 'opacity-0')}>
+        <span className={cn('inline-flex items-center gap-1.5 transition-opacity duration-150', loading && 'opacity-0')}>
           {children}
         </span>
       </button>

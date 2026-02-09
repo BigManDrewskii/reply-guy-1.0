@@ -60,13 +60,11 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
     const checkDuplicate = async () => {
       if (!pageData?.url) return;
       try {
-        // Check CRM contacts first
         const contact = await contactExists(pageData.url);
         if (contact && contact.totalMessages > 0) {
           setDuplicateWarning(`You've already sent ${contact.totalMessages} message${contact.totalMessages > 1 ? 's' : ''} to this contact.`);
           return;
         }
-        // Fallback to conversations table
         const existing = await db.conversations
           .where('pageUrl')
           .equals(pageData.url)
@@ -101,7 +99,6 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
     if (!pageData || !lastCopiedMessage) return;
 
     try {
-      // Log conversation
       await db.conversations.add({
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
         platform: pageData.platform,
@@ -113,7 +110,6 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
         status: 'sent',
       });
 
-      // Auto-create/update contact via CRM service
       try {
         const contactId = await findOrCreateContact(pageData, analysis || undefined);
         await addTouchpoint({
@@ -136,13 +132,8 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
   // Loading state
   if (isLoading) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-4 animate-fade-in">
         <ProfileCardSkeleton />
-        <div className="space-y-2">
-          <div className="h-3 bg-muted rounded w-1/4"></div>
-          <div className="h-3 bg-muted rounded w-full"></div>
-          <div className="h-3 bg-muted rounded w-5/6"></div>
-        </div>
       </div>
     );
   }
@@ -150,8 +141,8 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
   // No data yet
   if (!pageData) {
     return (
-      <div className="text-center py-8">
-        <p className="text-[13px] leading-relaxed text-muted-foreground">Waiting for page data...</p>
+      <div className="text-center py-12">
+        <p className="text-sm leading-relaxed text-muted-foreground">Waiting for page data...</p>
       </div>
     );
   }
@@ -159,7 +150,7 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
   const isProfile = pageData.isProfile || pageData.name;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4 stagger-children">
       {isProfile ? (
         <ProfileCard data={pageData} />
       ) : (
@@ -169,14 +160,14 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
       {/* Thread context indicator */}
       {pageData.isThread && pageData.threadContext && pageData.threadContext.length > 0 && (
         <Card variant="default">
-          <CardContent className="p-3">
-            <div className="flex items-center gap-2 mb-1.5">
-              <MessageCircle size={13} className="text-info" />
-              <span className="text-[11px] font-medium text-foreground">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2.5 mb-1.5">
+              <MessageCircle size={14} className="text-info" />
+              <span className="text-xs font-medium text-foreground">
                 Thread detected · {pageData.threadContext.length} messages
               </span>
             </div>
-            <p className="text-[11px] text-muted-foreground leading-relaxed">
+            <p className="text-xs text-muted-foreground leading-relaxed">
               Thread context will be used to generate more relevant messages.
             </p>
           </CardContent>
@@ -200,15 +191,15 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
 
       {/* Analyze CTA — before analysis */}
       {pageData && !analysis && !isAnalyzing && !isDebouncing && !hasAnalyzed && (
-        <Card variant="default">
-          <CardContent className="p-5 text-center">
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
-              <Zap size={18} className="text-primary" />
+        <Card variant="elevated">
+          <CardContent className="p-6 text-center">
+            <div className="w-12 h-12 rounded-2xl bg-foreground/5 flex items-center justify-center mx-auto mb-4">
+              <Zap size={20} className="text-foreground/70" />
             </div>
-            <p className="text-sm font-medium text-foreground mb-1">
+            <p className="text-sm font-medium text-foreground mb-1.5">
               Ready to analyze
             </p>
-            <p className="text-xs text-muted-foreground mb-4">
+            <p className="text-xs text-muted-foreground mb-5 leading-relaxed">
               Generate personalized outreach for{' '}
               <span className="text-foreground font-medium">
                 {pageData.name || pageData.ogTitle || pageData.hostname}
@@ -217,7 +208,7 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
             <Button
               onClick={handleAnalyze}
               variant="primary"
-              size="md"
+              size="lg"
               className="w-full"
             >
               Analyze This Page
@@ -229,19 +220,19 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
       {/* Debouncing countdown */}
       {isDebouncing && (
         <Card variant="default">
-          <CardContent className="p-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <div className="w-2 h-2 rounded-full bg-info animate-pulse" />
-              <span className="text-xs font-medium text-foreground">Starting analysis...</span>
+          <CardContent className="p-5 text-center">
+            <div className="flex items-center justify-center gap-2.5 mb-2">
+              <div className="w-2 h-2 rounded-full bg-info animate-pulse-subtle" />
+              <span className="text-sm font-medium text-foreground">Starting analysis...</span>
             </div>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Analyzing in {debounceCountdown}s
             </p>
             <Button
               onClick={cancelAnalysis}
               variant="ghost"
-              size="xs"
-              className="mt-2"
+              size="sm"
+              className="mt-3"
             >
               Cancel
             </Button>
@@ -252,14 +243,14 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
       {/* Analyzing state */}
       {isAnalyzing && !analysis && (
         <Card variant="default">
-          <CardContent className="p-4 text-center">
-            <div className="flex items-center justify-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-info animate-pulse" />
-              <span className="text-xs font-medium text-foreground">Analyzing page...</span>
+          <CardContent className="p-5 text-center">
+            <div className="flex items-center justify-center gap-2.5">
+              <div className="w-2 h-2 rounded-full bg-info animate-pulse-subtle" />
+              <span className="text-sm font-medium text-foreground">Analyzing page...</span>
             </div>
-            <div className="mt-3 space-y-2">
-              <div className="h-2 bg-muted rounded-full w-full animate-pulse"></div>
-              <div className="h-2 bg-muted rounded-full w-3/4 animate-pulse"></div>
+            <div className="mt-4 space-y-2.5">
+              <div className="h-2 bg-muted rounded-full w-full animate-pulse-subtle"></div>
+              <div className="h-2 bg-muted rounded-full w-3/4 animate-pulse-subtle"></div>
             </div>
           </CardContent>
         </Card>
@@ -276,7 +267,7 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
             <CardContent>
               <Progress value={analysis.confidence} showValue size="md" />
               {analysis.confidenceReason && (
-                <p className="text-[11px] leading-relaxed text-muted-foreground mt-2">
+                <p className="text-xs leading-relaxed text-muted-foreground mt-2.5">
                   {analysis.confidenceReason}
                 </p>
               )}
@@ -290,7 +281,7 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
                 <CardTitle>Summary</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-[13px] leading-relaxed text-muted-foreground">
+                <p className="text-sm leading-relaxed text-muted-foreground">
                   {analysis.summary}
                 </p>
               </CardContent>
@@ -305,7 +296,7 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-1.5">
-                  {analysis.interests.map((interest, i) => (
+                  {analysis.interests.map((interest: string, i: number) => (
                     <Badge key={i} variant="outline" size="sm">
                       {interest}
                     </Badge>
@@ -321,19 +312,19 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
               <CardTitle>Message Length</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex rounded-lg bg-muted/50 p-0.5 gap-0.5">
+              <div className="flex rounded-xl bg-muted/50 p-1 gap-1">
                 {LENGTH_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}
                     onClick={() => setMessageLength(opt.value)}
-                    className={`flex-1 py-1.5 px-2 rounded-md text-center transition-all duration-200 ${
+                    className={`flex-1 py-2 px-2.5 rounded-lg text-center transition-all duration-[200ms] ease-out ${
                       messageLength === opt.value
-                        ? 'bg-background text-foreground shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground'
+                        ? 'bg-card text-foreground shadow-xs'
+                        : 'text-muted-foreground hover:text-foreground/80'
                     }`}
                   >
-                    <span className="text-[11px] font-medium block">{opt.label}</span>
-                    <span className="text-[9px] opacity-60 block">{opt.desc}</span>
+                    <span className="text-xs font-medium block">{opt.label}</span>
+                    <span className="text-[10px] opacity-50 block mt-0.5">{opt.desc}</span>
                   </button>
                 ))}
               </div>

@@ -21,8 +21,6 @@ interface MessageCardProps {
   onScheduleFollowUp?: () => void;
 }
 
-// ── Voice Match Labels ──
-
 function getVoiceLabel(score: number): { label: string; variant: 'success' | 'warning' | 'error' | 'info' } {
   if (score >= 80) return { label: 'Sounds like you', variant: 'success' };
   if (score >= 60) return { label: 'Close match', variant: 'info' };
@@ -45,8 +43,6 @@ const BREAKDOWN_LABELS: Record<keyof VoiceMatchBreakdown, { label: string; desc:
   pronouns: { label: 'Pronouns', desc: 'I/you/we usage' },
   punctuation: { label: 'Punctuation', desc: 'Marks & emphasis' },
 };
-
-// ── Component ──
 
 function MessageCard({
   pageData,
@@ -80,15 +76,12 @@ function MessageCard({
   const isStreaming = (isLoading || isCurrentRefining) && currentStreamingText.length > 0;
   const voiceMatch = voiceMatchScores[selectedAngle];
 
-  // AI-ness score
   const aiScore = currentMessage ? calculateAiScore(currentMessage.message) : null;
   const aiLabel = aiScore ? getAiLabel(aiScore.score) : null;
 
-  // Voice match info — prefer local NLP score, fallback to LLM voiceScore
   const effectiveVoiceScore = voiceMatch?.score ?? currentMessage?.voiceScore ?? 0;
   const voiceInfo = currentMessage ? getVoiceLabel(effectiveVoiceScore) : null;
 
-  // Can refine if score is below threshold and we have a voice profile
   const canRefine = voiceMatch && voiceMatch.score < 70 && !isCurrentRefining && !isLoading;
 
   const handleAngleChange = (angle: string) => {
@@ -117,7 +110,6 @@ function MessageCard({
     }
   };
 
-  // Generate initial message for selected angle
   if (!currentMessage && !isLoading && analysis) {
     generateMessage(pageData, analysis, selectedAngle);
   }
@@ -127,7 +119,7 @@ function MessageCard({
       <CardHeader>
         <CardTitle>Message</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-3.5">
         {/* Angle tabs */}
         {analysis?.outreachAngles && (
           <Tabs.Root defaultValue={selectedAngle} value={selectedAngle} onValueChange={handleAngleChange}>
@@ -141,31 +133,31 @@ function MessageCard({
           </Tabs.Root>
         )}
 
-        {/* Loading state — skeleton before any streaming text arrives */}
+        {/* Loading state — skeleton */}
         {isLoading && !currentMessage && !isStreaming && (
           <div
             role="status"
             aria-live="polite"
             aria-label="Generating message"
-            className="space-y-2.5 py-3"
+            className="space-y-2.5 py-4"
           >
-            <div className="h-2.5 bg-muted rounded-full w-full animate-pulse" />
-            <div className="h-2.5 bg-muted rounded-full w-5/6 animate-pulse" />
-            <div className="h-2.5 bg-muted rounded-full w-4/6 animate-pulse" />
-            <div className="h-2.5 bg-muted rounded-full w-full animate-pulse" />
-            <div className="h-2.5 bg-muted rounded-full w-3/5 animate-pulse" />
+            <div className="h-2.5 bg-muted rounded-full w-full animate-pulse-subtle" />
+            <div className="h-2.5 bg-muted rounded-full w-5/6 animate-pulse-subtle" />
+            <div className="h-2.5 bg-muted rounded-full w-4/6 animate-pulse-subtle" />
+            <div className="h-2.5 bg-muted rounded-full w-full animate-pulse-subtle" />
+            <div className="h-2.5 bg-muted rounded-full w-3/5 animate-pulse-subtle" />
           </div>
         )}
 
-        {/* Streaming text — show partial message as it arrives */}
+        {/* Streaming text */}
         {isStreaming && !currentMessage && (
-          <div className="rounded-lg bg-background/50 p-3">
-            <p className="text-[13px] text-foreground whitespace-pre-wrap leading-relaxed">
+          <div className="rounded-xl bg-background/50 p-4">
+            <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
               {currentStreamingText}
-              <span className="inline-block w-[2px] h-[14px] bg-primary ml-0.5 align-middle animate-blink" />
+              <span className="inline-block w-[2px] h-[14px] bg-foreground ml-0.5 align-middle animate-blink" />
             </p>
-            <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border/30">
-              <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border/20">
+              <div className="w-1.5 h-1.5 rounded-full bg-foreground animate-pulse-subtle" />
               <span className="text-[10px] text-muted-foreground">
                 {isCurrentRefining ? 'Refining voice' : 'Generating'} · {currentStreamingText.split(/\s+/).filter(Boolean).length}w
               </span>
@@ -173,16 +165,16 @@ function MessageCard({
           </div>
         )}
 
-        {/* Refining overlay — show streaming text while refining an existing message */}
+        {/* Refining overlay */}
         {isCurrentRefining && isStreaming && currentMessage && (
-          <div className="rounded-lg bg-background/50 p-3 border border-primary/20">
-            <div className="flex items-center gap-1.5 mb-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-              <span className="text-[10px] text-primary font-medium">Refining voice match...</span>
+          <div className="rounded-xl bg-background/50 p-4 border border-border/30">
+            <div className="flex items-center gap-2 mb-2.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-foreground animate-pulse-subtle" />
+              <span className="text-[10px] text-foreground/70 font-medium">Refining voice match...</span>
             </div>
-            <p className="text-[13px] text-foreground whitespace-pre-wrap leading-relaxed">
+            <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
               {currentStreamingText}
-              <span className="inline-block w-[2px] h-[14px] bg-primary ml-0.5 align-middle animate-blink" />
+              <span className="inline-block w-[2px] h-[14px] bg-foreground ml-0.5 align-middle animate-blink" />
             </p>
           </div>
         )}
@@ -190,20 +182,19 @@ function MessageCard({
         {/* Message content — final result */}
         {currentMessage && !isCurrentRefining && (
           <>
-            {/* The message text */}
-            <div className="rounded-lg bg-background/50 p-3">
-              <p className="text-[13px] text-foreground whitespace-pre-wrap leading-relaxed">
+            <div className="rounded-xl bg-background/50 p-4">
+              <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
                 {currentMessage.message}
               </p>
             </div>
 
-            {/* ── Metadata row: voice score + AI score + word count ── */}
+            {/* Metadata row */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {voiceInfo && (
                   <button
                     onClick={() => setShowVoiceDetails(!showVoiceDetails)}
-                    className="flex items-center gap-1 group"
+                    className="flex items-center gap-1.5 group"
                   >
                     <Badge variant={voiceInfo.variant} size="sm">
                       {voiceInfo.label}
@@ -213,57 +204,60 @@ function MessageCard({
                     </span>
                     <ChevronDown
                       size={10}
-                      className={`text-muted-foreground/50 transition-transform ${showVoiceDetails ? 'rotate-180' : ''}`}
+                      className={`text-muted-foreground/40 transition-transform duration-[200ms] ${showVoiceDetails ? 'rotate-180' : ''}`}
                     />
                   </button>
                 )}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
                 {aiScore && aiLabel && (
                   <button
                     onClick={() => setShowAiDetails(!showAiDetails)}
-                    className={`flex items-center gap-1 text-[10px] ${aiLabel.color} hover:opacity-80 transition-opacity`}
+                    className={`flex items-center gap-1 text-[10px] ${aiLabel.color} hover:opacity-80 transition-opacity duration-200`}
                     title="AI-ness score — click for details"
                   >
                     <Zap size={10} />
                     <span className="tabular-nums">{aiScore.score}% AI</span>
                   </button>
                 )}
-                <span className="text-[10px] text-muted-foreground/40">·</span>
+                <span className="text-[10px] text-muted-foreground/30">·</span>
                 <span className="text-[10px] text-muted-foreground tabular-nums">
                   {currentMessage.wordCount}w
                 </span>
               </div>
             </div>
 
-            {/* ── Voice Match Breakdown Panel ── */}
+            {/* Voice Match Breakdown Panel */}
             {showVoiceDetails && voiceMatch && (
-              <div className="rounded-lg bg-background/50 border border-border/40 p-3 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
+              <div className="rounded-xl bg-background/50 border border-border/30 p-4 space-y-2.5 animate-fade-in">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-medium text-foreground">Voice Match Breakdown</span>
-                  <span className={`text-[11px] font-medium ${voiceInfo ? `text-${voiceInfo.variant}` : 'text-muted-foreground'}`}>
+                  <span className="text-xs font-medium text-foreground">Voice Match Breakdown</span>
+                  <span className="text-xs font-medium text-muted-foreground tabular-nums">
                     {voiceMatch.score}/100
                   </span>
                 </div>
 
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   {(Object.entries(voiceMatch.breakdown) as [keyof VoiceMatchBreakdown, number][]).map(
                     ([key, value]) => {
                       const info = BREAKDOWN_LABELS[key];
                       return (
-                        <div key={key} className="flex items-center gap-2">
-                          <span className="text-[10px] text-muted-foreground w-[70px] shrink-0" title={info.desc}>
+                        <div key={key} className="flex items-center gap-2.5">
+                          <span className="text-[10px] text-muted-foreground w-[72px] shrink-0" title={info.desc}>
                             {info.label}
                           </span>
                           <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
                             <div
-                              className={`h-full rounded-full transition-all duration-500 ${
+                              className={`h-full rounded-full transition-all duration-700 ${
                                 value >= 70 ? 'bg-success' : value >= 40 ? 'bg-warning' : 'bg-destructive'
                               }`}
-                              style={{ width: `${Math.max(3, value)}%` }}
+                              style={{
+                                width: `${Math.max(3, value)}%`,
+                                transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+                              }}
                             />
                           </div>
-                          <span className="text-[9px] text-muted-foreground/60 w-6 text-right tabular-nums">
+                          <span className="text-[10px] text-muted-foreground/50 w-6 text-right tabular-nums">
                             {value}
                           </span>
                         </div>
@@ -272,19 +266,18 @@ function MessageCard({
                   )}
                 </div>
 
-                {/* Refine CTA if score is low */}
                 {canRefine && (
-                  <div className="pt-2 border-t border-border/30">
+                  <div className="pt-2.5 border-t border-border/20">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={handleRefine}
-                      className="w-full text-[11px]"
+                      className="w-full"
                     >
-                      <RefreshCw size={11} />
+                      <RefreshCw size={12} />
                       Refine Voice Match ({voiceMatch.score}% → 85%+)
                     </Button>
-                    <p className="text-[9px] text-muted-foreground/50 text-center mt-1">
+                    <p className="text-[9px] text-muted-foreground/40 text-center mt-1.5">
                       Uses a second LLM pass to improve weak dimensions
                     </p>
                   </div>
@@ -292,34 +285,34 @@ function MessageCard({
               </div>
             )}
 
-            {/* ── AI-ness Details Panel ── */}
+            {/* AI-ness Details Panel */}
             {showAiDetails && aiScore && (
-              <div className="rounded-lg bg-background/50 border border-border/40 p-3 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
+              <div className="rounded-xl bg-background/50 border border-border/30 p-4 space-y-2.5 animate-fade-in">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-medium text-foreground">AI Detection Breakdown</span>
-                  <span className={`text-[11px] font-medium ${aiLabel!.color}`}>{aiScore.label}</span>
+                  <span className="text-xs font-medium text-foreground">AI Detection Breakdown</span>
+                  <span className={`text-xs font-medium ${aiLabel!.color}`}>{aiScore.label}</span>
                 </div>
 
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   {[
                     { label: 'Phrases', value: aiScore.breakdown.phrases, desc: 'Common AI phrases' },
                     { label: 'Structure', value: aiScore.breakdown.structure, desc: 'Sentence uniformity' },
                     { label: 'Hedging', value: aiScore.breakdown.hedging, desc: 'Qualifiers & hedges' },
                     { label: 'Vocab', value: aiScore.breakdown.compression, desc: 'Word diversity' },
                   ].map(({ label, value, desc }) => (
-                    <div key={label} className="flex items-center gap-2">
+                    <div key={label} className="flex items-center gap-2.5">
                       <span className="text-[10px] text-muted-foreground w-14 shrink-0" title={desc}>
                         {label}
                       </span>
                       <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
                         <div
-                          className={`h-full rounded-full transition-all duration-300 ${
+                          className={`h-full rounded-full transition-all duration-500 ${
                             value <= 30 ? 'bg-success' : value <= 60 ? 'bg-warning' : 'bg-destructive'
                           }`}
                           style={{ width: `${Math.max(2, value)}%` }}
                         />
                       </div>
-                      <span className="text-[9px] text-muted-foreground/60 w-6 text-right tabular-nums">
+                      <span className="text-[10px] text-muted-foreground/50 w-6 text-right tabular-nums">
                         {value}
                       </span>
                     </div>
@@ -327,12 +320,12 @@ function MessageCard({
                 </div>
 
                 {aiScore.suggestions.length > 0 && (
-                  <div className="pt-2 border-t border-border/30">
-                    <p className="text-[10px] font-medium text-muted-foreground mb-1">Suggestions</p>
-                    <ul className="space-y-0.5">
+                  <div className="pt-2.5 border-t border-border/20">
+                    <p className="text-[10px] font-medium text-muted-foreground mb-1.5">Suggestions</p>
+                    <ul className="space-y-1">
                       {aiScore.suggestions.map((s, i) => (
-                        <li key={i} className="text-[10px] text-muted-foreground/70 flex gap-1.5">
-                          <span className="shrink-0">•</span>
+                        <li key={i} className="text-[10px] text-muted-foreground/60 flex gap-1.5">
+                          <span className="shrink-0">·</span>
                           <span>{s}</span>
                         </li>
                       ))}
@@ -344,7 +337,7 @@ function MessageCard({
 
             {/* Hook explanation */}
             {currentMessage.hook && (
-              <p className="text-[11px] text-muted-foreground/70 italic leading-relaxed">
+              <p className="text-xs text-muted-foreground/60 italic leading-relaxed">
                 Hook: {currentMessage.hook}
               </p>
             )}
@@ -353,10 +346,10 @@ function MessageCard({
             <CopyButton text={currentMessage.message} onCopy={handleCopy} />
 
             {/* Secondary actions */}
-            <div className="flex gap-2">
+            <div className="flex gap-2.5">
               <Button
                 variant="ghost"
-                size="sm"
+                size="md"
                 onClick={handleRegenerate}
                 disabled={isLoading || isCurrentRefining}
                 className="flex-1"
@@ -366,7 +359,7 @@ function MessageCard({
               </Button>
               <Button
                 variant="ghost"
-                size="sm"
+                size="md"
                 onClick={() => setIsEditing(true)}
                 className="flex-1"
                 aria-label="Edit this message"
@@ -380,7 +373,7 @@ function MessageCard({
             {onScheduleFollowUp && (
               <Button
                 variant="ghost"
-                size="sm"
+                size="md"
                 onClick={onScheduleFollowUp}
                 className="w-full text-muted-foreground"
               >

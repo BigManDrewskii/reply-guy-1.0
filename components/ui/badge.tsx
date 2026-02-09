@@ -19,19 +19,19 @@ export function Badge({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-md font-medium transition-colors',
+        'inline-flex items-center gap-1.5 rounded-full font-medium transition-colors',
         {
-          // Variants
+          // Variants — muted, refined tints
           'bg-muted text-muted-foreground': variant === 'default',
-          'bg-success/15 text-success': variant === 'success',
-          'bg-warning/15 text-warning': variant === 'warning',
-          'bg-destructive/15 text-destructive': variant === 'error',
-          'bg-info/15 text-info': variant === 'info',
-          'border border-border text-muted-foreground': variant === 'outline',
+          'bg-success-subtle text-success': variant === 'success',
+          'bg-warning-subtle text-warning': variant === 'warning',
+          'bg-destructive-subtle text-destructive': variant === 'error',
+          'bg-info-subtle text-info': variant === 'info',
+          'border border-border/50 text-muted-foreground': variant === 'outline',
 
           // Sizes
-          'px-1.5 py-0.5 text-[10px]': size === 'sm',
-          'px-2 py-0.5 text-xs': size === 'md',
+          'px-2 py-0.5 text-[10px]': size === 'sm',
+          'px-2.5 py-0.5 text-[11px]': size === 'md',
         },
         className
       )}
@@ -40,7 +40,7 @@ export function Badge({
       {dot && (
         <span
           className={cn(
-            'w-1.5 h-1.5 rounded-full',
+            'w-1.5 h-1.5 rounded-full shrink-0',
             {
               'bg-muted-foreground': variant === 'default' || variant === 'outline',
               'bg-success': variant === 'success',

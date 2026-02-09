@@ -55,32 +55,32 @@ export default function OnboardingScreen() {
   // Step 1: Welcome
   if (step === 'welcome') {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[70vh] p-6 animate-fade-in">
+      <div className="flex flex-col items-center justify-center min-h-[75vh] px-6 animate-fade-in-up">
         {/* Logo */}
-        <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center mb-6">
-          <Zap size={26} className="text-primary-foreground" />
+        <div className="w-16 h-16 rounded-2xl bg-foreground flex items-center justify-center mb-8">
+          <Zap size={28} className="text-background" />
         </div>
 
-        <h1 className="text-lg font-semibold text-foreground mb-1.5">
+        <h1 className="text-xl font-semibold text-foreground mb-2 tracking-tight">
           Reply Guy
         </h1>
 
-        <p className="text-xs text-muted-foreground text-center max-w-[220px] leading-relaxed mb-8">
+        <p className="text-sm text-muted-foreground text-center max-w-[240px] leading-relaxed mb-10">
           AI-powered outreach that sounds like you. Analyze profiles and craft personalized messages.
         </p>
 
         {/* Steps */}
-        <div className="w-full max-w-[260px] space-y-3 mb-8">
+        <div className="w-full max-w-[260px] space-y-4 mb-10">
           {[
-            { num: '1', label: 'Connect API key' },
-            { num: '2', label: 'Train your voice (optional)' },
+            { num: '1', label: 'Connect your API key' },
+            { num: '2', label: 'Train your voice' },
             { num: '3', label: 'Start reaching out' },
-          ].map((item) => (
-            <div key={item.num} className="flex items-center gap-3">
-              <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-semibold text-muted-foreground shrink-0">
+          ].map((item, i) => (
+            <div key={item.num} className="flex items-center gap-3.5" style={{ animationDelay: `${i * 80}ms` }}>
+              <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-[11px] font-semibold text-muted-foreground shrink-0">
                 {item.num}
               </div>
-              <span className="text-[13px] text-foreground/80">{item.label}</span>
+              <span className="text-sm text-foreground/80">{item.label}</span>
             </div>
           ))}
         </div>
@@ -88,11 +88,11 @@ export default function OnboardingScreen() {
         <Button
           onClick={() => setStep('apiKey')}
           variant="primary"
-          size="md"
+          size="lg"
           className="w-full max-w-[260px]"
         >
           Get Started
-          <ChevronRight size={14} />
+          <ChevronRight size={15} />
         </Button>
       </div>
     );
@@ -100,39 +100,39 @@ export default function OnboardingScreen() {
 
   // Step 2: API Key
   return (
-    <div className="flex flex-col items-center justify-center min-h-[70vh] p-6 animate-fade-in">
-      <div className="w-10 h-10 rounded-xl bg-muted/60 flex items-center justify-center mb-5">
-        <Key size={18} className="text-muted-foreground" />
+    <div className="flex flex-col items-center justify-center min-h-[75vh] px-6 animate-fade-in-up">
+      <div className="w-12 h-12 rounded-xl bg-muted/60 flex items-center justify-center mb-6">
+        <Key size={20} className="text-muted-foreground" />
       </div>
 
-      <h1 className="text-base font-semibold text-foreground mb-1">
+      <h1 className="text-lg font-semibold text-foreground mb-1.5 tracking-tight">
         Connect your API key
       </h1>
 
-      <p className="text-xs text-muted-foreground text-center max-w-[240px] leading-relaxed mb-5">
+      <p className="text-sm text-muted-foreground text-center max-w-[260px] leading-relaxed mb-6">
         Reply Guy uses OpenRouter for AI. You'll need an API key to get started.
       </p>
 
-      <form onSubmit={handleSubmit} className="w-full max-w-[280px] space-y-3">
+      <form onSubmit={handleSubmit} className="w-full max-w-[280px] space-y-3.5">
         <div>
           <Input
             type="password"
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
             placeholder="sk-or-..."
-            size="md"
+            size="lg"
             error={!!error}
             disabled={isValidating}
           />
           {error && (
-            <p className="text-[11px] text-destructive mt-1.5">{error}</p>
+            <p className="text-xs text-destructive mt-2">{error}</p>
           )}
         </div>
 
         <Button
           type="submit"
           variant="primary"
-          size="md"
+          size="lg"
           disabled={!apiKey.trim() || isValidating}
           loading={isValidating}
           className="w-full"
@@ -141,20 +141,20 @@ export default function OnboardingScreen() {
         </Button>
       </form>
 
-      <div className="mt-5 flex flex-col items-center gap-2.5">
+      <div className="mt-6 flex flex-col items-center gap-3">
         <a
           href="https://openrouter.ai/keys"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-[11px] text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors duration-200 inline-flex items-center gap-1.5"
         >
           Get a key at openrouter.ai
-          <ExternalLink size={10} />
+          <ExternalLink size={11} />
         </a>
 
         <button
           onClick={() => setStep('welcome')}
-          className="text-[11px] text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+          className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors duration-200"
         >
           Back
         </button>

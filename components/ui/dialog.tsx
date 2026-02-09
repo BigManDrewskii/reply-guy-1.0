@@ -23,12 +23,10 @@ export default function ConfirmDialog({
   const cancelRef = useRef<HTMLButtonElement>(null);
   const confirmRef = useRef<HTMLButtonElement>(null);
 
-  // Focus the cancel button on mount (safe default)
   useEffect(() => {
     cancelRef.current?.focus();
   }, []);
 
-  // Keyboard handler: Escape to close, Tab to trap focus
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -37,7 +35,6 @@ export default function ConfirmDialog({
         return;
       }
 
-      // Simple focus trap between cancel and confirm
       if (e.key === 'Tab') {
         const focusable = [cancelRef.current, confirmRef.current].filter(Boolean) as HTMLElement[];
         const first = focusable[0];
@@ -60,7 +57,6 @@ export default function ConfirmDialog({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
-  // Close on backdrop click
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
       onClose();
@@ -69,29 +65,29 @@ export default function ConfirmDialog({
 
   return (
     <div
-      className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-4 animate-fade-in"
+      className="fixed inset-0 bg-background/70 glass flex items-end sm:items-center justify-center z-50 p-4 animate-fade-in"
       onClick={handleBackdropClick}
       role="dialog"
       aria-modal="true"
       aria-labelledby="dialog-title"
       aria-describedby="dialog-description"
     >
-      <div className="w-full max-w-sm rounded-xl bg-card border border-border/60 shadow-lg animate-slide-up">
-        <div className="p-4 space-y-3">
-          <h3 id="dialog-title" className="text-sm font-semibold text-foreground">
+      <div className="w-full max-w-sm rounded-2xl bg-card border border-border/40 shadow-lg animate-fade-in-scale">
+        <div className="p-5 space-y-4">
+          <h3 id="dialog-title" className="text-base font-semibold text-foreground">
             {title}
           </h3>
 
-          <p id="dialog-description" className="text-xs text-muted-foreground leading-relaxed">
+          <p id="dialog-description" className="text-sm text-muted-foreground leading-relaxed">
             {description}
           </p>
 
-          <div className="flex gap-2 pt-1">
+          <div className="flex gap-2.5 pt-1">
             <Button
               ref={cancelRef}
               onClick={onClose}
               variant="ghost"
-              size="sm"
+              size="md"
               className="flex-1"
             >
               {cancelLabel}
@@ -103,7 +99,7 @@ export default function ConfirmDialog({
                 onClose();
               }}
               variant={variant === 'danger' ? 'danger' : 'primary'}
-              size="sm"
+              size="md"
               className="flex-1"
             >
               {confirmLabel}

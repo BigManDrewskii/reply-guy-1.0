@@ -1,4 +1,4 @@
-import{c as t}from"./sidepanel-DuZjw_0a.js";/**
+import{c as t}from"./sidepanel-D81KDWu8.js";/**
  * @license lucide-react v0.460.0 - ISC
  *
  * This source code is licensed under the ISC license.

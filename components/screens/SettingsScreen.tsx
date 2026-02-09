@@ -16,7 +16,7 @@ interface SettingsScreenProps {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
+    <h2 className="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-muted-foreground mb-2.5">
       {children}
     </h2>
   );
@@ -130,21 +130,21 @@ export default function SettingsScreen({ onNavigateVoiceTraining }: SettingsScre
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6 stagger-children">
       {/* API Key Section */}
       <div>
         <SectionLabel>API Key</SectionLabel>
         <Card variant="default">
-          <CardContent className="p-3">
+          <CardContent className="p-4">
             {!isEditing ? (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <code className="text-xs text-foreground/80 font-mono truncate flex-1 mr-2">
+                  <code className="text-xs text-foreground/70 font-mono truncate flex-1 mr-3">
                     {showKey ? apiKey : maskedKey}
                   </code>
                   <button
                     onClick={() => setShowKey(!showKey)}
-                    className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded"
+                    className="text-muted-foreground hover:text-foreground transition-colors duration-200 p-1.5 rounded-lg hover:bg-muted/50"
                     type="button"
                     aria-label={showKey ? 'Hide API key' : 'Show API key'}
                   >
@@ -159,33 +159,33 @@ export default function SettingsScreen({ onNavigateVoiceTraining }: SettingsScre
                       setIsEditing(true);
                       setNewKey(apiKey || '');
                     }}
-                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors duration-200"
                   >
                     Change
                   </button>
                 </div>
               </div>
             ) : (
-              <form onSubmit={handleSave} className="space-y-2.5">
+              <form onSubmit={handleSave} className="space-y-3">
                 <Input
                   type={showKey ? 'text' : 'password'}
                   value={newKey}
                   onChange={(e) => setNewKey(e.target.value)}
                   placeholder="sk-or-..."
-                  size="sm"
+                  size="md"
                   error={!!error}
                   disabled={isValidating}
                 />
                 {error && (
-                  <p className="text-[11px] text-destructive">{error}</p>
+                  <p className="text-xs text-destructive">{error}</p>
                 )}
-                <div className="flex gap-2">
+                <div className="flex gap-2.5">
                   <Button
                     type="button"
                     onClick={handleCancel}
                     disabled={isValidating}
                     variant="ghost"
-                    size="sm"
+                    size="md"
                     className="flex-1"
                   >
                     Cancel
@@ -194,7 +194,7 @@ export default function SettingsScreen({ onNavigateVoiceTraining }: SettingsScre
                     type="submit"
                     disabled={!newKey.trim() || isValidating}
                     variant="primary"
-                    size="sm"
+                    size="md"
                     className="flex-1"
                   >
                     {isValidating ? 'Validating...' : 'Save'}
@@ -210,8 +210,8 @@ export default function SettingsScreen({ onNavigateVoiceTraining }: SettingsScre
       <div>
         <SectionLabel>AI Model</SectionLabel>
         <Card variant="default">
-          <CardContent className="p-3 space-y-2">
-            <p className="text-[11px] text-muted-foreground">
+          <CardContent className="p-4 space-y-2.5">
+            <p className="text-xs text-muted-foreground leading-relaxed">
               Primary model for generation. Falls back to others if unavailable.
             </p>
             <div className="space-y-1">
@@ -220,9 +220,9 @@ export default function SettingsScreen({ onNavigateVoiceTraining }: SettingsScre
                   key={model}
                   onClick={() => setPreferredModel(model)}
                   className={`
-                    w-full flex items-center justify-between px-3 py-2 rounded-lg text-left transition-colors
+                    w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left transition-all duration-[200ms]
                     ${preferredModel === model
-                      ? 'bg-primary/10 border border-primary/30'
+                      ? 'bg-muted border border-border/50'
                       : 'hover:bg-card-hover border border-transparent'
                     }
                   `}
@@ -231,7 +231,7 @@ export default function SettingsScreen({ onNavigateVoiceTraining }: SettingsScre
                     {modelLabels[model] || model.split('/')[1]}
                   </span>
                   {preferredModel === model && (
-                    <div className="w-2 h-2 rounded-full bg-primary" />
+                    <div className="w-2 h-2 rounded-full bg-foreground" />
                   )}
                 </button>
               ))}
@@ -247,15 +247,15 @@ export default function SettingsScreen({ onNavigateVoiceTraining }: SettingsScre
           <CardContent className="p-0">
             <button
               onClick={onNavigateVoiceTraining}
-              className="w-full flex items-center justify-between p-3 hover:bg-card-hover transition-colors rounded-xl"
+              className="w-full flex items-center justify-between p-4 hover:bg-card-hover transition-all duration-[200ms] rounded-xl group"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
-                  <Mic size={14} className="text-muted-foreground" />
+              <div className="flex items-center gap-3.5">
+                <div className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center group-hover:bg-muted-hover transition-colors duration-[200ms]">
+                  <Mic size={15} className="text-muted-foreground" />
                 </div>
                 <div className="text-left">
                   <p className="text-sm font-medium text-foreground">Train Your Voice</p>
-                  <p className="text-[11px] text-muted-foreground">
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     {hasStructuredProfile
                       ? `${voiceProfileCount} exemplar${voiceProfileCount !== 1 ? 's' : ''} \u00b7 Style DNA active`
                       : voiceProfileCount > 0
@@ -265,7 +265,7 @@ export default function SettingsScreen({ onNavigateVoiceTraining }: SettingsScre
                   </p>
                 </div>
               </div>
-              <ChevronRight size={14} className="text-muted-foreground" />
+              <ChevronRight size={15} className="text-muted-foreground group-hover:translate-x-0.5 transition-transform duration-[200ms]" />
             </button>
           </CardContent>
         </Card>
@@ -275,11 +275,11 @@ export default function SettingsScreen({ onNavigateVoiceTraining }: SettingsScre
       <div>
         <SectionLabel>Appearance</SectionLabel>
         <Card variant="default">
-          <CardContent className="p-3">
+          <CardContent className="p-4">
             <label className="flex items-center justify-between cursor-pointer">
               <div>
                 <p className="text-sm text-foreground">Page glow</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">
+                <p className="text-xs text-muted-foreground mt-0.5">
                   {persistentGlow ? 'Stays on while panel is open' : 'Fades after 10 seconds'}
                 </p>
               </div>
@@ -291,12 +291,12 @@ export default function SettingsScreen({ onNavigateVoiceTraining }: SettingsScre
                   className="sr-only"
                 />
                 <div className={`
-                  w-9 h-5 rounded-full transition-colors duration-200
-                  ${persistentGlow ? 'bg-primary' : 'bg-muted'}
+                  w-10 h-[22px] rounded-full transition-colors duration-[250ms]
+                  ${persistentGlow ? 'bg-foreground' : 'bg-muted'}
                 `}>
                   <div className={`
-                    w-4 h-4 bg-white rounded-full shadow-xs transform transition-transform duration-200
-                    ${persistentGlow ? 'translate-x-[18px]' : 'translate-x-[2px]'}
+                    w-[18px] h-[18px] bg-background rounded-full shadow-xs transform transition-transform duration-[250ms]
+                    ${persistentGlow ? 'translate-x-[20px]' : 'translate-x-[2px]'}
                     relative top-[2px]
                   `} />
                 </div>
@@ -310,43 +310,43 @@ export default function SettingsScreen({ onNavigateVoiceTraining }: SettingsScre
       <div>
         <SectionLabel>Data</SectionLabel>
         <Card variant="default">
-          <CardContent className="p-1">
+          <CardContent className="p-1.5">
             <button
               onClick={() => setShowClearCacheDialog(true)}
               disabled={isClearingCache}
-              className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-card-hover transition-colors rounded-lg text-left disabled:opacity-50"
+              className="w-full flex items-center justify-between px-3.5 py-3 hover:bg-card-hover transition-all duration-[200ms] rounded-xl text-left disabled:opacity-40"
             >
               <span className="text-sm text-foreground">
                 {isClearingCache ? 'Clearing...' : 'Clear cache'}
               </span>
               <ChevronRight size={14} className="text-muted-foreground" />
             </button>
-            <div className="mx-3 border-t border-border/40" />
+            <div className="mx-3.5 border-t border-border/30" />
             <button
               onClick={() => setShowDeleteConvosDialog(true)}
               disabled={isDeletingConvos}
-              className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-card-hover transition-colors rounded-lg text-left disabled:opacity-50"
+              className="w-full flex items-center justify-between px-3.5 py-3 hover:bg-card-hover transition-all duration-[200ms] rounded-xl text-left disabled:opacity-40"
             >
               <span className="text-sm text-foreground">
                 {isDeletingConvos ? 'Deleting...' : 'Delete conversations'}
               </span>
               <ChevronRight size={14} className="text-muted-foreground" />
             </button>
-            <div className="mx-3 border-t border-border/40" />
+            <div className="mx-3.5 border-t border-border/30" />
             <button
               onClick={() => setShowResetDialog(true)}
-              className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-card-hover transition-colors rounded-lg text-left"
+              className="w-full flex items-center justify-between px-3.5 py-3 hover:bg-card-hover transition-all duration-[200ms] rounded-xl text-left"
             >
               <span className="text-sm text-destructive">Reset everything</span>
-              <ChevronRight size={14} className="text-destructive/60" />
+              <ChevronRight size={14} className="text-destructive/50" />
             </button>
           </CardContent>
         </Card>
       </div>
 
       {/* Footer */}
-      <div className="text-center pb-2">
-        <p className="text-[10px] text-muted-foreground/60">v0.3.0 · Studio Drewskii</p>
+      <div className="text-center pb-3">
+        <p className="text-[10px] text-muted-foreground/40 font-medium">v0.3.0 · Studio Drewskii</p>
       </div>
 
       {showClearCacheDialog && (

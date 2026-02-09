@@ -21,9 +21,9 @@ type Screen = 'outreach' | 'history' | 'settings' | 'voiceTraining';
 
 function ScreenLoader() {
   return (
-    <div className="space-y-3 animate-fade-in">
+    <div className="space-y-4 animate-fade-in p-1">
       <ProfileCardSkeleton />
-      <div className="space-y-2">
+      <div className="space-y-2.5">
         <Skeleton variant="text" className="w-1/3 h-4" />
         <Skeleton variant="pulse" className="h-1.5 w-full rounded-full" />
       </div>
@@ -134,7 +134,7 @@ export default function App() {
 
       const timeout2 = setTimeout(() => {
         setAnimationClass('');
-      }, 500);
+      }, 550);
 
       return () => {
         clearTimeout(timeout1);
@@ -149,10 +149,10 @@ export default function App() {
   if (!apiKey) {
     return (
       <div className="h-screen flex flex-col bg-background text-foreground">
-        <header className="h-12 flex items-center px-4 border-b border-border/60 bg-card shrink-0">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-primary flex items-center justify-center">
-              <Zap size={13} className="text-primary-foreground" />
+        <header className="h-13 flex items-center px-5 border-b border-border/30 bg-card/80 glass shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-foreground flex items-center justify-center">
+              <Zap size={14} className="text-background" />
             </div>
             <span className="text-sm font-semibold tracking-tight">Reply Guy</span>
           </div>
@@ -233,27 +233,27 @@ export default function App() {
   return (
     <div className="h-screen flex flex-col bg-background text-foreground">
       {/* Header */}
-      <header className="h-12 flex items-center px-4 border-b border-border/60 bg-card shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-md bg-primary flex items-center justify-center">
-            <Zap size={13} className="text-primary-foreground" />
+      <header className="h-13 flex items-center px-5 border-b border-border/30 bg-card/80 glass shrink-0">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg bg-foreground flex items-center justify-center">
+            <Zap size={14} className="text-background" />
           </div>
           <span className="text-sm font-semibold tracking-tight">Reply Guy</span>
         </div>
       </header>
 
       {/* Main content */}
-      <main ref={mainRef} className={cn('flex-1 overflow-y-auto p-4', animationClass)}>
+      <main ref={mainRef} className={cn('flex-1 overflow-y-auto p-5 scrollbar-hidden', animationClass)}>
         {renderMainContent()}
       </main>
 
       {/* Bottom navigation */}
       {showNav && (
-        <nav className="h-14 flex flex-col border-t border-border/60 bg-card px-3 shrink-0">
+        <nav className="h-15 flex flex-col border-t border-border/30 bg-card/80 glass px-4 shrink-0">
           <div className="relative flex flex-1">
             {/* Sliding active indicator */}
             <div
-              className="absolute top-0 h-[2px] bg-foreground rounded-full transition-all duration-200 ease-out"
+              className="absolute top-0 h-[2px] bg-foreground rounded-full transition-all duration-[250ms] ease-out"
               style={{
                 left: `${(activeIndex / navScreens.length) * 100}%`,
                 width: `${100 / navScreens.length}%`,
@@ -270,15 +270,18 @@ export default function App() {
                   aria-current={isActive ? 'page' : undefined}
                   className={cn(
                     'relative flex flex-col items-center justify-center gap-1 flex-1 h-full',
-                    'transition-colors duration-150',
+                    'transition-all duration-[200ms] ease-out',
                     'focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
                     isActive
                       ? 'text-foreground'
-                      : 'text-muted-foreground hover:text-foreground/70'
+                      : 'text-muted-foreground hover:text-foreground/60'
                   )}
                 >
-                  <Icon size={18} strokeWidth={isActive ? 2.2 : 1.8} />
-                  <span className="text-[10px] font-medium">{label}</span>
+                  <Icon size={18} strokeWidth={isActive ? 2.2 : 1.6} />
+                  <span className={cn(
+                    'text-[10px] transition-all duration-[200ms]',
+                    isActive ? 'font-semibold' : 'font-medium'
+                  )}>{label}</span>
                 </button>
               );
             })}

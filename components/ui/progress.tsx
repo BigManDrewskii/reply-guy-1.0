@@ -67,20 +67,20 @@ export function Progress({
         aria-valuenow={Math.round(normalizedValue)}
         aria-valuemin={0}
         aria-valuemax={100}
-        className={cn('w-full bg-muted rounded-full overflow-hidden', {
+        className={cn('w-full bg-muted/70 rounded-full overflow-hidden', {
           'h-1': size === 'sm',
           'h-1.5': size === 'md',
-          'h-2': size === 'lg',
+          'h-2.5': size === 'lg',
         })}
       >
         <div
           className={cn(
-            'h-full rounded-full transition-all duration-500',
+            'h-full rounded-full transition-all duration-700',
             color ? '' : barColors[autoVariant]
           )}
           style={{
             width: `${normalizedValue}%`,
-            transitionTimingFunction: 'cubic-bezier(0.4, 0.0, 0.2, 1)',
+            transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
             ...(color && { backgroundColor: color }),
           }}
         />

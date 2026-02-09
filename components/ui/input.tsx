@@ -15,19 +15,20 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         ref={ref}
         aria-invalid={error ? 'true' : undefined}
         className={cn(
-          'flex w-full rounded-lg bg-background text-foreground placeholder:text-muted-foreground',
-          'border transition-colors duration-150',
-          'focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring',
-          'disabled:cursor-not-allowed disabled:opacity-50',
+          'flex w-full rounded-lg bg-input text-foreground placeholder:text-muted-foreground/60',
+          'border transition-all duration-[180ms] ease-out',
+          'focus:outline-none focus:ring-2 focus:ring-ring/30 focus:border-border-hover focus:bg-input-hover',
+          'disabled:cursor-not-allowed disabled:opacity-40',
+          'hover:border-border-hover',
           {
-            'border-border': variant === 'default' && !error,
-            'border-border/80': variant === 'bordered' && !error,
-            'border-destructive focus:ring-destructive/30': error,
+            'border-border/50': variant === 'default' && !error,
+            'border-border/70': variant === 'bordered' && !error,
+            'border-destructive/60 focus:ring-destructive/20': error,
           },
           {
             'h-8 px-2.5 text-xs': size === 'sm',
             'h-9 px-3 text-sm': size === 'md',
-            'h-10 px-3.5 text-sm': size === 'lg',
+            'h-10 px-4 text-sm': size === 'lg',
           },
           className
         )}

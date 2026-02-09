@@ -58,17 +58,13 @@ export default function HistoryScreen() {
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
-  // Load CRM stats when stats panel is shown
   useEffect(() => {
     if (showStats) {
       getCrmStats().then(setCrmStats).catch(() => {});
     }
   }, [showStats, contacts, conversations]);
 
-  // ============================================
   // Conversations tab logic
-  // ============================================
-
   const filteredConversations = useMemo(() => {
     let result = conversations;
     if (activeFilter !== 'all') {
@@ -101,10 +97,7 @@ export default function HistoryScreen() {
     return { total, byPlatform, byStatus, last7Days, responseRate };
   }, [conversations]);
 
-  // ============================================
   // Contacts tab logic
-  // ============================================
-
   const filteredContacts = useMemo(() => {
     let result = contacts;
     if (activeFilter !== 'all') {
@@ -172,25 +165,25 @@ export default function HistoryScreen() {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4 stagger-children">
       {/* Tab switcher */}
-      <div className="flex rounded-lg bg-muted/50 p-0.5 gap-0.5">
+      <div className="flex rounded-xl bg-muted/50 p-1 gap-1">
         <button
           onClick={() => setActiveTab('conversations')}
-          className={`flex-1 py-1.5 px-3 rounded-md text-[11px] font-medium transition-all ${
+          className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all duration-[200ms] ${
             activeTab === 'conversations'
-              ? 'bg-background text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
+              ? 'bg-card text-foreground shadow-xs'
+              : 'text-muted-foreground hover:text-foreground/80'
           }`}
         >
           Messages {conversations.length > 0 && `(${conversations.length})`}
         </button>
         <button
           onClick={() => setActiveTab('contacts')}
-          className={`flex-1 py-1.5 px-3 rounded-md text-[11px] font-medium transition-all ${
+          className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all duration-[200ms] ${
             activeTab === 'contacts'
-              ? 'bg-background text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
+              ? 'bg-card text-foreground shadow-xs'
+              : 'text-muted-foreground hover:text-foreground/80'
           }`}
         >
           Contacts {contacts.length > 0 && `(${contacts.length})`}
@@ -198,24 +191,24 @@ export default function HistoryScreen() {
       </div>
 
       {/* Search + stats toggle */}
-      <div className="flex gap-2">
+      <div className="flex gap-2.5">
         <div className="relative flex-1">
-          <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
           <Input
             placeholder={activeTab === 'conversations' ? 'Search messages...' : 'Search contacts...'}
-            size="sm"
+            size="md"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             aria-label="Search"
-            className="pl-8"
+            className="pl-9"
           />
         </div>
         <button
           onClick={() => setShowStats(!showStats)}
-          className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-colors ${
+          className={`w-9 h-9 flex items-center justify-center rounded-xl border transition-all duration-[200ms] ${
             showStats
-              ? 'bg-primary text-primary-foreground border-primary'
-              : 'bg-card text-muted-foreground border-border/60 hover:text-foreground'
+              ? 'bg-foreground text-background border-foreground'
+              : 'bg-card text-muted-foreground border-border/40 hover:text-foreground hover:border-border/60'
           }`}
           aria-label="Toggle analytics"
           aria-pressed={showStats}
@@ -226,34 +219,34 @@ export default function HistoryScreen() {
 
       {/* Analytics dashboard */}
       {showStats && (
-        <Card variant="default">
+        <Card variant="default" className="animate-fade-in">
           <CardHeader>
             <CardTitle>Analytics</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 gap-3">
-              <div className="text-center p-2 rounded-lg bg-background/50">
-                <p className="text-lg font-bold tabular-nums text-foreground">
+              <div className="text-center p-3 rounded-xl bg-background/50">
+                <p className="text-xl font-bold tabular-nums text-foreground">
                   {crmStats?.totalContacts || contacts.length}
                 </p>
-                <p className="text-[10px] text-muted-foreground">Contacts</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Contacts</p>
               </div>
-              <div className="text-center p-2 rounded-lg bg-background/50">
-                <p className="text-lg font-bold tabular-nums text-foreground">
+              <div className="text-center p-3 rounded-xl bg-background/50">
+                <p className="text-xl font-bold tabular-nums text-foreground">
                   {convStats?.total || 0}
                 </p>
-                <p className="text-[10px] text-muted-foreground">Messages</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Messages</p>
               </div>
-              <div className="text-center p-2 rounded-lg bg-background/50">
-                <p className="text-lg font-bold tabular-nums text-foreground">
+              <div className="text-center p-3 rounded-xl bg-background/50">
+                <p className="text-xl font-bold tabular-nums text-foreground">
                   {convStats?.responseRate || 0}%
                 </p>
-                <p className="text-[10px] text-muted-foreground">Reply Rate</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Reply Rate</p>
               </div>
             </div>
             {crmStats && crmStats.topAngles.length > 0 && (
-              <div className="pt-3 mt-3 border-t border-border/40">
-                <p className="text-[10px] text-muted-foreground mb-1.5">Top Angles</p>
+              <div className="pt-3.5 mt-3.5 border-t border-border/30">
+                <p className="text-[10px] text-muted-foreground mb-2">Top Angles</p>
                 <div className="flex flex-wrap gap-1.5">
                   {crmStats.topAngles.map(({ angle, count }) => (
                     <Badge key={angle} variant="outline" size="sm">
@@ -264,7 +257,7 @@ export default function HistoryScreen() {
               </div>
             )}
             {crmStats && Object.keys(crmStats.contactsByPlatform).length > 0 && (
-              <div className="flex flex-wrap gap-1.5 pt-3 mt-3 border-t border-border/40">
+              <div className="flex flex-wrap gap-1.5 pt-3.5 mt-3.5 border-t border-border/30">
                 {Object.entries(crmStats.contactsByPlatform).map(([platform, count]) => (
                   <Badge key={platform} variant="outline" size="sm">
                     {getPlatformLabel(platform)} {count}
@@ -282,10 +275,10 @@ export default function HistoryScreen() {
           <button
             key={filter}
             onClick={() => setActiveFilter(filter)}
-            className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-[200ms] ${
               activeFilter === filter
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted/50 text-muted-foreground hover:text-foreground'
+                ? 'bg-foreground text-background'
+                : 'bg-muted/40 text-muted-foreground hover:text-foreground border border-border/20'
             }`}
             aria-pressed={activeFilter === filter}
           >
@@ -294,28 +287,26 @@ export default function HistoryScreen() {
         ))}
       </div>
 
-      {/* ============================================ */}
       {/* Conversations Tab */}
-      {/* ============================================ */}
       {activeTab === 'conversations' && (
         <>
           {filteredConversations.length === 0 ? (
-            <div className="py-10 text-center">
-              <p className="text-xs text-muted-foreground">
+            <div className="py-12 text-center">
+              <p className="text-sm text-muted-foreground">
                 {searchQuery || activeFilter !== 'all'
                   ? 'No conversations match your search.'
                   : 'No conversations yet.'}
               </p>
               {!searchQuery && activeFilter === 'all' && (
-                <p className="text-[11px] text-muted-foreground/60 mt-1">
+                <p className="text-xs text-muted-foreground/50 mt-1.5">
                   Copy and send a message to start tracking.
                 </p>
               )}
             </div>
           ) : (
             Object.entries(grouped).map(([date, convs]) => (
-              <div key={date} className="space-y-1.5">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60 px-1 pt-1">
+              <div key={date} className="space-y-2">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground/50 px-1 pt-1">
                   {date === new Date().toLocaleDateString() ? 'Today' : date}
                 </p>
                 {convs.map((conv) => {
@@ -326,8 +317,8 @@ export default function HistoryScreen() {
                     <Card
                       key={conv.id}
                       variant="default"
-                      className={`cursor-pointer transition-all ${
-                        isExpanded ? 'ring-1 ring-ring/30' : ''
+                      className={`cursor-pointer transition-all duration-[200ms] ${
+                        isExpanded ? 'ring-1 ring-ring/20' : ''
                       }`}
                       style={
                         prefersReducedMotion
@@ -339,17 +330,17 @@ export default function HistoryScreen() {
                       }
                       onClick={() => setExpandedId(isExpanded ? null : conv.id)}
                     >
-                      <CardContent className="p-3">
-                        <div className="flex items-start gap-2.5">
-                          <div className="flex-shrink-0 w-7 h-7 rounded-md bg-muted/60 flex items-center justify-center text-[10px] font-semibold text-muted-foreground">
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-muted/50 flex items-center justify-center text-[10px] font-semibold text-muted-foreground">
                             {getPlatformLabel(conv.platform)}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-2">
-                              <h4 className="text-[13px] font-medium text-foreground truncate">
+                              <h4 className="text-sm font-medium text-foreground truncate">
                                 {conv.pageName}
                               </h4>
-                              <span className="text-[10px] text-muted-foreground/60 tabular-nums shrink-0">
+                              <span className="text-[10px] text-muted-foreground/50 tabular-nums shrink-0">
                                 {new Date(conv.sentAt).toLocaleTimeString([], {
                                   hour: '2-digit',
                                   minute: '2-digit',
@@ -357,11 +348,11 @@ export default function HistoryScreen() {
                               </span>
                             </div>
                             {!isExpanded && (
-                              <p className="text-xs text-muted-foreground truncate mt-0.5">
+                              <p className="text-xs text-muted-foreground truncate mt-1">
                                 {conv.sentMessage}
                               </p>
                             )}
-                            <div className="flex items-center gap-1.5 mt-1.5">
+                            <div className="flex items-center gap-2 mt-2">
                               <span
                                 className={`w-1.5 h-1.5 rounded-full ${
                                   conv.status === 'sent'
@@ -374,26 +365,26 @@ export default function HistoryScreen() {
                               <span className="text-[10px] text-muted-foreground capitalize">
                                 {conv.status.replace('_', ' ')}
                               </span>
-                              <span className="text-[10px] text-muted-foreground/40">·</span>
+                              <span className="text-[10px] text-muted-foreground/30">·</span>
                               <span className="text-[10px] text-muted-foreground/60 capitalize">
                                 {conv.angle}
                               </span>
                             </div>
                             {isExpanded && (
-                              <div className="mt-2.5 pt-2.5 border-t border-border/40">
-                                <p className="text-[13px] leading-relaxed text-foreground/90 whitespace-pre-wrap">
+                              <div className="mt-3 pt-3 border-t border-border/30">
+                                <p className="text-sm leading-relaxed text-foreground/85 whitespace-pre-wrap">
                                   {conv.sentMessage}
                                 </p>
-                                <div className="flex items-center justify-end mt-2.5">
+                                <div className="flex items-center justify-end mt-3">
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       setDeleteTarget({ id: conv.id, name: conv.pageName });
                                     }}
-                                    className="flex items-center gap-1 text-[10px] text-destructive/70 hover:text-destructive transition-colors"
+                                    className="flex items-center gap-1.5 text-[11px] text-destructive/60 hover:text-destructive transition-colors duration-200"
                                     aria-label={`Delete conversation with ${conv.pageName}`}
                                   >
-                                    <Trash2 size={11} />
+                                    <Trash2 size={12} />
                                     Delete
                                   </button>
                                 </div>
@@ -411,26 +402,24 @@ export default function HistoryScreen() {
         </>
       )}
 
-      {/* ============================================ */}
       {/* Contacts Tab */}
-      {/* ============================================ */}
       {activeTab === 'contacts' && (
         <>
           {filteredContacts.length === 0 ? (
-            <div className="py-10 text-center">
-              <p className="text-xs text-muted-foreground">
+            <div className="py-12 text-center">
+              <p className="text-sm text-muted-foreground">
                 {searchQuery || activeFilter !== 'all'
                   ? 'No contacts match your search.'
                   : 'No contacts yet.'}
               </p>
               {!searchQuery && activeFilter === 'all' && (
-                <p className="text-[11px] text-muted-foreground/60 mt-1">
+                <p className="text-xs text-muted-foreground/50 mt-1.5">
                   Contacts are created automatically when you send messages.
                 </p>
               )}
             </div>
           ) : (
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               {filteredContacts.map((contact, index) => {
                 const isExpanded = expandedContactId === contact.id;
 
@@ -438,8 +427,8 @@ export default function HistoryScreen() {
                   <Card
                     key={contact.id}
                     variant="default"
-                    className={`cursor-pointer transition-all ${
-                      isExpanded ? 'ring-1 ring-ring/30' : ''
+                    className={`cursor-pointer transition-all duration-[200ms] ${
+                      isExpanded ? 'ring-1 ring-ring/20' : ''
                     }`}
                     style={
                       prefersReducedMotion
@@ -451,69 +440,63 @@ export default function HistoryScreen() {
                     }
                     onClick={() => setExpandedContactId(isExpanded ? null : (contact.id ?? null))}
                   >
-                    <CardContent className="p-3">
-                      <div className="flex items-start gap-2.5">
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3">
                         {/* Avatar */}
-                        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-[11px] font-semibold text-primary">
+                        <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-muted/50 flex items-center justify-center text-xs font-semibold text-muted-foreground">
                           {contact.name.charAt(0).toUpperCase()}
                         </div>
 
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <h4 className="text-[13px] font-medium text-foreground truncate">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <h4 className="text-sm font-medium text-foreground truncate">
                                 {contact.name}
                               </h4>
                               <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${STATUS_COLORS[contact.status]}`} />
                             </div>
-                            <span className="text-[10px] text-muted-foreground/60 tabular-nums shrink-0">
+                            <span className="text-[10px] text-muted-foreground/50 tabular-nums shrink-0">
                               {getRelativeTime(contact.lastContactedAt)}
                             </span>
                           </div>
 
-                          {/* Bio/headline preview */}
                           {(contact.headline || contact.bio) && !isExpanded && (
-                            <p className="text-xs text-muted-foreground truncate mt-0.5">
+                            <p className="text-xs text-muted-foreground truncate mt-1">
                               {contact.headline || contact.bio}
                             </p>
                           )}
 
-                          {/* Meta row */}
-                          <div className="flex items-center gap-1.5 mt-1.5">
+                          <div className="flex items-center gap-2 mt-2">
                             <Badge variant="outline" size="sm">
                               {getPlatformLabel(contact.platform)}
                             </Badge>
                             <span className="text-[10px] text-muted-foreground">
                               {contact.totalMessages} msg{contact.totalMessages !== 1 ? 's' : ''}
                             </span>
-                            <span className="text-[10px] text-muted-foreground/40">·</span>
+                            <span className="text-[10px] text-muted-foreground/30">·</span>
                             <span className="text-[10px] text-muted-foreground capitalize">
                               {contact.status}
                             </span>
                           </div>
 
-                          {/* Expanded details */}
                           {isExpanded && (
-                            <div className="mt-2.5 pt-2.5 border-t border-border/40 space-y-2.5">
-                              {/* Bio */}
+                            <div className="mt-3 pt-3 border-t border-border/30 space-y-3">
                               {(contact.headline || contact.bio) && (
-                                <p className="text-[12px] leading-relaxed text-muted-foreground">
+                                <p className="text-xs leading-relaxed text-muted-foreground">
                                   {contact.headline || contact.bio}
                                 </p>
                               )}
 
-                              {/* Location + followers */}
                               {(contact.location || contact.followers) && (
-                                <div className="flex items-center gap-2 text-[10px] text-muted-foreground/70">
+                                <div className="flex items-center gap-2 text-[11px] text-muted-foreground/60">
                                   {contact.location && <span>{contact.location}</span>}
                                   {contact.location && contact.followers && <span>·</span>}
                                   {contact.followers && <span>{contact.followers} followers</span>}
                                 </div>
                               )}
 
-                              {/* Tags */}
                               {contact.tags && contact.tags.length > 0 && (
-                                <div className="flex flex-wrap gap-1">
+                                <div className="flex flex-wrap gap-1.5">
                                   {contact.tags.map((tag, i) => (
                                     <Badge key={i} variant="outline" size="sm">
                                       {tag}
@@ -524,8 +507,8 @@ export default function HistoryScreen() {
 
                               {/* Status changer */}
                               <div>
-                                <p className="text-[10px] text-muted-foreground mb-1">Status</p>
-                                <div className="flex flex-wrap gap-1">
+                                <p className="text-[10px] text-muted-foreground mb-1.5">Status</p>
+                                <div className="flex flex-wrap gap-1.5">
                                   {STATUS_OPTIONS.map((status) => (
                                     <button
                                       key={status}
@@ -533,10 +516,10 @@ export default function HistoryScreen() {
                                         e.stopPropagation();
                                         if (contact.id) handleStatusChange(contact.id, status);
                                       }}
-                                      className={`px-2 py-0.5 rounded text-[10px] font-medium transition-all ${
+                                      className={`px-2.5 py-1 rounded-full text-[10px] font-medium transition-all duration-[200ms] ${
                                         contact.status === status
-                                          ? 'bg-primary text-primary-foreground'
-                                          : 'bg-muted/50 text-muted-foreground hover:text-foreground'
+                                          ? 'bg-foreground text-background'
+                                          : 'bg-muted/40 text-muted-foreground hover:text-foreground'
                                       }`}
                                     >
                                       {status}
@@ -552,9 +535,9 @@ export default function HistoryScreen() {
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   onClick={(e) => e.stopPropagation()}
-                                  className="flex items-center gap-1 text-[10px] text-info hover:text-info/80 transition-colors"
+                                  className="flex items-center gap-1.5 text-[11px] text-info hover:text-info/80 transition-colors duration-200"
                                 >
-                                  <ExternalLink size={10} />
+                                  <ExternalLink size={11} />
                                   View Profile
                                 </a>
                                 <button
@@ -564,9 +547,9 @@ export default function HistoryScreen() {
                                       setDeleteContactTarget({ id: contact.id, name: contact.name });
                                     }
                                   }}
-                                  className="flex items-center gap-1 text-[10px] text-destructive/70 hover:text-destructive transition-colors"
+                                  className="flex items-center gap-1.5 text-[11px] text-destructive/60 hover:text-destructive transition-colors duration-200"
                                 >
-                                  <Trash2 size={11} />
+                                  <Trash2 size={12} />
                                   Delete
                                 </button>
                               </div>

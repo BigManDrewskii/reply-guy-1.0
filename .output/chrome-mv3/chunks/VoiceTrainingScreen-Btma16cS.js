@@ -1,4 +1,4 @@
-import{c as E,r as m,u as he,d as Ae,j as e,b as de}from"./sidepanel-DuZjw_0a.js";import{s as we,e as Se}from"./openrouter-DO4vzLi3.js";import{s as Ce,d as Pe,B as F,C as ae,a as ne,b as Ee,c as Me}from"./badge-CmSeivz9.js";import{e as ze,s as Te,f as Ie,A as fe,T as Re,a as Le,b as ue,d as me,G as Ve,C as Ue}from"./alert-4kMVdb-k.js";import{B as V,L as Q}from"./button-DmPrM7kr.js";import{M as ye}from"./mic-BNzs3FMQ.js";/**
+import{c as E,r as m,u as he,d as Ae,j as e,b as de}from"./sidepanel-D81KDWu8.js";import{s as we,e as Se}from"./openrouter-BZtvTj_X.js";import{s as Ce,d as Pe,B as F,C as ae,a as ne,b as Ee,c as Me}from"./badge-2-8IB16q.js";import{e as ze,s as Te,f as Ie,A as fe,T as Re,a as Le,b as ue,d as me,G as Ve,C as Ue}from"./alert-DoMjsQy8.js";import{B as V,L as Q}from"./button-cslzYFV6.js";import{M as ye}from"./mic-y7L3DTHr.js";/**
  * @license lucide-react v0.460.0 - ISC
  *
  * This source code is licensed under the ISC license.
