@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import { ArrowLeft } from '@/lib/icons';
 import { useToast } from '@/components/ui/useToast';
 
@@ -19,6 +20,8 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
     setExampleMessages,
     messageCount,
     voiceProfile,
+    voiceMetrics,
+    voiceMetricsSummary,
     isExtracting,
     extractionProgress,
     error,
@@ -149,13 +152,37 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
           </p>
           <p className="text-[13px] text-foreground font-medium mb-1">Analyzing your voice</p>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Extracting your unique writing style...
+            Running local NLP + AI extraction...
           </p>
         </div>
 
+        {/* Local NLP metrics (appear instantly) */}
+        {voiceMetrics && (
+          <Card variant="default">
+            <CardHeader>
+              <CardTitle>Quick Analysis</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2.5">
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                {voiceMetricsSummary}
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <MetricItem label="Readability" value={voiceMetrics.readabilityScore} max={100} />
+                <MetricItem label="Formality" value={voiceMetrics.formalityScore} max={100} />
+                <MetricItem label="Avg sentence" value={voiceMetrics.avgSentenceLength} suffix=" words" />
+                <MetricItem label="Vocab richness" value={voiceMetrics.vocabularyRichness} suffix="%" />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* LLM extraction progress */}
         {isExtracting && (
           <Card variant="default">
-            <CardContent className="p-3 space-y-2">
+            <CardHeader>
+              <CardTitle>AI Extraction</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
               {progressItems.map((item) => (
                 <div key={item.key} className="flex items-center gap-2.5">
                   <div className={`w-1.5 h-1.5 rounded-full transition-colors duration-300 ${
@@ -224,6 +251,37 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
           </CardContent>
         </Card>
 
+        {/* Style Metrics (from compromise.js) */}
+        {voiceMetrics && (
+          <Card variant="default">
+            <CardHeader>
+              <CardTitle>Style Metrics</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-3">
+                <MetricItem label="Readability" value={voiceMetrics.readabilityScore} max={100} />
+                <MetricItem label="Formality" value={voiceMetrics.formalityScore} max={100} />
+                <MetricItem label="Questions" value={voiceMetrics.questionFrequency} suffix="%" />
+                <MetricItem label="Active voice" value={voiceMetrics.activeVoiceRate} suffix="%" />
+                <MetricItem label="Avg sentence" value={voiceMetrics.avgSentenceLength} suffix=" words" />
+                <MetricItem label="Vocab richness" value={voiceMetrics.vocabularyRichness} suffix="%" />
+              </div>
+              {voiceMetrics.topPhrases.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-border/40">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">
+                    Signature phrases
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {voiceMetrics.topPhrases.slice(0, 6).map((phrase, i) => (
+                      <Badge key={i} variant="outline" size="sm">{phrase}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         {/* Opening patterns */}
         <Card variant="default">
           <CardHeader>
@@ -281,4 +339,31 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
   }
 
   return null;
+}
+
+// Small metric display component
+function MetricItem({ label, value, max, suffix }: {
+  label: string;
+  value: number;
+  max?: number;
+  suffix?: string;
+}) {
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] text-muted-foreground">{label}</span>
+        <span className="text-[11px] font-medium tabular-nums text-foreground">
+          {Math.round(value)}{suffix || ''}
+        </span>
+      </div>
+      {max && (
+        <div className="h-1 bg-muted rounded-full overflow-hidden">
+          <div
+            className="h-full bg-primary/60 rounded-full transition-all"
+            style={{ width: `${Math.min(100, (value / max) * 100)}%` }}
+          />
+        </div>
+      )}
+    </div>
+  );
 }

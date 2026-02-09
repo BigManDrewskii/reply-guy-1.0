@@ -27,6 +27,7 @@ export function useAnalysis(): UseAnalysisResult {
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const apiKey = useStore((state) => state.apiKey);
+  const preferredModel = useStore((state) => state.preferredModel);
 
   // Refs to track debounced calls and abort
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -188,7 +189,8 @@ export function useAnalysis(): UseAnalysisResult {
                 setRetryCount(0);
               }
             }
-          }
+          },
+          preferredModel
         );
       } catch (err) {
         if (err instanceof DOMException && err.name === 'AbortError') {

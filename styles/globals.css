@@ -251,6 +251,11 @@ a:focus:not(:focus-visible) {
   100% { background-position: -200% 0; }
 }
 
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
 .animate-fade-in {
   animation: fade-in 0.2s ease-out;
 }
@@ -283,6 +288,10 @@ a:focus:not(:focus-visible) {
   animation: pulse-subtle 2s ease-in-out infinite;
 }
 
+.animate-blink {
+  animation: blink 0.8s ease-in-out infinite;
+}
+
 /* ============================================
  * REDUCED MOTION
  * ============================================ */
@@ -295,7 +304,8 @@ a:focus:not(:focus-visible) {
   .animate-shake,
   .animate-slide-in-left,
   .animate-slide-out-right,
-  .animate-pulse-subtle {
+  .animate-pulse-subtle,
+  .animate-blink {
     animation: none !important;
   }
 

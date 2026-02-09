@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ConfirmDialog from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/useToast';
+import { MODEL_CHAIN } from '@/lib/openrouter';
 
 interface SettingsScreenProps {
   onNavigateVoiceTraining?: () => void;
@@ -27,6 +28,8 @@ export default function SettingsScreen({ onNavigateVoiceTraining }: SettingsScre
   const clearApiKey = useStore((state) => state.clearApiKey);
   const persistentGlow = useStore((state) => state.persistentGlow);
   const setPersistentGlow = useStore((state) => state.setPersistentGlow);
+  const preferredModel = useStore((state) => state.preferredModel);
+  const setPreferredModel = useStore((state) => state.setPreferredModel);
   const { add: addToast } = useToast();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -108,6 +111,13 @@ export default function SettingsScreen({ onNavigateVoiceTraining }: SettingsScre
     setShowKey(false);
   };
 
+  // Friendly model names
+  const modelLabels: Record<string, string> = {
+    'google/gemini-2.0-flash-001': 'Gemini 2.0 Flash',
+    'anthropic/claude-3.5-haiku': 'Claude 3.5 Haiku',
+    'openai/gpt-4o-mini': 'GPT-4o Mini',
+  };
+
   return (
     <div className="space-y-5">
       {/* API Key Section */}
@@ -181,6 +191,40 @@ export default function SettingsScreen({ onNavigateVoiceTraining }: SettingsScre
                 </div>
               </form>
             )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Model Selection */}
+      <div>
+        <SectionLabel>AI Model</SectionLabel>
+        <Card variant="default">
+          <CardContent className="p-3 space-y-2">
+            <p className="text-[11px] text-muted-foreground">
+              Primary model for generation. Falls back to others if unavailable.
+            </p>
+            <div className="space-y-1">
+              {MODEL_CHAIN.map((model) => (
+                <button
+                  key={model}
+                  onClick={() => setPreferredModel(model)}
+                  className={`
+                    w-full flex items-center justify-between px-3 py-2 rounded-lg text-left transition-colors
+                    ${preferredModel === model
+                      ? 'bg-primary/10 border border-primary/30'
+                      : 'hover:bg-card-hover border border-transparent'
+                    }
+                  `}
+                >
+                  <span className={`text-sm ${preferredModel === model ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
+                    {modelLabels[model] || model.split('/')[1]}
+                  </span>
+                  {preferredModel === model && (
+                    <div className="w-2 h-2 rounded-full bg-primary" />
+                  )}
+                </button>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -289,7 +333,7 @@ export default function SettingsScreen({ onNavigateVoiceTraining }: SettingsScre
 
       {/* Footer */}
       <div className="text-center pb-2">
-        <p className="text-[10px] text-muted-foreground/60">v0.1.0 · Studio Drewskii</p>
+        <p className="text-[10px] text-muted-foreground/60">v0.3.0 · Studio Drewskii</p>
       </div>
 
       {showClearCacheDialog && (

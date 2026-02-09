@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+export type MessageLength = 'short' | 'medium' | 'long';
+
 interface AppState {
   // API Key
   apiKey: string | null;
@@ -14,6 +16,14 @@ interface AppState {
   // Appearance
   persistentGlow: boolean;
   setPersistentGlow: (enabled: boolean) => void;
+
+  // Message preferences
+  messageLength: MessageLength;
+  setMessageLength: (length: MessageLength) => void;
+
+  // Model preference
+  preferredModel: string | null;
+  setPreferredModel: (model: string | null) => void;
 
   // Error handling
   lastError: string | null;
@@ -54,6 +64,14 @@ export const useStore = create<AppState>()(
       persistentGlow: false,
       setPersistentGlow: (enabled) => set({ persistentGlow: enabled }),
 
+      // Message preferences
+      messageLength: 'medium',
+      setMessageLength: (length) => set({ messageLength: length }),
+
+      // Model preference
+      preferredModel: null,
+      setPreferredModel: (model) => set({ preferredModel: model }),
+
       // Error handling
       lastError: null,
       setLastError: (error) => set({ lastError: error }),
@@ -85,6 +103,8 @@ export const useStore = create<AppState>()(
         apiKey: state.apiKey,
         activeScreen: state.activeScreen,
         persistentGlow: state.persistentGlow,
+        messageLength: state.messageLength,
+        preferredModel: state.preferredModel,
         voiceProfileLoaded: state.voiceProfileLoaded,
         // Don't persist: lastError, isOnline, pendingActions
       }),

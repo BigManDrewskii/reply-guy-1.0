@@ -6,6 +6,7 @@ import type { PageData, AnalysisResult, VoiceProfile, GeneratedMessage, Outreach
 
 interface UseMessageGenerationResult {
   messages: Record<string, GeneratedMessage | null>;
+  streamingText: Record<string, string>;
   isGenerating: Record<string, boolean>;
   selectedAngle: OutreachAngle['angle'];
   setSelectedAngle: (angle: OutreachAngle['angle']) => void;
@@ -15,13 +16,44 @@ interface UseMessageGenerationResult {
   setMessages: React.Dispatch<React.SetStateAction<Record<string, GeneratedMessage | null>>>;
 }
 
+/**
+ * Extract the "message" field from partial JSON as it streams in.
+ * This allows us to show the message text before the full JSON is complete.
+ */
+function extractPartialMessage(text: string): string | null {
+  const cleaned = extractJsonFromResponse(text);
+
+  // Try full parse first
+  try {
+    const parsed = JSON.parse(cleaned);
+    if (parsed.message) return parsed.message;
+  } catch {
+    // Not complete JSON yet — try to extract partial message field
+  }
+
+  // Look for "message": "..." pattern and extract what we have so far
+  const messageMatch = cleaned.match(/"message"\s*:\s*"((?:[^"\\]|\\.)*)(?:"|$)/s);
+  if (messageMatch?.[1]) {
+    // Unescape JSON string escapes
+    return messageMatch[1]
+      .replace(/\\n/g, '\n')
+      .replace(/\\"/g, '"')
+      .replace(/\\\\/g, '\\')
+      .replace(/\\t/g, '\t');
+  }
+
+  return null;
+}
+
 export function useMessageGeneration(): UseMessageGenerationResult {
   const [messages, setMessages] = useState<Record<string, GeneratedMessage | null>>({});
+  const [streamingText, setStreamingText] = useState<Record<string, string>>({});
   const [isGenerating, setIsGenerating] = useState<Record<string, boolean>>({});
   const [selectedAngle, setSelectedAngle] = useState<OutreachAngle['angle']>('service');
   const [voiceProfile, setVoiceProfile] = useState<VoiceProfile | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const apiKey = useStore((state) => state.apiKey);
+  const preferredModel = useStore((state) => state.preferredModel);
 
   const pageDataRef = useRef<PageData | null>(null);
   const analysisRef = useRef<AnalysisResult | null>(null);
@@ -72,6 +104,7 @@ export function useMessageGeneration(): UseMessageGenerationResult {
     abortControllerRef.current = controller;
 
     setIsGenerating((prev) => ({ ...prev, [angle]: true }));
+    setStreamingText((prev) => ({ ...prev, [angle]: '' }));
 
     try {
       const prompt = getMessagePrompt(pageData, analysis, angle, voiceProfile || undefined);
@@ -87,14 +120,23 @@ export function useMessageGeneration(): UseMessageGenerationResult {
           signal: controller.signal,
           onChunk: (chunk) => {
             fullResponse += chunk;
+
+            // Try to extract partial message text for live streaming display
+            const partialMessage = extractPartialMessage(fullResponse);
+            if (partialMessage) {
+              setStreamingText((prev) => ({ ...prev, [angle]: partialMessage }));
+            }
+
+            // Also try full JSON parse for early completion
             try {
               const jsonStr = extractJsonFromResponse(fullResponse);
               const parsed = JSON.parse(jsonStr) as GeneratedMessage;
-              if (parsed.message) {
+              if (parsed.message && parsed.wordCount) {
                 setMessages((prev) => ({ ...prev, [angle]: parsed }));
+                setStreamingText((prev) => ({ ...prev, [angle]: '' }));
               }
             } catch {
-              // Partial JSON, not parseable yet
+              // Partial JSON, not parseable yet — streaming text handles display
             }
           },
           onComplete: (finalText) => {
@@ -102,9 +144,24 @@ export function useMessageGeneration(): UseMessageGenerationResult {
               const jsonStr = extractJsonFromResponse(finalText);
               const parsed = JSON.parse(jsonStr) as GeneratedMessage;
               setMessages((prev) => ({ ...prev, [angle]: parsed }));
+              setStreamingText((prev) => ({ ...prev, [angle]: '' }));
               setIsGenerating((prev) => ({ ...prev, [angle]: false }));
               setRetryCount(0);
             } catch {
+              // If JSON parse fails but we have streaming text, create a fallback message
+              const partialMessage = extractPartialMessage(finalText);
+              if (partialMessage) {
+                setMessages((prev) => ({
+                  ...prev,
+                  [angle]: {
+                    message: partialMessage,
+                    wordCount: partialMessage.split(/\s+/).filter(Boolean).length,
+                    hook: '',
+                    voiceScore: 50,
+                  },
+                }));
+              }
+              setStreamingText((prev) => ({ ...prev, [angle]: '' }));
               setIsGenerating((prev) => ({ ...prev, [angle]: false }));
             }
             abortControllerRef.current = null;
@@ -112,6 +169,7 @@ export function useMessageGeneration(): UseMessageGenerationResult {
           onError: (err) => {
             if (err instanceof DOMException && err.name === 'AbortError') {
               setIsGenerating((prev) => ({ ...prev, [angle]: false }));
+              setStreamingText((prev) => ({ ...prev, [angle]: '' }));
               return;
             }
 
@@ -133,18 +191,22 @@ export function useMessageGeneration(): UseMessageGenerationResult {
               }, backoffDelay);
             } else {
               setIsGenerating((prev) => ({ ...prev, [angle]: false }));
+              setStreamingText((prev) => ({ ...prev, [angle]: '' }));
               setRetryCount(0);
             }
             abortControllerRef.current = null;
           }
-        }
+        },
+        preferredModel
       );
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') {
         setIsGenerating((prev) => ({ ...prev, [angle]: false }));
+        setStreamingText((prev) => ({ ...prev, [angle]: '' }));
         return;
       }
       setIsGenerating((prev) => ({ ...prev, [angle]: false }));
+      setStreamingText((prev) => ({ ...prev, [angle]: '' }));
       abortControllerRef.current = null;
     }
   }, [apiKey, voiceProfile, retryCount, cancelGeneration]);
@@ -155,11 +217,13 @@ export function useMessageGeneration(): UseMessageGenerationResult {
     angle: OutreachAngle['angle']
   ) => {
     setMessages((prev) => ({ ...prev, [angle]: null }));
+    setStreamingText((prev) => ({ ...prev, [angle]: '' }));
     await generateMessage(pageData, analysis, angle);
   }, [generateMessage]);
 
   return {
     messages,
+    streamingText,
     isGenerating,
     selectedAngle,
     setSelectedAngle,

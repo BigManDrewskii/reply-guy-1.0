@@ -1,0 +1,65 @@
+/* Reply Guy inline button styles — designed to blend with X's action bar */
+.reply-guy-inline-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34.75px;
+  height: 34.75px;
+  border-radius: 9999px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  color: rgb(113, 118, 123);
+  padding: 0;
+  position: relative;
+}
+
+.reply-guy-inline-btn:hover {
+  background-color: rgba(120, 86, 255, 0.1);
+  color: rgb(120, 86, 255);
+}
+
+.reply-guy-inline-btn:active {
+  transform: scale(0.92);
+}
+
+.reply-guy-inline-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Tooltip */
+.reply-guy-inline-btn::after {
+  content: 'Reply Guy';
+  position: absolute;
+  bottom: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  font-size: 11px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  padding: 3px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  z-index: 10;
+}
+
+.reply-guy-inline-btn:hover::after {
+  opacity: 1;
+}
+
+/* Pulse animation when processing */
+.reply-guy-inline-btn.processing {
+  color: rgb(120, 86, 255);
+  animation: reply-guy-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes reply-guy-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}

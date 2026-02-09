@@ -21,11 +21,14 @@ interface StreamOptions {
  * Model fallback chain as specified in PRD:
  * claude-sonnet-4 → gpt-4o → llama-3.3-70b-instruct
  */
-const MODEL_FALLBACK_CHAIN = [
-  'anthropic/claude-sonnet-4',
-  'openai/gpt-4o',
-  'meta-llama/llama-3.3-70b-instruct',
-];
+export const MODEL_CHAIN = [
+  'google/gemini-2.0-flash-001',
+  'anthropic/claude-3.5-haiku',
+  'openai/gpt-4o-mini',
+] as const;
+
+// Alias for internal use
+const MODEL_FALLBACK_CHAIN = MODEL_CHAIN as readonly string[];
 
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
@@ -37,13 +40,20 @@ const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 export async function streamCompletion(
   messages: OpenRouterMessage[],
   apiKey: string,
-  options: StreamOptions = {}
+  options: StreamOptions = {},
+  preferredModel?: string | null
 ): Promise<void> {
   const { onChunk, onComplete, onError, signal } = options;
 
+  // Reorder chain to put preferred model first
+  let chain = [...MODEL_FALLBACK_CHAIN];
+  if (preferredModel && chain.includes(preferredModel)) {
+    chain = [preferredModel, ...chain.filter((m) => m !== preferredModel)];
+  }
+
   let lastError: Error | null = null;
 
-  for (const model of MODEL_FALLBACK_CHAIN) {
+  for (const model of chain) {
     try {
       // Check if aborted before attempting
       if (signal?.aborted) {

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { PageData, OutreachAngle } from '@/types';
+import { useStore, type MessageLength } from '@/lib/store';
 import ProfileCard from '@/components/profile/ProfileCard';
 import PageCard from '@/components/profile/PageCard';
 import MessageCard from '@/components/messages/MessageCard';
@@ -12,11 +13,20 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useAnalysis } from '@/hooks/useAnalysis';
 import { db } from '@/lib/db';
-import { AlertOctagon, Zap } from '@/lib/icons';
+import { AlertOctagon, Zap, MessageCircle } from '@/lib/icons';
+import { findOrCreateContact, addTouchpoint, contactExists } from '@/lib/crm';
+import { generateFollowUpPlan, scheduleFollowUps } from '@/lib/follow-up';
+import { useToast } from '@/components/ui/useToast';
 
 interface OutreachScreenProps {
   initialData?: PageData | null;
 }
+
+const LENGTH_OPTIONS: { value: MessageLength; label: string; desc: string }[] = [
+  { value: 'short', label: 'Short', desc: '40-80w' },
+  { value: 'medium', label: 'Medium', desc: '100-150w' },
+  { value: 'long', label: 'Long', desc: '180-250w' },
+];
 
 export default function OutreachScreen({ initialData }: OutreachScreenProps) {
   const [pageData, setPageData] = useState<PageData | null | undefined>(initialData);
@@ -27,6 +37,9 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
   const [lastCopiedMessage, setLastCopiedMessage] = useState('');
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
   const { analysis, isAnalyzing, isDebouncing, debounceCountdown, error, analyzePage, cancelAnalysis } = useAnalysis();
+  const messageLength = useStore((s) => s.messageLength);
+  const setMessageLength = useStore((s) => s.setMessageLength);
+  const { add: addToast } = useToast();
 
   useEffect(() => {
     const listener = (changes: Record<string, chrome.storage.StorageChange>) => {
@@ -47,6 +60,13 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
     const checkDuplicate = async () => {
       if (!pageData?.url) return;
       try {
+        // Check CRM contacts first
+        const contact = await contactExists(pageData.url);
+        if (contact && contact.totalMessages > 0) {
+          setDuplicateWarning(`You've already sent ${contact.totalMessages} message${contact.totalMessages > 1 ? 's' : ''} to this contact.`);
+          return;
+        }
+        // Fallback to conversations table
         const existing = await db.conversations
           .where('pageUrl')
           .equals(pageData.url)
@@ -81,6 +101,7 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
     if (!pageData || !lastCopiedMessage) return;
 
     try {
+      // Log conversation
       await db.conversations.add({
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
         platform: pageData.platform,
@@ -91,6 +112,22 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
         sentAt: Date.now(),
         status: 'sent',
       });
+
+      // Auto-create/update contact via CRM service
+      try {
+        const contactId = await findOrCreateContact(pageData, analysis || undefined);
+        await addTouchpoint({
+          contactId,
+          type: 'copied',
+          angle: selectedAngle,
+          message: lastCopiedMessage,
+          platform: pageData.platform,
+          timestamp: Date.now(),
+          messageLength,
+        });
+      } catch (err) {
+        console.warn('[OutreachScreen] Failed to update contact:', err);
+      }
     } catch (err) {
       console.error('[OutreachScreen] Failed to log conversation:', err);
     }
@@ -127,6 +164,23 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
         <ProfileCard data={pageData} />
       ) : (
         <PageCard data={pageData} />
+      )}
+
+      {/* Thread context indicator */}
+      {pageData.isThread && pageData.threadContext && pageData.threadContext.length > 0 && (
+        <Card variant="default">
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2 mb-1.5">
+              <MessageCircle size={13} className="text-info" />
+              <span className="text-[11px] font-medium text-foreground">
+                Thread detected · {pageData.threadContext.length} messages
+              </span>
+            </div>
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              Thread context will be used to generate more relevant messages.
+            </p>
+          </CardContent>
+        </Card>
       )}
 
       {/* Duplicate contact warning */}
@@ -260,6 +314,31 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
               </CardContent>
             </Card>
           )}
+
+          {/* Message Length Control */}
+          <Card variant="default">
+            <CardHeader>
+              <CardTitle>Message Length</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex rounded-lg bg-muted/50 p-0.5 gap-0.5">
+                {LENGTH_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setMessageLength(opt.value)}
+                    className={`flex-1 py-1.5 px-2 rounded-md text-center transition-all duration-200 ${
+                      messageLength === opt.value
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <span className="text-[11px] font-medium block">{opt.label}</span>
+                    <span className="text-[9px] opacity-60 block">{opt.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </>
       )}
 
@@ -271,6 +350,23 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
           selectedAngle={selectedAngle}
           onSelectAngle={setSelectedAngle}
           onCopy={handleCopy}
+          onScheduleFollowUp={async () => {
+            if (!pageData || !lastCopiedMessage) {
+              addToast({ title: 'Copy a message first', variant: 'error' });
+              return;
+            }
+            try {
+              const contactId = await findOrCreateContact(pageData, analysis || undefined);
+              const contact = await db.contacts.get(contactId);
+              if (!contact) return;
+              const plan = generateFollowUpPlan(contact, lastCopiedMessage, selectedAngle, pageData.platform);
+              await scheduleFollowUps(plan);
+              addToast({ title: 'Follow-ups scheduled', description: '3 reminders: 3d, 7d, 14d', variant: 'success' });
+            } catch (err) {
+              console.error('[OutreachScreen] Failed to schedule follow-ups:', err);
+              addToast({ title: 'Failed to schedule follow-ups', variant: 'error' });
+            }
+          }}
         />
       )}
 
@@ -279,6 +375,8 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
         isOpen={showPostCopySheet}
         onClose={() => setShowPostCopySheet(false)}
         onLogged={handleLogged}
+        platform={pageData.platform}
+        username={pageData.username}
       />
     </div>
   );

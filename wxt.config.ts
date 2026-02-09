@@ -5,7 +5,7 @@ export default defineConfig({
   manifest: {
     name: 'Reply Guy',
     description: 'AI-powered outreach for any page',
-    version: '0.1.0',
+    version: '0.3.0',
     action: {
       default_icon: {
         '16': 'icon-16.png',
@@ -21,6 +21,9 @@ export default defineConfig({
     permissions: [
       'activeTab',
       'storage',
+      'sidePanel',
+      'alarms',
+      'notifications',
     ],
   },
 });
