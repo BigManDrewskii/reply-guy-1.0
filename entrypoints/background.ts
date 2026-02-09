@@ -23,4 +23,15 @@ export default defineBackground(() => {
   chrome.tabs.onActivated.addListener((activeInfo) => {
     chrome.tabs.sendMessage(activeInfo.tabId, { type: 'SCRAPE_PAGE' }).catch(() => {});
   });
+
+  // Clean up glow when side panel closes
+  if (chrome.sidePanel.onPanelClosed) {
+    chrome.sidePanel.onPanelClosed.addListener(() => {
+      chrome.tabs.query({ active: true }).then(tabs => {
+        tabs.forEach(tab => {
+          chrome.tabs.sendMessage(tab.id!, { type: 'CLOSE_PANEL' }).catch(() => {});
+        });
+      });
+    });
+  }
 });

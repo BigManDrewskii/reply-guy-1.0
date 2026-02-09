@@ -40,7 +40,18 @@ export default function App() {
     // Subscribe to page data from content script (via background → storage.session)
     const listener = (changes: Record<string, chrome.storage.StorageChange>) => {
       if (changes.currentPageData) {
-        setPageData(changes.currentPageData.newValue);
+        const newData = changes.currentPageData.newValue;
+        setPageData(newData);
+
+        // Notify content script that analysis is complete
+        chrome.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
+          if (tab.id) {
+            chrome.tabs.sendMessage(tab.id, {
+              type: 'ANALYSIS_COMPLETE',
+              confidence: newData.confidence || 100
+            }).catch(() => {});
+          }
+        });
       }
     };
     chrome.storage.session.onChanged.addListener(listener);
@@ -50,7 +61,23 @@ export default function App() {
       if (result.currentPageData) setPageData(result.currentPageData);
     });
 
-    return () => chrome.storage.session.onChanged.removeListener(listener);
+    // Start analysis when side panel opens
+    chrome.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
+      if (tab.id) {
+        chrome.tabs.sendMessage(tab.id, { type: 'START_ANALYSIS' }).catch(() => {});
+      }
+    });
+
+    return () => {
+      chrome.storage.session.onChanged.removeListener(listener);
+
+      // Clean up glow when side panel unmounts
+      chrome.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
+        if (tab.id) {
+          chrome.tabs.sendMessage(tab.id, { type: 'CLOSE_PANEL' }).catch(() => {});
+        }
+      });
+    };
   }, []);
 
   useEffect(() => {

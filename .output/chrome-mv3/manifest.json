@@ -1,0 +1,1 @@
+{"manifest_version":3,"name":"Reply Guy","description":"AI-powered outreach for any page","version":"0.1.0","action":{},"permissions":["activeTab","storage","sidePanel"],"background":{"service_worker":"background.js"},"side_panel":{"default_path":"sidepanel.html"},"content_scripts":[{"matches":["<all_urls>"],"run_at":"document_idle","js":["content-scripts/content.js"]}]}

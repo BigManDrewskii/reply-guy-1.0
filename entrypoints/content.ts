@@ -1,3 +1,6 @@
+import { initializeGlow, removeGlow, updateGlowState } from '@/lib/glow-manager';
+import { scrapeGeneric as enhancedScrapeGeneric } from '@/lib/scrapers';
+
 export default defineContentScript({
   matches: ['<all_urls>'],
   runAt: 'document_idle',
@@ -8,13 +11,31 @@ export default defineContentScript({
       scrapeAndSend();
     });
 
-    // Background asks us to re-scrape (tab change, navigation)
+    // Message handlers for glow lifecycle and scraping
     chrome.runtime.onMessage.addListener((message) => {
       if (message.type === 'SCRAPE_PAGE') {
         waitForPageReady().then(() => {
           scrapeAndSend();
         });
       }
+
+      if (message.type === 'START_ANALYSIS') {
+        initializeGlow();
+        updateGlowState('analyzing');
+        waitForPageReady().then(() => {
+          scrapeAndSend();
+        });
+      }
+
+      if (message.type === 'ANALYSIS_COMPLETE') {
+        updateGlowState(message.confidence < 50 ? 'low-confidence' : 'complete');
+      }
+
+      if (message.type === 'CLOSE_PANEL') {
+        removeGlow();
+      }
+
+      return true;
     });
 
     // SPA navigation detection
@@ -138,7 +159,10 @@ function scrapePage() {
   if (platform === 'x') return { ...base, ...scrapeX() };
   if (platform === 'linkedin') return { ...base, ...scrapeLinkedIn() };
   if (platform === 'github') return { ...base, ...scrapeGitHub() };
-  return { ...base, ...scrapeGeneric() };
+
+  // Use enhanced generic scraper
+  const genericData = enhancedScrapeGeneric();
+  return { ...base, ...genericData };
 }
 
 function detectPlatform(h: string) {
@@ -157,49 +181,77 @@ function getMeta(name: string) {
 
 function scrapeX() {
   try {
+    const name = document.querySelector('[data-testid="UserName"] span')?.textContent || '';
+    const bio = document.querySelector('[data-testid="UserDescription"]')?.textContent || '';
+    const location = document.querySelector('[data-testid="UserLocation"]')?.textContent || '';
+    const followers = document.querySelector('[href$="/followers"] span')?.textContent || '';
+    const recentPosts = Array.from(document.querySelectorAll('[data-testid="tweetText"]'))
+      .slice(0, 6).map(el => el.textContent || '');
+
+    // Calculate confidence
+    let confidence = 50;
+    if (name) confidence += 15;
+    if (bio) confidence += 10;
+    if (location) confidence += 5;
+    if (followers) confidence += 5;
+    if (recentPosts.length > 0) confidence += 15;
+
     return {
-      name: document.querySelector('[data-testid="UserName"] span')?.textContent || '',
-      bio: document.querySelector('[data-testid="UserDescription"]')?.textContent || '',
-      location: document.querySelector('[data-testid="UserLocation"]')?.textContent || '',
-      followers: document.querySelector('[href$="/followers"] span')?.textContent || '',
-      recentPosts: Array.from(document.querySelectorAll('[data-testid="tweetText"]'))
-        .slice(0, 6).map(el => el.textContent || ''),
+      name,
+      bio,
+      location,
+      followers,
+      recentPosts,
       isProfile: true,
+      confidence: Math.min(confidence, 100)
     };
   } catch { return {}; }
 }
 
 function scrapeLinkedIn() {
   try {
+    const name = document.querySelector('.text-heading-xlarge')?.textContent?.trim() || '';
+    const headline = document.querySelector('.text-body-medium.break-words')?.textContent?.trim() || '';
+    const about = document.querySelector('#about ~ div .visually-hidden + span')?.textContent?.trim() || '';
+    const isProfile = !!document.querySelector('.text-heading-xlarge');
+
+    // Calculate confidence
+    let confidence = 40;
+    if (name) confidence += 20;
+    if (headline) confidence += 15;
+    if (about) confidence += 15;
+    if (isProfile) confidence += 10;
+
     return {
-      name: document.querySelector('.text-heading-xlarge')?.textContent?.trim() || '',
-      headline: document.querySelector('.text-body-medium.break-words')?.textContent?.trim() || '',
-      about: document.querySelector('#about ~ div .visually-hidden + span')?.textContent?.trim() || '',
-      isProfile: !!document.querySelector('.text-heading-xlarge'),
+      name,
+      headline,
+      about,
+      isProfile,
+      confidence: Math.min(confidence, 100)
     };
   } catch { return {}; }
 }
 
 function scrapeGitHub() {
   try {
+    const name = document.querySelector('.p-name')?.textContent?.trim() || '';
+    const bio = document.querySelector('.p-note .js-user-profile-bio')?.textContent?.trim() || '';
+    const company = document.querySelector('[itemprop="worksFor"]')?.textContent?.trim() || '';
+    const isProfile = !!document.querySelector('.p-name');
+
+    // Calculate confidence
+    let confidence = 40;
+    if (name) confidence += 20;
+    if (bio) confidence += 15;
+    if (company) confidence += 10;
+    if (isProfile) confidence += 15;
+
     return {
-      name: document.querySelector('.p-name')?.textContent?.trim() || '',
-      bio: document.querySelector('.p-note .js-user-profile-bio')?.textContent?.trim() || '',
-      company: document.querySelector('[itemprop="worksFor"]')?.textContent?.trim() || '',
-      isProfile: !!document.querySelector('.p-name'),
+      name,
+      bio,
+      company,
+      isProfile,
+      confidence: Math.min(confidence, 100)
     };
   } catch { return {}; }
-}
-
-function scrapeGeneric() {
-  const bodyText = document.body.innerText.substring(0, 2000);
-  const h1 = document.querySelector('h1')?.textContent?.trim() || '';
-  const socialLinks = Array.from(document.querySelectorAll('a[href]'))
-    .map(a => a.getAttribute('href') || '')
-    .filter(href =>
-      /x\.com|twitter\.com|linkedin\.com|github\.com/.test(href)
-    ).slice(0, 5);
-  const emailMatch = bodyText.match(/[\w.-]+@[\w.-]+\.\w+/);
-
-  return { h1, bodyText, socialLinks, email: emailMatch?.[0] || '' };
 }

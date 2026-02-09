@@ -14,6 +14,8 @@ export default function SettingsScreen() {
   const apiKey = useStore((state) => state.apiKey);
   const setApiKey = useStore((state) => state.setApiKey);
   const clearApiKey = useStore((state) => state.clearApiKey);
+  const persistentGlow = useStore((state) => state.persistentGlow);
+  const setPersistentGlow = useStore((state) => state.setPersistentGlow);
 
   const [isEditing, setIsEditing] = useState(false);
   const [newKey, setNewKey] = useState(apiKey || '');
@@ -217,14 +219,49 @@ export default function SettingsScreen() {
 
       <div className="border-t border-border pt-4">
         <h2 className="text-base font-semibold leading-tight text-foreground mb-3">Appearance</h2>
-        <Button
-          onClick={toggleTheme}
-          variant="secondary"
-          size="md"
-          className="w-full"
-        >
-          {theme === 'dark' ? '☀️ Switch to Light Mode' : '🌙 Switch to Dark Mode'}
-        </Button>
+        <div className="space-y-2">
+          <Button
+            onClick={toggleTheme}
+            variant="secondary"
+            size="md"
+            className="w-full"
+          >
+            {theme === 'dark' ? '☀️ Switch to Light Mode' : '🌙 Switch to Dark Mode'}
+          </Button>
+
+          <Card variant="default">
+            <CardContent className="px-4 py-3">
+              <label className="flex items-center justify-between cursor-pointer">
+                <span className="text-[13px] leading-relaxed text-foreground">
+                  Keep page glow on
+                </span>
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    checked={persistentGlow}
+                    onChange={(e) => setPersistentGlow(e.target.checked)}
+                    className="sr-only"
+                  />
+                  <div className={`
+                    w-10 h-6 rounded-full transition-colors duration-200
+                    ${persistentGlow ? 'bg-accent' : 'bg-muted'}
+                  `}>
+                    <div className={`
+                      w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-200
+                      ${persistentGlow ? 'translate-x-5' : 'translate-x-0.5'}
+                      relative top-0.5
+                    `} />
+                  </div>
+                </div>
+              </label>
+              <p className="text-[11px] leading-normal text-muted-foreground mt-2">
+                {persistentGlow
+                  ? 'Glow stays on while side panel is open'
+                  : 'Glow fades after 10 seconds'}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <div className="border-t border-border pt-4">

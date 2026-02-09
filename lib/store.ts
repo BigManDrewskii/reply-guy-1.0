@@ -11,6 +11,10 @@ interface AppState {
   activeScreen: 'outreach' | 'history' | 'settings';
   setActiveScreen: (screen: 'outreach' | 'history' | 'settings') => void;
 
+  // Appearance
+  persistentGlow: boolean;
+  setPersistentGlow: (enabled: boolean) => void;
+
   // Error handling
   lastError: string | null;
   setLastError: (error: string | null) => void;
@@ -46,6 +50,10 @@ export const useStore = create<AppState>()(
       activeScreen: 'outreach',
       setActiveScreen: (screen) => set({ activeScreen: screen }),
 
+      // Appearance
+      persistentGlow: false,
+      setPersistentGlow: (enabled) => set({ persistentGlow: enabled }),
+
       // Error handling
       lastError: null,
       setLastError: (error) => set({ lastError: error }),
@@ -76,6 +84,7 @@ export const useStore = create<AppState>()(
         // Only persist these fields
         apiKey: state.apiKey,
         activeScreen: state.activeScreen,
+        persistentGlow: state.persistentGlow,
         voiceProfileLoaded: state.voiceProfileLoaded,
         // Don't persist: lastError, isOnline, pendingActions
       }),
