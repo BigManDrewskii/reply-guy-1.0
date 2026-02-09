@@ -1,4 +1,4 @@
-import{c as b,r as x,j as t,a as n}from"./sidepanel-BVNUtaom.js";/**
+import{c as b,r as x,j as t,a as n}from"./sidepanel-DuZjw_0a.js";/**
  * @license lucide-react v0.460.0 - ISC
  *
  * This source code is licensed under the ISC license.

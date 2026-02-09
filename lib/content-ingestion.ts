@@ -105,26 +105,33 @@ export async function segmentContentWithAI(
   apiKey: string,
   onProgress?: (msg: string) => void,
 ): Promise<string[]> {
+  const wordCount = rawContent.split(/\s+/).length;
+  const contentSlice = rawContent.slice(0, 15000);
+
   const prompt = `You are a writing sample extraction specialist. Your job is to take raw content and extract discrete, individual writing samples from a SINGLE author.
 
-INPUT CONTENT:
+INPUT CONTENT (${wordCount} words total):
 ---
-${rawContent.slice(0, 12000)}
+${contentSlice}
 ---
 
 TASK:
-1. Identify individual writing samples (messages, posts, paragraphs, emails) from the content above
+1. Identify individual writing samples (messages, posts, paragraphs, tweets, emails, comments) from the content above
 2. Each sample should be a complete thought or message from the same person
-3. Remove any metadata, timestamps, usernames, "RT", "Retweeted", navigation text, or UI artifacts
+3. Remove any metadata, timestamps, usernames, "RT", "Retweeted", navigation text, headers, or UI artifacts
 4. Remove any content that is clearly NOT written by the primary author (quotes from others, retweets, etc.)
 5. Keep the original wording exactly — do NOT paraphrase or clean up grammar
-6. Each sample should be at least 10 words long
-7. Aim for 5-30 samples depending on content length
+6. Even SHORT samples (5+ words) are valuable — tweets, one-liners, and brief replies all count
+7. If the content is a single long document/article, split it into meaningful paragraphs or sections
+8. Aim for 3-30 samples depending on content length
+9. If you can only find 1-2 samples, that's OK — return what you find rather than an empty array
 
-Return a JSON array of strings, each being one writing sample. No markdown, no code blocks, just raw JSON:
+IMPORTANT: You MUST return at least 1 sample if there is ANY author-written content. An empty array is only acceptable if the content contains zero original writing.
+
+Return a JSON array of strings, each being one writing sample:
 ["sample 1 text here", "sample 2 text here", ...]
 
-CRITICAL: Return ONLY the JSON array. No explanation, no markdown formatting.`;
+CRITICAL: Return ONLY the raw JSON array. No explanation, no markdown code blocks, no \`\`\`json wrapper.`;
 
   return new Promise((resolve, reject) => {
     let fullResponse = '';
@@ -154,12 +161,32 @@ CRITICAL: Return ONLY the JSON array. No explanation, no markdown formatting.`;
               throw new Error('Expected JSON array');
             }
 
+            // Accept samples with 5+ words (was 10, too aggressive for tweets/short posts)
             const samples = parsed
               .filter((s: unknown): s is string => typeof s === 'string')
               .map((s: string) => s.trim())
-              .filter((s: string) => s.split(/\s+/).length >= 10); // min 10 words
+              .filter((s: string) => s.length > 0 && s.split(/\s+/).length >= 5);
 
             if (samples.length === 0) {
+              // Fallback: if LLM returned empty but we have raw content, use it as-is
+              console.warn('[content-ingestion] AI returned no samples, falling back to raw content');
+              const fallbackSamples = rawContent
+                .split(/\n\n+/)
+                .map(s => s.trim())
+                .filter(s => s.length > 15 && s.split(/\s+/).length >= 5)
+                .slice(0, 20);
+
+              if (fallbackSamples.length > 0) {
+                resolve(fallbackSamples);
+                return;
+              }
+
+              // Last resort: treat entire content as one sample if it's long enough
+              if (rawContent.trim().split(/\s+/).length >= 5) {
+                resolve([rawContent.trim()]);
+                return;
+              }
+
               throw new Error('No valid writing samples found in content');
             }
 

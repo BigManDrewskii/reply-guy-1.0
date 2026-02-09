@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { useStore } from '@/lib/store';
 import { streamCompletion, extractJsonFromResponse } from '@/lib/openrouter';
-import { db } from '@/lib/db';
+import { db, safeDbOperation } from '@/lib/db';
 import {
   extractLocalStyleMetrics,
   summarizeLocalMetrics,
@@ -509,18 +509,31 @@ export function useVoiceTraining(): VoiceTrainingState {
 
   // ── Save Profile (with proper serialization and error handling) ──
 
+  // Guard to prevent concurrent save attempts (fixes retry loop)
+  const saveInProgress = useRef(false);
+
   const saveVoiceProfile = useCallback(async (): Promise<boolean> => {
     if (!voiceProfile) return false;
+    if (saveInProgress.current) return false;
+
+    saveInProgress.current = true;
 
     try {
       // Serialize the profile to a plain JSON-safe object
       // This ensures no class instances or non-serializable data gets stored
       const serializedProfile = JSON.parse(JSON.stringify(voiceProfile));
 
-      // Save to Dexie (IndexedDB)
-      await db.voiceProfiles.put(serializedProfile);
+      // Save to Dexie (IndexedDB) — non-fatal if it fails
+      // Uses safeDbOperation which handles DatabaseClosedError with auto-reopen
+      await safeDbOperation(
+        () => db.voiceProfiles.put(serializedProfile),
+        undefined
+      ).catch((err) => {
+        console.warn('[useVoiceTraining] Dexie save failed (non-fatal):', err);
+      });
 
-      // Save to chrome.storage.local for easy access by other hooks
+      // Save to chrome.storage.local — this is the PRIMARY storage
+      // Other hooks read from here, so this MUST succeed
       await new Promise<void>((resolve, reject) => {
         chrome.storage.local.set({ voiceProfile: serializedProfile }, () => {
           if (chrome.runtime.lastError) {
@@ -539,6 +552,8 @@ export function useVoiceTraining(): VoiceTrainingState {
       console.error('[useVoiceTraining] Save failed:', err);
       setError(`Failed to save voice profile: ${err instanceof Error ? err.message : 'Unknown error'}`);
       return false;
+    } finally {
+      saveInProgress.current = false;
     }
   }, [voiceProfile]);
 
