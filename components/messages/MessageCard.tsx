@@ -158,7 +158,7 @@ function MessageCard({
             </p>
             <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border/20">
               <div className="w-1.5 h-1.5 rounded-full bg-foreground animate-pulse-subtle" />
-              <span className="text-[10px] text-muted-foreground">
+              <span className="text-[12px] text-muted-foreground">
                 {isCurrentRefining ? 'Refining voice' : 'Generating'} · {currentStreamingText.split(/\s+/).filter(Boolean).length}w
               </span>
             </div>
@@ -170,7 +170,7 @@ function MessageCard({
           <div className="rounded-xl bg-background/50 p-4 border border-border/30">
             <div className="flex items-center gap-2 mb-2.5">
               <div className="w-1.5 h-1.5 rounded-full bg-foreground animate-pulse-subtle" />
-              <span className="text-[10px] text-foreground/70 font-medium">Refining voice match...</span>
+              <span className="text-[12px] text-foreground/70 font-medium">Refining voice match...</span>
             </div>
             <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
               {currentStreamingText}
@@ -199,11 +199,11 @@ function MessageCard({
                     <Badge variant={voiceInfo.variant} size="sm">
                       {voiceInfo.label}
                     </Badge>
-                    <span className="text-[10px] text-muted-foreground tabular-nums">
+                    <span className="text-[12px] text-muted-foreground tabular-nums">
                       {effectiveVoiceScore}%
                     </span>
                     <ChevronDown
-                      size={10}
+                      size={14}
                       className={`text-muted-foreground/40 transition-transform duration-[200ms] ${showVoiceDetails ? 'rotate-180' : ''}`}
                     />
                   </button>
@@ -213,15 +213,15 @@ function MessageCard({
                 {aiScore && aiLabel && (
                   <button
                     onClick={() => setShowAiDetails(!showAiDetails)}
-                    className={`flex items-center gap-1 text-[10px] ${aiLabel.color} hover:opacity-80 transition-opacity duration-200`}
+                    className={`flex items-center gap-1 text-[12px] ${aiLabel.color} hover:opacity-80 transition-opacity duration-200`}
                     title="AI-ness score — click for details"
                   >
-                    <Zap size={10} />
+                    <Zap size={14} />
                     <span className="tabular-nums">{aiScore.score}% AI</span>
                   </button>
                 )}
-                <span className="text-[10px] text-muted-foreground/30">·</span>
-                <span className="text-[10px] text-muted-foreground tabular-nums">
+                <span className="text-[12px] text-muted-foreground/30">·</span>
+                <span className="text-[12px] text-muted-foreground tabular-nums">
                   {currentMessage.wordCount}w
                 </span>
               </div>
@@ -243,7 +243,7 @@ function MessageCard({
                       const info = BREAKDOWN_LABELS[key];
                       return (
                         <div key={key} className="flex items-center gap-2.5">
-                          <span className="text-[10px] text-muted-foreground w-[72px] shrink-0" title={info.desc}>
+                          <span className="text-[12px] text-muted-foreground w-[72px] shrink-0" title={info.desc}>
                             {info.label}
                           </span>
                           <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
@@ -257,7 +257,7 @@ function MessageCard({
                               }}
                             />
                           </div>
-                          <span className="text-[10px] text-muted-foreground/50 w-6 text-right tabular-nums">
+                          <span className="text-[12px] text-muted-foreground/50 w-6 text-right tabular-nums">
                             {value}
                           </span>
                         </div>
@@ -274,10 +274,10 @@ function MessageCard({
                       onClick={handleRefine}
                       className="w-full"
                     >
-                      <RefreshCw size={12} />
+                      <RefreshCw size={14} />
                       Refine Voice Match ({voiceMatch.score}% → 85%+)
                     </Button>
-                    <p className="text-[9px] text-muted-foreground/40 text-center mt-1.5">
+                    <p className="text-[12px] text-muted-foreground/40 text-center mt-1.5">
                       Uses a second LLM pass to improve weak dimensions
                     </p>
                   </div>
@@ -301,7 +301,7 @@ function MessageCard({
                     { label: 'Vocab', value: aiScore.breakdown.compression, desc: 'Word diversity' },
                   ].map(({ label, value, desc }) => (
                     <div key={label} className="flex items-center gap-2.5">
-                      <span className="text-[10px] text-muted-foreground w-14 shrink-0" title={desc}>
+                      <span className="text-[12px] text-muted-foreground w-14 shrink-0" title={desc}>
                         {label}
                       </span>
                       <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
@@ -312,7 +312,7 @@ function MessageCard({
                           style={{ width: `${Math.max(2, value)}%` }}
                         />
                       </div>
-                      <span className="text-[10px] text-muted-foreground/50 w-6 text-right tabular-nums">
+                      <span className="text-[12px] text-muted-foreground/50 w-6 text-right tabular-nums">
                         {value}
                       </span>
                     </div>
@@ -321,10 +321,10 @@ function MessageCard({
 
                 {aiScore.suggestions.length > 0 && (
                   <div className="pt-2.5 border-t border-border/20">
-                    <p className="text-[10px] font-medium text-muted-foreground mb-1.5">Suggestions</p>
+                    <p className="text-[12px] font-medium text-muted-foreground mb-1.5">Suggestions</p>
                     <ul className="space-y-1">
                       {aiScore.suggestions.map((s, i) => (
-                        <li key={i} className="text-[10px] text-muted-foreground/60 flex gap-1.5">
+                        <li key={i} className="text-[12px] text-muted-foreground/60 flex gap-1.5">
                           <span className="shrink-0">·</span>
                           <span>{s}</span>
                         </li>
@@ -354,7 +354,7 @@ function MessageCard({
                 disabled={isLoading || isCurrentRefining}
                 className="flex-1"
               >
-                <RefreshCw size={13} className={isLoading ? 'animate-spin' : ''} />
+                <RefreshCw size={15} className={isLoading ? 'animate-spin' : ''} />
                 Regenerate
               </Button>
               <Button
@@ -364,7 +364,7 @@ function MessageCard({
                 className="flex-1"
                 aria-label="Edit this message"
               >
-                <Edit size={13} />
+                <Edit size={15} />
                 Edit
               </Button>
             </div>
@@ -377,7 +377,7 @@ function MessageCard({
                 onClick={onScheduleFollowUp}
                 className="w-full text-muted-foreground"
               >
-                <AlertOctagon size={13} />
+                <AlertOctagon size={15} />
                 Schedule Follow-ups
               </Button>
             )}

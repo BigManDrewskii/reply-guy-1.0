@@ -33,7 +33,7 @@ export default function Toast({ toast, onRemove }: ToastProps) {
         aria-label="Dismiss toast"
         className="p-1 hover:bg-foreground/10 rounded-lg transition-colors shrink-0 opacity-60 hover:opacity-100"
       >
-        <X size={12} />
+        <X size={14} />
       </button>
     </div>
   );

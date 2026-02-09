@@ -77,7 +77,7 @@ export default function OnboardingScreen() {
             { num: '3', label: 'Start reaching out' },
           ].map((item, i) => (
             <div key={item.num} className="flex items-center gap-3.5" style={{ animationDelay: `${i * 80}ms` }}>
-              <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-[11px] font-semibold text-muted-foreground shrink-0">
+              <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-[12px] font-semibold text-muted-foreground shrink-0">
                 {item.num}
               </div>
               <span className="text-sm text-foreground/80">{item.label}</span>
@@ -149,7 +149,7 @@ export default function OnboardingScreen() {
           className="text-xs text-muted-foreground hover:text-foreground transition-colors duration-200 inline-flex items-center gap-1.5"
         >
           Get a key at openrouter.ai
-          <ExternalLink size={11} />
+          <ExternalLink size={15} />
         </a>
 
         <button

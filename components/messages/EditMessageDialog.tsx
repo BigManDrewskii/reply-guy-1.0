@@ -53,14 +53,14 @@ export default function EditMessageDialog({
         <div className="p-4 space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-foreground">Edit Message</h3>
-            <span className="text-[10px] text-muted-foreground tabular-nums">{wordCount}w</span>
+            <span className="text-[12px] text-muted-foreground tabular-nums">{wordCount}w</span>
           </div>
 
           <textarea
             ref={textareaRef}
             value={edited}
             onChange={(e) => setEdited(e.target.value)}
-            className="w-full h-40 px-3 py-2.5 rounded-lg bg-background border border-border/60 text-[13px] text-foreground leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring transition-colors"
+            className="w-full h-40 px-3 py-2.5 rounded-lg bg-background border border-border/60 text-[14px] text-foreground leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring transition-colors"
             placeholder="Edit your message..."
             aria-label="Edit message content"
           />
@@ -81,7 +81,7 @@ export default function EditMessageDialog({
               className="flex-1"
               disabled={isDisabled}
             >
-              <Check size={13} />
+              <Check size={15} />
               Save
             </Button>
           </div>

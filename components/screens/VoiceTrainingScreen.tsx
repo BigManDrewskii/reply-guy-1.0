@@ -159,7 +159,7 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
           <div key={s.num} className="flex items-center gap-1.5 flex-1">
             <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
               <div
-                className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold transition-all duration-300 ${
+                className={`w-6 h-6 rounded-full flex items-center justify-center text-[12px] font-semibold transition-all duration-300 ${
                   s.num < current
                     ? 'bg-primary text-primary-foreground'
                     : s.num === current
@@ -167,9 +167,9 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
                     : 'bg-muted text-muted-foreground'
                 }`}
               >
-                {s.num < current ? <Check size={10} /> : s.num}
+                {s.num < current ? <Check size={14} /> : s.num}
               </div>
-              <span className="text-[9px] text-muted-foreground">{s.label}</span>
+              <span className="text-[12px] text-muted-foreground">{s.label}</span>
             </div>
             {i < steps.length - 1 && (
               <div
@@ -221,14 +221,14 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
           className="w-full flex items-center justify-between px-3.5 py-2.5 text-left"
         >
           <div className="flex items-center gap-2">
-            <IconComp size={13} className="text-muted-foreground" />
+            <IconComp size={15} className="text-muted-foreground" />
             <span className="text-xs font-semibold text-foreground">{title}</span>
             {badge && <Badge variant="outline" size="sm">{badge}</Badge>}
           </div>
           {isExpanded ? (
-            <ChevronUp size={13} className="text-muted-foreground" />
+            <ChevronUp size={15} className="text-muted-foreground" />
           ) : (
-            <ChevronDown size={13} className="text-muted-foreground" />
+            <ChevronDown size={15} className="text-muted-foreground" />
           )}
         </button>
         {isExpanded && (
@@ -262,7 +262,7 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
 
         {/* Intro */}
         <div>
-          <p className="text-[13px] text-foreground font-medium mb-1">
+          <p className="text-[14px] text-foreground font-medium mb-1">
             Feed your writing to the AI
           </p>
           <p className="text-xs text-muted-foreground leading-relaxed">
@@ -276,19 +276,19 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
           <TabsList>
             <TabsTrigger value="smart">
               <div className="flex items-center gap-1.5">
-                <Sparkles size={11} />
+                <Sparkles size={15} />
                 Smart Paste
               </div>
             </TabsTrigger>
             <TabsTrigger value="url">
               <div className="flex items-center gap-1.5">
-                <Link size={11} />
+                <Link size={15} />
                 Add URL
               </div>
             </TabsTrigger>
             <TabsTrigger value="text">
               <div className="flex items-center gap-1.5">
-                <Type size={11} />
+                <Type size={15} />
                 Paste Text
               </div>
             </TabsTrigger>
@@ -296,7 +296,7 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
 
           {/* Smart Paste — auto-detects URLs vs text */}
           <TabsContent value="smart" className="mt-3 space-y-2.5">
-            <p className="text-[10px] text-muted-foreground leading-relaxed">
+            <p className="text-[12px] text-muted-foreground leading-relaxed">
               Paste anything — URLs, documents, emails, tweets, blog posts.
               The AI auto-detects the format and extracts writing samples.
             </p>
@@ -304,7 +304,7 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
               value={rawTextInput}
               onChange={(e) => setRawTextInput(e.target.value)}
               placeholder={`Paste anything here:\n\n• A URL to your blog post or tweet\n• An email you wrote\n• A document or essay\n• Multiple messages (any format)\n\nThe AI will figure out the rest...`}
-              className="w-full h-40 px-3 py-2.5 bg-background border border-border/60 rounded-lg text-[13px] leading-relaxed text-foreground placeholder-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring resize-none font-mono transition-colors"
+              className="w-full h-40 px-3 py-2.5 bg-background border border-border/60 rounded-lg text-[14px] leading-relaxed text-foreground placeholder-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring resize-none font-mono transition-colors"
             />
             <Button
               onClick={handleSmartPaste}
@@ -313,14 +313,14 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
               size="sm"
               className="w-full"
             >
-              <Plus size={13} className="mr-1.5" />
+              <Plus size={15} className="mr-1.5" />
               Add to Sources
             </Button>
           </TabsContent>
 
           {/* URL Input */}
           <TabsContent value="url" className="mt-3 space-y-2.5">
-            <p className="text-[10px] text-muted-foreground leading-relaxed">
+            <p className="text-[12px] text-muted-foreground leading-relaxed">
               Add URLs to your tweets, blog posts, LinkedIn posts, or any page with your writing.
               Content is extracted using Jina Reader AI.
             </p>
@@ -331,7 +331,7 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
                 onChange={(e) => setUrlInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAddUrl()}
                 placeholder="https://x.com/you/status/..."
-                className="flex-1 px-3 py-2 bg-background border border-border/60 rounded-lg text-[13px] text-foreground placeholder-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring transition-colors"
+                className="flex-1 px-3 py-2 bg-background border border-border/60 rounded-lg text-[14px] text-foreground placeholder-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring transition-colors"
               />
               <Button
                 onClick={handleAddUrl}
@@ -340,9 +340,9 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
                 size="sm"
               >
                 {isFetchingUrl ? (
-                  <Loader2 size={13} className="animate-spin" />
+                  <Loader2 size={15} className="animate-spin" />
                 ) : (
-                  <Plus size={13} />
+                  <Plus size={15} />
                 )}
               </Button>
             </div>
@@ -350,7 +350,7 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
 
           {/* Plain Text Input */}
           <TabsContent value="text" className="mt-3 space-y-2.5">
-            <p className="text-[10px] text-muted-foreground leading-relaxed">
+            <p className="text-[12px] text-muted-foreground leading-relaxed">
               Paste raw text — emails, DMs, documents, essays. The AI will segment
               it into individual writing samples for analysis.
             </p>
@@ -358,7 +358,7 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
               value={rawTextInput}
               onChange={(e) => setRawTextInput(e.target.value)}
               placeholder={`Paste your writing here...\n\nYou can paste:\n• A single long document\n• Multiple messages/emails\n• Copy-pasted social media posts\n\nNo special formatting needed.`}
-              className="w-full h-40 px-3 py-2.5 bg-background border border-border/60 rounded-lg text-[13px] leading-relaxed text-foreground placeholder-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring resize-none font-mono transition-colors"
+              className="w-full h-40 px-3 py-2.5 bg-background border border-border/60 rounded-lg text-[14px] leading-relaxed text-foreground placeholder-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring resize-none font-mono transition-colors"
             />
             <Button
               onClick={handleAddText}
@@ -367,7 +367,7 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
               size="sm"
               className="w-full"
             >
-              <FileText size={13} className="mr-1.5" />
+              <FileText size={15} className="mr-1.5" />
               Add Text Source
             </Button>
           </TabsContent>
@@ -377,13 +377,13 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
         {sources.length > 0 && (
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <p className="text-[11px] font-semibold text-foreground">
+              <p className="text-[12px] font-semibold text-foreground">
                 Sources ({sources.length})
               </p>
               {fetchingSources.length > 0 && (
                 <div className="flex items-center gap-1.5">
-                  <Loader2 size={10} className="animate-spin text-primary" />
-                  <span className="text-[10px] text-muted-foreground">
+                  <Loader2 size={14} className="animate-spin text-primary" />
+                  <span className="text-[12px] text-muted-foreground">
                     Fetching {fetchingSources.length}...
                   </span>
                 </div>
@@ -410,30 +410,30 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
                   }`}>
                     {source.type === 'url' ? (
                       source.status === 'fetching' ? (
-                        <Loader2 size={13} className="animate-spin" />
+                        <Loader2 size={15} className="animate-spin" />
                       ) : (
-                        <Globe size={13} />
+                        <Globe size={15} />
                       )
                     ) : (
-                      <FileText size={13} />
+                      <FileText size={15} />
                     )}
                   </div>
 
                   {/* Label */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-[11px] text-foreground truncate font-medium">
+                    <p className="text-[12px] text-foreground truncate font-medium">
                       {source.label}
                     </p>
                     {source.status === 'ready' && (
-                      <p className="text-[9px] text-muted-foreground">
+                      <p className="text-[12px] text-muted-foreground">
                         {source.rawContent.split(/\s+/).length} words extracted
                       </p>
                     )}
                     {source.status === 'error' && (
-                      <p className="text-[9px] text-destructive">{source.error}</p>
+                      <p className="text-[12px] text-destructive">{source.error}</p>
                     )}
                     {source.status === 'fetching' && (
-                      <p className="text-[9px] text-primary">Fetching content...</p>
+                      <p className="text-[12px] text-primary">Fetching content...</p>
                     )}
                   </div>
 
@@ -457,7 +457,7 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
                     className="text-muted-foreground hover:text-destructive transition-colors p-0.5"
                     aria-label="Remove source"
                   >
-                    <XCircle size={13} />
+                    <XCircle size={15} />
                   </button>
                 </div>
               ))}
@@ -469,10 +469,10 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
         {writingSamples.length > 0 && (
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <p className="text-[11px] font-semibold text-foreground">
+              <p className="text-[12px] font-semibold text-foreground">
                 Writing Samples ({writingSamples.length})
               </p>
-              <span className={`text-[10px] font-medium ${
+              <span className={`text-[12px] font-medium ${
                 writingSamples.length >= 10 ? 'text-green-500' :
                 writingSamples.length >= 5 ? 'text-primary' :
                 writingSamples.length >= 3 ? 'text-yellow-500' :
@@ -491,16 +491,16 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
                   key={i}
                   className="bg-muted/50 rounded-md px-2.5 py-2 border border-border/20"
                 >
-                  <p className="text-[11px] text-foreground leading-relaxed line-clamp-2 font-mono">
+                  <p className="text-[12px] text-foreground leading-relaxed line-clamp-2 font-mono">
                     {sample.text}
                   </p>
-                  <p className="text-[9px] text-muted-foreground mt-1 tabular-nums">
+                  <p className="text-[12px] text-muted-foreground mt-1 tabular-nums">
                     {sample.wordCount} words · from {sample.sourceLabel}
                   </p>
                 </div>
               ))}
               {writingSamples.length > 10 && (
-                <p className="text-[10px] text-muted-foreground text-center py-1">
+                <p className="text-[12px] text-muted-foreground text-center py-1">
                   +{writingSamples.length - 10} more samples
                 </p>
               )}
@@ -526,7 +526,7 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
           </div>
         )}
 
-        {error && <p className="text-[11px] text-destructive">{error}</p>}
+        {error && <p className="text-[12px] text-destructive">{error}</p>}
 
         {/* Action Buttons */}
         <div className="space-y-2">
@@ -566,7 +566,7 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
           )}
         </div>
 
-        <p className="text-[10px] text-muted-foreground/60 text-center leading-relaxed">
+        <p className="text-[12px] text-muted-foreground/60 text-center leading-relaxed">
           URLs are fetched via Jina Reader AI. Your text is analyzed locally first,
           then sent to AI for deep style extraction. Nothing is stored externally.
         </p>
@@ -614,7 +614,7 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
         <StepIndicator current={2} />
 
         <div>
-          <p className="text-[13px] text-foreground font-medium mb-1">
+          <p className="text-[14px] text-foreground font-medium mb-1">
             Analyzing your voice
           </p>
           <p className="text-xs text-muted-foreground leading-relaxed">
@@ -642,7 +642,7 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
                         : 'bg-muted text-muted-foreground'
                     }`}
                   >
-                    {isDone ? <Check size={12} /> : <StageIcon size={12} />}
+                    {isDone ? <Check size={14} /> : <StageIcon size={14} />}
                   </div>
                   <div className="flex-1 min-w-0 pt-0.5">
                     <p
@@ -652,7 +652,7 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
                     >
                       {stage.label}
                     </p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                    <p className="text-[12px] text-muted-foreground mt-0.5">
                       {stage.description}
                     </p>
                   </div>
@@ -669,7 +669,7 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
               <CardTitle>Quick Metrics</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2.5">
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
+              <p className="text-[12px] text-muted-foreground leading-relaxed">
                 {localMetricsSummary}
               </p>
               <div className="grid grid-cols-2 gap-2">
@@ -707,8 +707,8 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
         {/* Profile quality banner */}
         <div className="flex items-center justify-between bg-card border border-border/40 rounded-lg px-3.5 py-2.5">
           <div>
-            <p className="text-[13px] font-medium text-foreground">Voice Fingerprint</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">
+            <p className="text-[14px] font-medium text-foreground">Voice Fingerprint</p>
+            <p className="text-[12px] text-muted-foreground mt-0.5">
               {voiceProfile.sampleCount} samples analyzed
             </p>
           </div>
@@ -719,7 +719,7 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
             }`}>
               {voiceProfile.quality.score}%
             </p>
-            <p className="text-[10px] text-muted-foreground">{voiceProfile.quality.label}</p>
+            <p className="text-[12px] text-muted-foreground">{voiceProfile.quality.label}</p>
           </div>
         </div>
 
@@ -727,17 +727,17 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
         <Card variant="default">
           <CardContent className="py-3 space-y-3">
             <div className="flex items-center gap-2 mb-1">
-              <Mic size={12} className="text-muted-foreground" />
+              <Mic size={14} className="text-muted-foreground" />
               <span className="text-xs font-semibold text-foreground">Voice Identity</span>
             </div>
 
             <div className="flex items-center gap-2">
               <Badge variant="info" size="sm">{voiceProfile.tone.primary}</Badge>
-              <span className="text-[10px] text-muted-foreground">+</span>
+              <span className="text-[12px] text-muted-foreground">+</span>
               <Badge variant="outline" size="sm">{voiceProfile.tone.secondary}</Badge>
               {voiceProfile.tone.humor !== 'none' && (
                 <>
-                  <span className="text-[10px] text-muted-foreground">&middot;</span>
+                  <span className="text-[12px] text-muted-foreground">&middot;</span>
                   <Badge variant="outline" size="sm">{voiceProfile.tone.humor} humor</Badge>
                 </>
               )}
@@ -747,7 +747,7 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
               {voiceProfile.descriptors.map((d, i) => (
                 <span
                   key={i}
-                  className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground"
+                  className="text-[12px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground"
                 >
                   {d}
                 </span>
@@ -755,7 +755,7 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
             </div>
 
             <div className="pt-2 border-t border-border/30">
-              <p className="text-[10px] text-muted-foreground mb-1">Confidence</p>
+              <p className="text-[12px] text-muted-foreground mb-1">Confidence</p>
               <div className="flex items-center gap-2">
                 <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
                   <div
@@ -770,7 +770,7 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
                     }`}
                   />
                 </div>
-                <span className="text-[10px] text-foreground font-medium capitalize">
+                <span className="text-[12px] text-foreground font-medium capitalize">
                   {voiceProfile.tone.confidence}
                 </span>
               </div>
@@ -806,7 +806,7 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
 
             {localMetrics.topBigrams.length > 0 && (
               <div className="mt-3 pt-2.5 border-t border-border/30">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">
+                <p className="text-[12px] uppercase tracking-wider text-muted-foreground mb-1.5">
                   Signature phrases
                 </p>
                 <div className="flex flex-wrap gap-1">
@@ -830,7 +830,7 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
             )}
             {voiceProfile.signatures.transitionWords.length > 0 && (
               <div>
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">
+                <p className="text-[12px] uppercase tracking-wider text-muted-foreground mb-1.5">
                   Transition Words
                 </p>
                 <div className="flex flex-wrap gap-1">
@@ -842,7 +842,7 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
             )}
             {voiceProfile.signatures.catchphrases.length > 0 && (
               <div>
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">
+                <p className="text-[12px] uppercase tracking-wider text-muted-foreground mb-1.5">
                   Catchphrases
                 </p>
                 <div className="flex flex-wrap gap-1">
@@ -862,8 +862,8 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
               <div className="space-y-1.5">
                 {voiceProfile.rules.map((rule, i) => (
                   <div key={i} className="flex items-start gap-2">
-                    <Check size={10} className="text-green-500 mt-0.5 flex-shrink-0" />
-                    <p className="text-[11px] text-foreground/80 leading-relaxed">{rule}</p>
+                    <Check size={14} className="text-green-500 mt-0.5 flex-shrink-0" />
+                    <p className="text-[12px] text-foreground/80 leading-relaxed">{rule}</p>
                   </div>
                 ))}
               </div>
@@ -871,14 +871,14 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
 
             {voiceProfile.antiPatterns.length > 0 && (
               <div className="pt-2.5 border-t border-border/30">
-                <p className="text-[10px] uppercase tracking-wider text-destructive/70 mb-1.5">
+                <p className="text-[12px] uppercase tracking-wider text-destructive/70 mb-1.5">
                   Never Do
                 </p>
                 <div className="space-y-1.5">
                   {voiceProfile.antiPatterns.map((ap, i) => (
                     <div key={i} className="flex items-start gap-2">
-                      <span className="text-destructive text-[10px] mt-0.5 flex-shrink-0">&times;</span>
-                      <p className="text-[11px] text-muted-foreground leading-relaxed">{ap}</p>
+                      <span className="text-destructive text-[12px] mt-0.5 flex-shrink-0">&times;</span>
+                      <p className="text-[12px] text-muted-foreground leading-relaxed">{ap}</p>
                     </div>
                   ))}
                 </div>
@@ -890,7 +890,7 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
         {/* Few-Shot Exemplars */}
         <Section id="exemplars" title="Stored Exemplars" icon={Mic} badge={`${voiceProfile.exemplars.length} samples`}>
           <div className="space-y-2 mt-2">
-            <p className="text-[10px] text-muted-foreground leading-relaxed">
+            <p className="text-[12px] text-muted-foreground leading-relaxed">
               These actual writing samples are injected into every generation prompt for better style matching.
             </p>
             {voiceProfile.exemplars.map((ex, i) => (
@@ -898,10 +898,10 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
                 key={i}
                 className="bg-muted/50 rounded-md px-2.5 py-2 border border-border/20"
               >
-                <p className="text-[11px] text-foreground leading-relaxed line-clamp-3 font-mono">
+                <p className="text-[12px] text-foreground leading-relaxed line-clamp-3 font-mono">
                   {ex.text}
                 </p>
-                <p className="text-[9px] text-muted-foreground mt-1 tabular-nums">
+                <p className="text-[12px] text-muted-foreground mt-1 tabular-nums">
                   {ex.wordCount} words &middot; {ex.context}
                 </p>
               </div>
@@ -922,16 +922,16 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
             className="flex-1"
           >
             {isSaving ? (
-              <Loader2 size={13} className="mr-1.5 animate-spin" />
+              <Loader2 size={15} className="mr-1.5 animate-spin" />
             ) : (
-              <Fingerprint size={13} className="mr-1.5" />
+              <Fingerprint size={15} className="mr-1.5" />
             )}
             {isSaving ? 'Saving...' : 'Save Profile'}
           </Button>
         </div>
 
         {voiceProfile.quality.suggestion && (
-          <p className="text-[10px] text-muted-foreground/60 text-center">
+          <p className="text-[12px] text-muted-foreground/60 text-center">
             {voiceProfile.quality.suggestion}
           </p>
         )}
@@ -960,8 +960,8 @@ function MetricBar({
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between">
-        <span className="text-[10px] text-muted-foreground">{label}</span>
-        <span className="text-[11px] font-medium tabular-nums text-foreground">
+        <span className="text-[12px] text-muted-foreground">{label}</span>
+        <span className="text-[12px] font-medium tabular-nums text-foreground">
           {Math.round(value)}{suffix || ''}
         </span>
       </div>
@@ -992,8 +992,8 @@ function RegisterBar({
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between">
-        <span className="text-[10px] text-muted-foreground">{leftLabel}</span>
-        <span className="text-[10px] text-muted-foreground">{rightLabel}</span>
+        <span className="text-[12px] text-muted-foreground">{leftLabel}</span>
+        <span className="text-[12px] text-muted-foreground">{rightLabel}</span>
       </div>
       <div className="relative h-1.5 bg-muted rounded-full">
         <div
@@ -1001,7 +1001,7 @@ function RegisterBar({
           style={{ left: `calc(${pct}% - 5px)` }}
         />
       </div>
-      <p className="text-[9px] text-muted-foreground/60 text-center tabular-nums">
+      <p className="text-[12px] text-muted-foreground/60 text-center tabular-nums">
         {value}/10
       </p>
     </div>
@@ -1011,12 +1011,12 @@ function RegisterBar({
 function PatternGroup({ label, items }: { label: string; items: string[] }) {
   return (
     <div>
-      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">
+      <p className="text-[12px] uppercase tracking-wider text-muted-foreground mb-1.5">
         {label}
       </p>
       <div className="space-y-1">
         {items.map((item, i) => (
-          <p key={i} className="text-[11px] text-foreground/80 leading-relaxed pl-2 border-l-2 border-border/40">
+          <p key={i} className="text-[12px] text-foreground/80 leading-relaxed pl-2 border-l-2 border-border/40">
             {item}
           </p>
         ))}

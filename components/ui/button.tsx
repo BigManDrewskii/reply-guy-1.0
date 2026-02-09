@@ -51,20 +51,20 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
           // Sizes
           {
-            'h-7 px-2.5 text-xs gap-1.5 rounded-md': size === 'xs',
-            'h-8 px-3 text-xs gap-1.5 rounded-md': size === 'sm',
-            'h-9 px-4 text-sm gap-2': size === 'md',
-            'h-10 px-5 text-sm gap-2': size === 'lg',
-            'h-11 px-6 text-base gap-2.5 rounded-xl': size === 'xl',
+            'h-8 px-3 text-xs gap-1.5 rounded-md': size === 'xs',
+            'h-9 px-3.5 text-xs gap-1.5 rounded-lg': size === 'sm',
+            'h-10 px-4 text-sm gap-2': size === 'md',
+            'h-11 px-5 text-sm gap-2': size === 'lg',
+            'h-12 px-6 text-base gap-2.5 rounded-xl': size === 'xl',
           },
 
           // Icon button
           icon && hasChildren === false && {
-            'h-7 w-7 px-0': size === 'xs',
-            'h-8 w-8 px-0': size === 'sm',
-            'h-9 w-9 px-0': size === 'md',
-            'h-10 w-10 px-0': size === 'lg',
-            'h-11 w-11 px-0': size === 'xl',
+            'h-8 w-8 px-0': size === 'xs',
+            'h-9 w-9 px-0': size === 'sm',
+            'h-10 w-10 px-0': size === 'md',
+            'h-11 w-11 px-0': size === 'lg',
+            'h-12 w-12 px-0': size === 'xl',
           },
 
           // Variants

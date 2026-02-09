@@ -346,7 +346,7 @@ export default function SettingsScreen({ onNavigateVoiceTraining }: SettingsScre
 
       {/* Footer */}
       <div className="text-center pb-3">
-        <p className="text-[10px] text-muted-foreground/40 font-medium">v0.3.0 · Studio Drewskii</p>
+        <p className="text-[12px] text-muted-foreground/40 font-medium">v0.3.0 · Studio Drewskii</p>
       </div>
 
       {showClearCacheDialog && (

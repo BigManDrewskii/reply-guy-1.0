@@ -1,4 +1,4 @@
-import{c as un,r as Ee,j as le,a as cn,I as $r,C as ds}from"./sidepanel-D81KDWu8.js";/**
+import{c as un,r as Ee,j as le,a as cn,I as $r,C as ds}from"./sidepanel-B3m0Y82W.js";/**
  * @license lucide-react v0.460.0 - ISC
  *
  * This source code is licensed under the ISC license.

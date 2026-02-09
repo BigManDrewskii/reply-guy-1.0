@@ -101,7 +101,7 @@ export default function PostCopySheet({ isOpen, onClose, onLogged, platform, use
           <p className="text-sm font-medium text-foreground text-center">
             Message copied
           </p>
-          <p className="text-[11px] text-muted-foreground text-center mt-0.5">
+          <p className="text-[12px] text-muted-foreground text-center mt-0.5">
             Did you send it? We'll track it for you.
           </p>
         </div>

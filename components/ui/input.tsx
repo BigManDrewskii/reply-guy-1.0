@@ -26,9 +26,9 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             'border-destructive/60 focus:ring-destructive/20': error,
           },
           {
-            'h-8 px-2.5 text-xs': size === 'sm',
-            'h-9 px-3 text-sm': size === 'md',
-            'h-10 px-4 text-sm': size === 'lg',
+            'h-9 px-3 text-xs': size === 'sm',
+            'h-10 px-3.5 text-sm': size === 'md',
+            'h-11 px-4 text-sm': size === 'lg',
           },
           className
         )}

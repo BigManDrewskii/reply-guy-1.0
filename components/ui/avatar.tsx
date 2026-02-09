@@ -46,7 +46,7 @@ export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
     const [imgError, setImgError] = useState(false);
 
     const sizeStyles = {
-      xs: 'w-5 h-5 text-[9px]',
+      xs: 'w-5 h-5 text-[12px]',
       sm: 'w-8 h-8 text-xs',
       md: 'w-10 h-10 text-sm',
       lg: 'w-12 h-12 text-base',

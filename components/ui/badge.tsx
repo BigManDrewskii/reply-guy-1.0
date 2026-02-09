@@ -30,8 +30,8 @@ export function Badge({
           'border border-border/50 text-muted-foreground': variant === 'outline',
 
           // Sizes
-          'px-2 py-0.5 text-[10px]': size === 'sm',
-          'px-2.5 py-0.5 text-[11px]': size === 'md',
+          'px-2 py-0.5 text-[12px]': size === 'sm',
+          'px-2.5 py-0.5 text-[12px]': size === 'md',
         },
         className
       )}

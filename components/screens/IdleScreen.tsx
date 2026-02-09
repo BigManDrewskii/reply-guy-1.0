@@ -29,7 +29,7 @@ export default function IdleScreen() {
             key={label}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/40 text-xs text-muted-foreground border border-border/20"
           >
-            <Icon size={13} />
+            <Icon size={15} />
             {label}
           </span>
         ))}
@@ -37,7 +37,7 @@ export default function IdleScreen() {
 
       {/* Keyboard shortcuts */}
       <div className="w-full max-w-[220px] pt-6 border-t border-border/30">
-        <p className="text-[10px] text-muted-foreground/40 uppercase tracking-[0.08em] font-semibold mb-3">Shortcuts</p>
+        <p className="text-[12px] text-muted-foreground/40 uppercase tracking-[0.08em] font-semibold mb-3">Shortcuts</p>
         <div className="space-y-2">
           {[
             { key: 'Alt+1', label: 'Outreach' },
@@ -46,7 +46,7 @@ export default function IdleScreen() {
           ].map(({ key, label }) => (
             <div key={key} className="flex items-center justify-between text-xs">
               <span className="text-muted-foreground/50">{label}</span>
-              <kbd className="px-2 py-0.5 rounded-md bg-muted/30 border border-border/30 font-mono text-[10px] text-muted-foreground/40">
+              <kbd className="px-2 py-0.5 rounded-md bg-muted/30 border border-border/30 font-mono text-[12px] text-muted-foreground/40">
                 {key}
               </kbd>
             </div>

@@ -40,7 +40,7 @@ function PageCard({ data }: PageCardProps) {
         {/* Social links */}
         {data.socialLinks && data.socialLinks.length > 0 && (
           <div className="border-t border-border/30 pt-3.5 mt-3.5">
-            <p className="text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-[0.06em] mb-2.5">Detected social links</p>
+            <p className="text-[12px] font-semibold text-muted-foreground/50 uppercase tracking-[0.06em] mb-2.5">Detected social links</p>
             <div className="flex flex-wrap gap-2">
               {data.socialLinks.map((link, i) => (
                 <a
@@ -51,7 +51,7 @@ function PageCard({ data }: PageCardProps) {
                   className="text-xs text-foreground/70 hover:text-foreground inline-flex items-center gap-1.5 transition-colors duration-200"
                 >
                   {new URL(link).hostname}
-                  <ExternalLink size={11} />
+                  <ExternalLink size={15} />
                 </a>
               ))}
             </div>
@@ -61,7 +61,7 @@ function PageCard({ data }: PageCardProps) {
         {/* Email */}
         {data.email && (
           <div className="border-t border-border/30 pt-3.5 mt-3.5">
-            <p className="text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-[0.06em] mb-1.5">Contact</p>
+            <p className="text-[12px] font-semibold text-muted-foreground/50 uppercase tracking-[0.06em] mb-1.5">Contact</p>
             <a
               href={`mailto:${data.email}`}
               className="text-sm text-foreground/70 hover:text-foreground transition-colors duration-200"

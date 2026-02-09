@@ -279,7 +279,7 @@ export default function App() {
                 >
                   <Icon size={18} strokeWidth={isActive ? 2.2 : 1.6} />
                   <span className={cn(
-                    'text-[10px] transition-all duration-[200ms]',
+                    'text-[12px] transition-all duration-[200ms]',
                     isActive ? 'font-semibold' : 'font-medium'
                   )}>{label}</span>
                 </button>

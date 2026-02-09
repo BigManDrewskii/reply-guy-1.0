@@ -324,7 +324,7 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
                     }`}
                   >
                     <span className="text-xs font-medium block">{opt.label}</span>
-                    <span className="text-[10px] opacity-50 block mt-0.5">{opt.desc}</span>
+                    <span className="text-[12px] opacity-50 block mt-0.5">{opt.desc}</span>
                   </button>
                 ))}
               </div>

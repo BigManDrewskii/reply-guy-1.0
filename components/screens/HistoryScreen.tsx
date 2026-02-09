@@ -229,24 +229,24 @@ export default function HistoryScreen() {
                 <p className="text-xl font-bold tabular-nums text-foreground">
                   {crmStats?.totalContacts || contacts.length}
                 </p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">Contacts</p>
+                <p className="text-[12px] text-muted-foreground mt-0.5">Contacts</p>
               </div>
               <div className="text-center p-3 rounded-xl bg-background/50">
                 <p className="text-xl font-bold tabular-nums text-foreground">
                   {convStats?.total || 0}
                 </p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">Messages</p>
+                <p className="text-[12px] text-muted-foreground mt-0.5">Messages</p>
               </div>
               <div className="text-center p-3 rounded-xl bg-background/50">
                 <p className="text-xl font-bold tabular-nums text-foreground">
                   {convStats?.responseRate || 0}%
                 </p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">Reply Rate</p>
+                <p className="text-[12px] text-muted-foreground mt-0.5">Reply Rate</p>
               </div>
             </div>
             {crmStats && crmStats.topAngles.length > 0 && (
               <div className="pt-3.5 mt-3.5 border-t border-border/30">
-                <p className="text-[10px] text-muted-foreground mb-2">Top Angles</p>
+                <p className="text-[12px] text-muted-foreground mb-2">Top Angles</p>
                 <div className="flex flex-wrap gap-1.5">
                   {crmStats.topAngles.map(({ angle, count }) => (
                     <Badge key={angle} variant="outline" size="sm">
@@ -306,7 +306,7 @@ export default function HistoryScreen() {
           ) : (
             Object.entries(grouped).map(([date, convs]) => (
               <div key={date} className="space-y-2">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground/50 px-1 pt-1">
+                <p className="text-[12px] font-semibold uppercase tracking-[0.06em] text-muted-foreground/50 px-1 pt-1">
                   {date === new Date().toLocaleDateString() ? 'Today' : date}
                 </p>
                 {convs.map((conv) => {
@@ -332,7 +332,7 @@ export default function HistoryScreen() {
                     >
                       <CardContent className="p-4">
                         <div className="flex items-start gap-3">
-                          <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-muted/50 flex items-center justify-center text-[10px] font-semibold text-muted-foreground">
+                          <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-muted/50 flex items-center justify-center text-[12px] font-semibold text-muted-foreground">
                             {getPlatformLabel(conv.platform)}
                           </div>
                           <div className="flex-1 min-w-0">
@@ -340,7 +340,7 @@ export default function HistoryScreen() {
                               <h4 className="text-sm font-medium text-foreground truncate">
                                 {conv.pageName}
                               </h4>
-                              <span className="text-[10px] text-muted-foreground/50 tabular-nums shrink-0">
+                              <span className="text-[12px] text-muted-foreground/50 tabular-nums shrink-0">
                                 {new Date(conv.sentAt).toLocaleTimeString([], {
                                   hour: '2-digit',
                                   minute: '2-digit',
@@ -362,11 +362,11 @@ export default function HistoryScreen() {
                                       : 'bg-muted-foreground'
                                 }`}
                               />
-                              <span className="text-[10px] text-muted-foreground capitalize">
+                              <span className="text-[12px] text-muted-foreground capitalize">
                                 {conv.status.replace('_', ' ')}
                               </span>
-                              <span className="text-[10px] text-muted-foreground/30">·</span>
-                              <span className="text-[10px] text-muted-foreground/60 capitalize">
+                              <span className="text-[12px] text-muted-foreground/30">·</span>
+                              <span className="text-[12px] text-muted-foreground/60 capitalize">
                                 {conv.angle}
                               </span>
                             </div>
@@ -381,10 +381,10 @@ export default function HistoryScreen() {
                                       e.stopPropagation();
                                       setDeleteTarget({ id: conv.id, name: conv.pageName });
                                     }}
-                                    className="flex items-center gap-1.5 text-[11px] text-destructive/60 hover:text-destructive transition-colors duration-200"
+                                    className="flex items-center gap-1.5 text-[12px] text-destructive/60 hover:text-destructive transition-colors duration-200"
                                     aria-label={`Delete conversation with ${conv.pageName}`}
                                   >
-                                    <Trash2 size={12} />
+                                    <Trash2 size={14} />
                                     Delete
                                   </button>
                                 </div>
@@ -455,7 +455,7 @@ export default function HistoryScreen() {
                               </h4>
                               <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${STATUS_COLORS[contact.status]}`} />
                             </div>
-                            <span className="text-[10px] text-muted-foreground/50 tabular-nums shrink-0">
+                            <span className="text-[12px] text-muted-foreground/50 tabular-nums shrink-0">
                               {getRelativeTime(contact.lastContactedAt)}
                             </span>
                           </div>
@@ -470,11 +470,11 @@ export default function HistoryScreen() {
                             <Badge variant="outline" size="sm">
                               {getPlatformLabel(contact.platform)}
                             </Badge>
-                            <span className="text-[10px] text-muted-foreground">
+                            <span className="text-[12px] text-muted-foreground">
                               {contact.totalMessages} msg{contact.totalMessages !== 1 ? 's' : ''}
                             </span>
-                            <span className="text-[10px] text-muted-foreground/30">·</span>
-                            <span className="text-[10px] text-muted-foreground capitalize">
+                            <span className="text-[12px] text-muted-foreground/30">·</span>
+                            <span className="text-[12px] text-muted-foreground capitalize">
                               {contact.status}
                             </span>
                           </div>
@@ -488,7 +488,7 @@ export default function HistoryScreen() {
                               )}
 
                               {(contact.location || contact.followers) && (
-                                <div className="flex items-center gap-2 text-[11px] text-muted-foreground/60">
+                                <div className="flex items-center gap-2 text-[12px] text-muted-foreground/60">
                                   {contact.location && <span>{contact.location}</span>}
                                   {contact.location && contact.followers && <span>·</span>}
                                   {contact.followers && <span>{contact.followers} followers</span>}
@@ -507,7 +507,7 @@ export default function HistoryScreen() {
 
                               {/* Status changer */}
                               <div>
-                                <p className="text-[10px] text-muted-foreground mb-1.5">Status</p>
+                                <p className="text-[12px] text-muted-foreground mb-1.5">Status</p>
                                 <div className="flex flex-wrap gap-1.5">
                                   {STATUS_OPTIONS.map((status) => (
                                     <button
@@ -516,7 +516,7 @@ export default function HistoryScreen() {
                                         e.stopPropagation();
                                         if (contact.id) handleStatusChange(contact.id, status);
                                       }}
-                                      className={`px-2.5 py-1 rounded-full text-[10px] font-medium transition-all duration-[200ms] ${
+                                      className={`px-2.5 py-1 rounded-full text-[12px] font-medium transition-all duration-[200ms] ${
                                         contact.status === status
                                           ? 'bg-foreground text-background'
                                           : 'bg-muted/40 text-muted-foreground hover:text-foreground'
@@ -535,9 +535,9 @@ export default function HistoryScreen() {
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   onClick={(e) => e.stopPropagation()}
-                                  className="flex items-center gap-1.5 text-[11px] text-info hover:text-info/80 transition-colors duration-200"
+                                  className="flex items-center gap-1.5 text-[12px] text-info hover:text-info/80 transition-colors duration-200"
                                 >
-                                  <ExternalLink size={11} />
+                                  <ExternalLink size={15} />
                                   View Profile
                                 </a>
                                 <button
@@ -547,9 +547,9 @@ export default function HistoryScreen() {
                                       setDeleteContactTarget({ id: contact.id, name: contact.name });
                                     }
                                   }}
-                                  className="flex items-center gap-1.5 text-[11px] text-destructive/60 hover:text-destructive transition-colors duration-200"
+                                  className="flex items-center gap-1.5 text-[12px] text-destructive/60 hover:text-destructive transition-colors duration-200"
                                 >
-                                  <Trash2 size={12} />
+                                  <Trash2 size={14} />
                                   Delete
                                 </button>
                               </div>
