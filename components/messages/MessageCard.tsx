@@ -1,13 +1,14 @@
-import { memo, useState, useEffect } from 'react';
+import { memo, useState } from 'react';
 import CopyButton from './CopyButton';
 import EditMessageDialog from './EditMessageDialog';
 import { useMessageGeneration } from '@/hooks/useMessageGeneration';
-import { RefreshCw, Edit, AlertOctagon, Zap } from '@/lib/icons';
+import { RefreshCw, Edit, AlertOctagon, Zap, ChevronDown } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { Tabs } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { calculateAiScore } from '@/lib/ai-score';
+import type { VoiceMatchBreakdown } from '@/lib/voice-analyzer';
 import type { PageData, AnalysisResult, OutreachAngle } from '@/types';
 
 interface MessageCardProps {
@@ -19,6 +20,8 @@ interface MessageCardProps {
   onRegenerate?: () => void;
   onScheduleFollowUp?: () => void;
 }
+
+// ── Voice Match Labels ──
 
 function getVoiceLabel(score: number): { label: string; variant: 'success' | 'warning' | 'error' | 'info' } {
   if (score >= 80) return { label: 'Sounds like you', variant: 'success' };
@@ -34,6 +37,17 @@ function getAiLabel(score: number): { label: string; color: string } {
   return { label: 'AI-sounding', color: 'text-destructive' };
 }
 
+const BREAKDOWN_LABELS: Record<keyof VoiceMatchBreakdown, { label: string; desc: string }> = {
+  sentenceLength: { label: 'Rhythm', desc: 'Sentence length pattern' },
+  formality: { label: 'Formality', desc: 'Register & tone level' },
+  contractions: { label: 'Contractions', desc: 'Contraction usage' },
+  readability: { label: 'Readability', desc: 'Reading level match' },
+  pronouns: { label: 'Pronouns', desc: 'I/you/we usage' },
+  punctuation: { label: 'Punctuation', desc: 'Marks & emphasis' },
+};
+
+// ── Component ──
+
 function MessageCard({
   pageData,
   analysis,
@@ -43,19 +57,39 @@ function MessageCard({
   onRegenerate,
   onScheduleFollowUp,
 }: MessageCardProps) {
-  const { messages, streamingText, isGenerating, generateMessage, regenerateMessage, setMessages } = useMessageGeneration();
+  const {
+    messages,
+    streamingText,
+    isGenerating,
+    isRefining,
+    voiceMatchScores,
+    generateMessage,
+    regenerateMessage,
+    refineMessage,
+    setMessages,
+  } = useMessageGeneration();
 
   const [isEditing, setIsEditing] = useState(false);
   const [showAiDetails, setShowAiDetails] = useState(false);
+  const [showVoiceDetails, setShowVoiceDetails] = useState(false);
 
   const currentMessage = messages[selectedAngle];
   const currentStreamingText = streamingText[selectedAngle] || '';
   const isLoading = isGenerating[selectedAngle];
-  const isStreaming = isLoading && currentStreamingText.length > 0;
+  const isCurrentRefining = isRefining[selectedAngle];
+  const isStreaming = (isLoading || isCurrentRefining) && currentStreamingText.length > 0;
+  const voiceMatch = voiceMatchScores[selectedAngle];
 
-  // Calculate AI-ness score when message is available
+  // AI-ness score
   const aiScore = currentMessage ? calculateAiScore(currentMessage.message) : null;
   const aiLabel = aiScore ? getAiLabel(aiScore.score) : null;
+
+  // Voice match info — prefer local NLP score, fallback to LLM voiceScore
+  const effectiveVoiceScore = voiceMatch?.score ?? currentMessage?.voiceScore ?? 0;
+  const voiceInfo = currentMessage ? getVoiceLabel(effectiveVoiceScore) : null;
+
+  // Can refine if score is below threshold and we have a voice profile
+  const canRefine = voiceMatch && voiceMatch.score < 70 && !isCurrentRefining && !isLoading;
 
   const handleAngleChange = (angle: string) => {
     onSelectAngle(angle as OutreachAngle['angle']);
@@ -67,7 +101,14 @@ function MessageCard({
   const handleRegenerate = () => {
     regenerateMessage(pageData, analysis!, selectedAngle);
     setShowAiDetails(false);
+    setShowVoiceDetails(false);
     if (onRegenerate) onRegenerate();
+  };
+
+  const handleRefine = () => {
+    if (!analysis) return;
+    refineMessage(pageData, analysis, selectedAngle);
+    setShowVoiceDetails(false);
   };
 
   const handleCopy = () => {
@@ -80,8 +121,6 @@ function MessageCard({
   if (!currentMessage && !isLoading && analysis) {
     generateMessage(pageData, analysis, selectedAngle);
   }
-
-  const voiceInfo = currentMessage ? getVoiceLabel(currentMessage.voiceScore) : null;
 
   return (
     <Card variant="default">
@@ -110,11 +149,11 @@ function MessageCard({
             aria-label="Generating message"
             className="space-y-2.5 py-3"
           >
-            <div className="h-2.5 bg-muted rounded-full w-full animate-pulse"></div>
-            <div className="h-2.5 bg-muted rounded-full w-5/6 animate-pulse"></div>
-            <div className="h-2.5 bg-muted rounded-full w-4/6 animate-pulse"></div>
-            <div className="h-2.5 bg-muted rounded-full w-full animate-pulse"></div>
-            <div className="h-2.5 bg-muted rounded-full w-3/5 animate-pulse"></div>
+            <div className="h-2.5 bg-muted rounded-full w-full animate-pulse" />
+            <div className="h-2.5 bg-muted rounded-full w-5/6 animate-pulse" />
+            <div className="h-2.5 bg-muted rounded-full w-4/6 animate-pulse" />
+            <div className="h-2.5 bg-muted rounded-full w-full animate-pulse" />
+            <div className="h-2.5 bg-muted rounded-full w-3/5 animate-pulse" />
           </div>
         )}
 
@@ -128,14 +167,28 @@ function MessageCard({
             <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border/30">
               <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
               <span className="text-[10px] text-muted-foreground">
-                Generating · {currentStreamingText.split(/\s+/).filter(Boolean).length}w
+                {isCurrentRefining ? 'Refining voice' : 'Generating'} · {currentStreamingText.split(/\s+/).filter(Boolean).length}w
               </span>
             </div>
           </div>
         )}
 
+        {/* Refining overlay — show streaming text while refining an existing message */}
+        {isCurrentRefining && isStreaming && currentMessage && (
+          <div className="rounded-lg bg-background/50 p-3 border border-primary/20">
+            <div className="flex items-center gap-1.5 mb-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              <span className="text-[10px] text-primary font-medium">Refining voice match...</span>
+            </div>
+            <p className="text-[13px] text-foreground whitespace-pre-wrap leading-relaxed">
+              {currentStreamingText}
+              <span className="inline-block w-[2px] h-[14px] bg-primary ml-0.5 align-middle animate-blink" />
+            </p>
+          </div>
+        )}
+
         {/* Message content — final result */}
-        {currentMessage && (
+        {currentMessage && !isCurrentRefining && (
           <>
             {/* The message text */}
             <div className="rounded-lg bg-background/50 p-3">
@@ -144,20 +197,28 @@ function MessageCard({
               </p>
             </div>
 
-            {/* Metadata row: voice score + AI score + word count */}
+            {/* ── Metadata row: voice score + AI score + word count ── */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {voiceInfo && (
-                  <Badge variant={voiceInfo.variant} size="sm">
-                    {voiceInfo.label}
-                  </Badge>
+                  <button
+                    onClick={() => setShowVoiceDetails(!showVoiceDetails)}
+                    className="flex items-center gap-1 group"
+                  >
+                    <Badge variant={voiceInfo.variant} size="sm">
+                      {voiceInfo.label}
+                    </Badge>
+                    <span className="text-[10px] text-muted-foreground tabular-nums">
+                      {effectiveVoiceScore}%
+                    </span>
+                    <ChevronDown
+                      size={10}
+                      className={`text-muted-foreground/50 transition-transform ${showVoiceDetails ? 'rotate-180' : ''}`}
+                    />
+                  </button>
                 )}
-                <span className="text-[10px] text-muted-foreground tabular-nums">
-                  {currentMessage.voiceScore}%
-                </span>
               </div>
               <div className="flex items-center gap-2">
-                {/* AI-ness indicator */}
                 {aiScore && aiLabel && (
                   <button
                     onClick={() => setShowAiDetails(!showAiDetails)}
@@ -175,15 +236,70 @@ function MessageCard({
               </div>
             </div>
 
-            {/* AI-ness details panel */}
+            {/* ── Voice Match Breakdown Panel ── */}
+            {showVoiceDetails && voiceMatch && (
+              <div className="rounded-lg bg-background/50 border border-border/40 p-3 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-medium text-foreground">Voice Match Breakdown</span>
+                  <span className={`text-[11px] font-medium ${voiceInfo ? `text-${voiceInfo.variant}` : 'text-muted-foreground'}`}>
+                    {voiceMatch.score}/100
+                  </span>
+                </div>
+
+                <div className="space-y-1.5">
+                  {(Object.entries(voiceMatch.breakdown) as [keyof VoiceMatchBreakdown, number][]).map(
+                    ([key, value]) => {
+                      const info = BREAKDOWN_LABELS[key];
+                      return (
+                        <div key={key} className="flex items-center gap-2">
+                          <span className="text-[10px] text-muted-foreground w-[70px] shrink-0" title={info.desc}>
+                            {info.label}
+                          </span>
+                          <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all duration-500 ${
+                                value >= 70 ? 'bg-success' : value >= 40 ? 'bg-warning' : 'bg-destructive'
+                              }`}
+                              style={{ width: `${Math.max(3, value)}%` }}
+                            />
+                          </div>
+                          <span className="text-[9px] text-muted-foreground/60 w-6 text-right tabular-nums">
+                            {value}
+                          </span>
+                        </div>
+                      );
+                    }
+                  )}
+                </div>
+
+                {/* Refine CTA if score is low */}
+                {canRefine && (
+                  <div className="pt-2 border-t border-border/30">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleRefine}
+                      className="w-full text-[11px]"
+                    >
+                      <RefreshCw size={11} />
+                      Refine Voice Match ({voiceMatch.score}% → 85%+)
+                    </Button>
+                    <p className="text-[9px] text-muted-foreground/50 text-center mt-1">
+                      Uses a second LLM pass to improve weak dimensions
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── AI-ness Details Panel ── */}
             {showAiDetails && aiScore && (
-              <div className="rounded-lg bg-background/50 border border-border/40 p-3 space-y-2">
+              <div className="rounded-lg bg-background/50 border border-border/40 p-3 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-medium text-foreground">AI Detection Breakdown</span>
                   <span className={`text-[11px] font-medium ${aiLabel!.color}`}>{aiScore.label}</span>
                 </div>
 
-                {/* Score bars */}
                 <div className="space-y-1.5">
                   {[
                     { label: 'Phrases', value: aiScore.breakdown.phrases, desc: 'Common AI phrases' },
@@ -192,7 +308,9 @@ function MessageCard({
                     { label: 'Vocab', value: aiScore.breakdown.compression, desc: 'Word diversity' },
                   ].map(({ label, value, desc }) => (
                     <div key={label} className="flex items-center gap-2">
-                      <span className="text-[10px] text-muted-foreground w-14 shrink-0">{label}</span>
+                      <span className="text-[10px] text-muted-foreground w-14 shrink-0" title={desc}>
+                        {label}
+                      </span>
                       <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
                         <div
                           className={`h-full rounded-full transition-all duration-300 ${
@@ -201,12 +319,13 @@ function MessageCard({
                           style={{ width: `${Math.max(2, value)}%` }}
                         />
                       </div>
-                      <span className="text-[9px] text-muted-foreground/60 w-6 text-right tabular-nums">{value}</span>
+                      <span className="text-[9px] text-muted-foreground/60 w-6 text-right tabular-nums">
+                        {value}
+                      </span>
                     </div>
                   ))}
                 </div>
 
-                {/* Suggestions */}
                 {aiScore.suggestions.length > 0 && (
                   <div className="pt-2 border-t border-border/30">
                     <p className="text-[10px] font-medium text-muted-foreground mb-1">Suggestions</p>
@@ -239,7 +358,7 @@ function MessageCard({
                 variant="ghost"
                 size="sm"
                 onClick={handleRegenerate}
-                disabled={isLoading}
+                disabled={isLoading || isCurrentRefining}
                 className="flex-1"
               >
                 <RefreshCw size={13} className={isLoading ? 'animate-spin' : ''} />

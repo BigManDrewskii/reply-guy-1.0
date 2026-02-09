@@ -1,4 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie';
+import type { VoiceProfile } from '@/types';
 
 interface AnalysisCache {
   pageUrl: string;
@@ -26,24 +27,6 @@ interface Conversation {
   angle: string;
   sentAt: number;
   status: 'sent' | 'responded' | 'no_response';
-}
-
-interface VoiceProfile {
-  id: string;
-  tone: number;
-  openingPatterns: string[];
-  closingPatterns: string[];
-  personalityMarkers: string[];
-  avoidPhrases: string[];
-  vocabularySignature: string[];
-  exampleMessages: string[];
-  lastUpdated: number;
-  // Enhanced metrics from compromise.js
-  avgSentenceLength?: number;
-  readabilityScore?: number;
-  formalityScore?: number;
-  questionFrequency?: number;
-  exclamationFrequency?: number;
 }
 
 // ============================================
@@ -120,5 +103,17 @@ db.version(2).stores({
   messageVariants: '++id, contactId, angle, variant, platform, createdAt',
 });
 
+// Version 3: Structured voice profiles with register dimensions, exemplars, and metrics
+// The voiceProfiles table schema key stays the same ('id'), but the data shape changes.
+// Dexie handles this gracefully — existing records will be overwritten on next training.
+db.version(3).stores({
+  analysisCache: 'pageUrl, timestamp',
+  conversations: 'id, platform, pageUrl, status, sentAt',
+  voiceProfiles: 'id, updatedAt',
+  contacts: '++id, name, platform, profileUrl, status, lastContactedAt, &profileUrl',
+  touchpoints: '++id, contactId, type, platform, timestamp',
+  messageVariants: '++id, contactId, angle, variant, platform, createdAt',
+});
+
 export { db };
-export type { AnalysisCache, Conversation, VoiceProfile, Contact, Touchpoint, MessageVariant };
+export type { AnalysisCache, Conversation, Contact, Touchpoint, MessageVariant };

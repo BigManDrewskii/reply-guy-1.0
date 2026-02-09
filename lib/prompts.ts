@@ -1,5 +1,10 @@
 import type { PageData, AnalysisResult, VoiceProfile } from '@/types';
 import type { MessageLength } from '@/lib/store';
+import { formatMetricsForPrompt } from '@/lib/voice-analyzer';
+
+// ============================================
+// Message Length Instructions
+// ============================================
 
 const LENGTH_INSTRUCTIONS: Record<MessageLength, string> = {
   short: 'Message must be 40-80 words. Be punchy and direct — 2-3 sentences max. Get to the point fast.',
@@ -7,8 +12,22 @@ const LENGTH_INSTRUCTIONS: Record<MessageLength, string> = {
   long: 'Message must be 180-250 words. Be thorough — include context, specific references, and a detailed value proposition.',
 };
 
+// ============================================
+// Copy Structure Framework
+// Hook → Bridge → Value → CTA
+// ============================================
+
+const COPY_FRAMEWORK = `MESSAGE STRUCTURE (follow this framework):
+1. HOOK (1-2 sentences): Open with something specific about THEM — a recent post, project, or achievement. Make it clear you've done your homework. Never start with "I" or "My".
+2. BRIDGE (1-2 sentences): Connect their world to yours. Show you understand their challenges or goals.
+3. VALUE (1-2 sentences): What specific value can you offer? Be concrete — not "let's collaborate" but what exactly.
+4. CTA (1 sentence): Clear, low-commitment ask. A question works best. Make it easy to say yes.`;
+
+// ============================================
+// Analysis Prompts
+// ============================================
+
 export function getAnalysisPrompt(pageData: PageData): string {
-  // LinkedIn-specific analysis prompt
   if (pageData.platform === 'linkedin') {
     return `You analyze LinkedIn profiles to help craft personalized outreach messages.
 
@@ -40,7 +59,6 @@ LinkedIn-specific rules:
 - interests must be specific professional topics, not generic phrases`;
   }
 
-  // Default analysis prompt (X, GitHub, generic)
   return `You analyze webpages to help craft personalized outreach messages.
 
 PAGE DATA:
@@ -69,6 +87,11 @@ Rules:
 - Each angle must have a unique hook based on actual page content
 - confidenceReason should explain the rating`;
 }
+
+// ============================================
+// Message Generation Prompt
+// (with structured voice profile + few-shot exemplars)
+// ============================================
 
 export function getMessagePrompt(
   pageData: PageData,
@@ -99,36 +122,156 @@ Use the thread context to make the message more relevant and timely.
 `;
   }
 
-  if (voiceProfile) {
-    prompt += `VOICE PROFILE (match this tone and style):
-- Tone: ${voiceProfile.tone}/10
-- Opening patterns: ${voiceProfile.openingPatterns.join(', ')}
-- Personality markers: ${voiceProfile.personalityMarkers.join(', ')}
-- Avoid: ${voiceProfile.avoidPhrases.join(', ')}
-`;
-    // Include enhanced metrics if available
-    if (voiceProfile.avgSentenceLength) {
-      prompt += `- Average sentence length: ${voiceProfile.avgSentenceLength} words
-`;
-    }
-    if (voiceProfile.formalityScore !== undefined) {
-      prompt += `- Formality: ${voiceProfile.formalityScore}/100 (${voiceProfile.formalityScore > 65 ? 'formal' : voiceProfile.formalityScore < 35 ? 'casual' : 'balanced'})
-`;
-    }
-    if (voiceProfile.readabilityScore !== undefined) {
-      prompt += `- Readability target: ${voiceProfile.readabilityScore}/100 (${voiceProfile.readabilityScore > 60 ? 'easy to read' : 'more complex'})
-`;
-    }
-    if (voiceProfile.questionFrequency !== undefined && voiceProfile.questionFrequency > 10) {
-      prompt += `- This writer frequently asks questions (${voiceProfile.questionFrequency}% of sentences)
-`;
-    }
-    prompt += '\n';
+  // ── Structured Voice Profile Injection ──
+  if (voiceProfile && voiceProfile.register) {
+    prompt += buildStructuredVoiceContext(voiceProfile);
+  } else if (voiceProfile) {
+    // Legacy voice profile fallback
+    prompt += buildLegacyVoiceContext(voiceProfile);
   }
 
-  // Platform-specific instructions
+  // ── Copy Structure Framework ──
+  prompt += `${COPY_FRAMEWORK}
+
+`;
+
+  // ── Platform-Specific Instructions ──
+  prompt += getPlatformInstructions(pageData);
+
+  // ── Output Format ──
+  prompt += `Return JSON in this exact format (no markdown, no code blocks, just raw JSON):
+{
+  "message": "personalized message following the Hook→Bridge→Value→CTA structure",
+  "wordCount": number,
+  "hook": "1-sentence explanation of why this approach works for this specific person",
+  "voiceScore": 0-100
+}
+
+Rules:
+- ${LENGTH_INSTRUCTIONS[messageLength]}
+- Follow the Hook→Bridge→Value→CTA structure
+- Reference specific details from the page/analysis — names, projects, posts, roles
+- voiceScore: Rate honestly how well the message matches the voice profile (if provided)
+- The message must sound like a REAL PERSON wrote it, not an AI
+- Never use clichés like "I hope this finds you well", "I came across your profile", "I'd love to pick your brain"
+- Never start with "I" — start with something about THEM`;
+
+  return prompt;
+}
+
+// ============================================
+// Structured Voice Context Builder
+// (for the new VoiceProfile with register dimensions)
+// ============================================
+
+function buildStructuredVoiceContext(vp: VoiceProfile): string {
+  let context = `═══ VOICE PROFILE (CRITICAL — match this voice precisely) ═══
+
+`;
+
+  // Register Dimensions
+  context += `REGISTER DIMENSIONS (Biber's 6-factor model, 1-10 scale):
+- Involved↔Informational: ${vp.register.involvedVsInformational}/10 (${vp.register.involvedVsInformational <= 4 ? 'personal/emotional' : vp.register.involvedVsInformational >= 7 ? 'detached/factual' : 'balanced'})
+- Narrative↔Non-narrative: ${vp.register.narrativeVsNonNarrative}/10 (${vp.register.narrativeVsNonNarrative <= 4 ? 'story-like' : vp.register.narrativeVsNonNarrative >= 7 ? 'expository' : 'mixed'})
+- Situation-dependent↔Explicit: ${vp.register.situationDependentVsExplicit}/10
+- Non-persuasive↔Persuasive: ${vp.register.nonPersuasiveVsPersuasive}/10
+- Concrete↔Abstract: ${vp.register.concreteVsAbstract}/10
+- Casual↔Formal: ${vp.register.casualVsFormalElaboration}/10
+
+`;
+
+  // Tone
+  context += `TONE: ${vp.tone.primary} (primary), ${vp.tone.secondary} (secondary)
+- Humor: ${vp.tone.humor}
+- Confidence: ${vp.tone.confidence}
+- Style descriptors: ${vp.descriptors.join(', ')}
+
+`;
+
+  // Voice Rules (actionable instructions)
+  if (vp.rules.length > 0) {
+    context += `VOICE RULES (you MUST follow these):
+${vp.rules.map((r, i) => `${i + 1}. ${r}`).join('\n')}
+
+`;
+  }
+
+  // Anti-Patterns (what NOT to do)
+  if (vp.antiPatterns.length > 0) {
+    context += `ANTI-PATTERNS (NEVER do these):
+${vp.antiPatterns.map((a) => `✗ ${a}`).join('\n')}
+
+`;
+  }
+
+  // Signature Patterns
+  if (vp.signatures) {
+    const sig = vp.signatures;
+    if (sig.openingPatterns.length > 0) {
+      context += `OPENING PATTERNS: ${sig.openingPatterns.join(' | ')}\n`;
+    }
+    if (sig.transitionWords.length > 0) {
+      context += `TRANSITION WORDS: ${sig.transitionWords.join(', ')}\n`;
+    }
+    if (sig.closingPatterns.length > 0) {
+      context += `CLOSING PATTERNS: ${sig.closingPatterns.join(' | ')}\n`;
+    }
+    if (sig.catchphrases.length > 0) {
+      context += `CATCHPHRASES: ${sig.catchphrases.join(' | ')}\n`;
+    }
+    context += '\n';
+  }
+
+  // Quantitative Anchors (hard constraints from local NLP)
+  if (vp.metrics) {
+    context += `QUANTITATIVE ANCHORS (match these numbers):
+${formatMetricsForPrompt(vp.metrics)}
+
+`;
+  }
+
+  // Few-Shot Exemplars (the single biggest improvement — 23.5x better matching)
+  if (vp.exemplars && vp.exemplars.length > 0) {
+    context += `═══ WRITING EXEMPLARS (study these carefully — replicate this EXACT style) ═══
+${vp.exemplars
+  .slice(0, 3) // Use top 3 to stay within context window
+  .map(
+    (ex, i) =>
+      `--- Exemplar ${i + 1} (${ex.wordCount} words, ${ex.context}) ---\n${ex.text}`
+  )
+  .join('\n\n')}
+
+CRITICAL: The message you generate must read as if the SAME PERSON who wrote the exemplars above wrote it. Match their sentence rhythm, word choices, punctuation habits, and energy level.
+
+`;
+  }
+
+  return context;
+}
+
+// ============================================
+// Legacy Voice Context (backward compat)
+// ============================================
+
+function buildLegacyVoiceContext(vp: any): string {
+  let context = `VOICE PROFILE (match this tone and style):\n`;
+  if (vp.tone !== undefined) context += `- Tone: ${vp.tone}/10\n`;
+  if (vp.openingPatterns?.length) context += `- Opening patterns: ${vp.openingPatterns.join(', ')}\n`;
+  if (vp.personalityMarkers?.length) context += `- Personality markers: ${vp.personalityMarkers.join(', ')}\n`;
+  if (vp.avoidPhrases?.length) context += `- Avoid: ${vp.avoidPhrases.join(', ')}\n`;
+  if (vp.avgSentenceLength) context += `- Average sentence length: ${vp.avgSentenceLength} words\n`;
+  if (vp.formalityScore !== undefined) context += `- Formality: ${vp.formalityScore}/100\n`;
+  context += '\n';
+  return context;
+}
+
+// ============================================
+// Platform-Specific Instructions
+// ============================================
+
+function getPlatformInstructions(pageData: PageData): string {
   if (pageData.platform === 'linkedin') {
-    prompt += `PLATFORM: LinkedIn
+    return `PLATFORM: LinkedIn
 - Use professional but warm tone appropriate for LinkedIn
 - Reference their headline, role, company, or recent activity
 - If connection degree is available, adjust warmth accordingly:
@@ -140,15 +283,19 @@ Use the thread context to make the message more relevant and timely.
 - Avoid overly salesy language — LinkedIn users are sensitive to spam
 
 `;
-  } else if (pageData.platform === 'x') {
-    prompt += `PLATFORM: X (Twitter)
+  }
+
+  if (pageData.platform === 'x') {
+    return `PLATFORM: X (Twitter)
 - Use conversational, authentic tone
 - Reference their recent posts or tweets if available
 - Keep it casual but purposeful
 
 `;
-  } else if (pageData.platform === 'github') {
-    prompt += `PLATFORM: GitHub
+  }
+
+  if (pageData.platform === 'github') {
+    return `PLATFORM: GitHub
 - Reference their projects, contributions, or tech stack
 - Use developer-friendly language
 - Be specific about technical interests
@@ -156,41 +303,90 @@ Use the thread context to make the message more relevant and timely.
 `;
   }
 
-  prompt += `Return JSON in this exact format (no markdown, no code blocks, just raw JSON):
-{
-  "message": "personalized message",
-  "wordCount": number,
-  "hook": "why this approach works",
-  "voiceScore": 0-100
+  return '';
 }
 
-Rules:
-- ${LENGTH_INSTRUCTIONS[messageLength]}
-- Start with a natural, conversational opening
-- Reference specific details from the page/analysis
-- End with clear call-to-action
-- Make it sound authentic, not AI-generated
-- voiceScore reflects how well it matches the requested style`;
+// ============================================
+// Self-Refinement Prompt
+// (optional second pass for higher quality)
+// ============================================
+
+export function getSelfRefinementPrompt(
+  generatedMessage: string,
+  voiceProfile: VoiceProfile,
+  voiceMatchScore: number,
+  scoreBreakdown: Record<string, number>
+): string {
+  // Find the weakest dimensions
+  const weakDimensions = Object.entries(scoreBreakdown)
+    .filter(([, score]) => score < 70)
+    .sort((a, b) => a[1] - b[1])
+    .map(([dim, score]) => `${dim}: ${score}/100`);
+
+  let prompt = `You are a voice-matching editor. A message was generated to match a specific voice profile, but scored ${voiceMatchScore}/100 on voice matching.
+
+GENERATED MESSAGE:
+"${generatedMessage}"
+
+`;
+
+  if (weakDimensions.length > 0) {
+    prompt += `WEAK DIMENSIONS (fix these):
+${weakDimensions.join('\n')}
+
+`;
+  }
+
+  // Include the voice rules and anti-patterns
+  prompt += `VOICE RULES TO FOLLOW:
+${voiceProfile.rules.map((r, i) => `${i + 1}. ${r}`).join('\n')}
+
+ANTI-PATTERNS TO AVOID:
+${voiceProfile.antiPatterns.map((a) => `✗ ${a}`).join('\n')}
+
+`;
+
+  // Include quantitative targets
+  if (voiceProfile.metrics) {
+    prompt += `TARGET METRICS:
+- Sentence length: aim for ~${voiceProfile.metrics.sentenceLength.mean} words per sentence
+- Formality: ${voiceProfile.metrics.formalityScore}/100
+- Contraction rate: ${voiceProfile.metrics.contractionRate}% of sentences should use contractions
+- Active voice: ${voiceProfile.metrics.activeVoiceRate}%
+${voiceProfile.metrics.punctuation.exclamationRate > 10 ? `- Use exclamation marks (${voiceProfile.metrics.punctuation.exclamationRate}% of sentences)` : '- Avoid exclamation marks'}
+${voiceProfile.metrics.punctuation.questionRate > 15 ? `- Include questions (${voiceProfile.metrics.punctuation.questionRate}% of sentences)` : ''}
+
+`;
+  }
+
+  // Include exemplars for reference
+  if (voiceProfile.exemplars && voiceProfile.exemplars.length > 0) {
+    prompt += `REFERENCE EXEMPLARS (match this style):
+${voiceProfile.exemplars
+  .slice(0, 2)
+  .map((ex, i) => `--- ${i + 1} ---\n${ex.text}`)
+  .join('\n\n')}
+
+`;
+  }
+
+  prompt += `TASK: Rewrite the message to better match the voice profile. Fix the weak dimensions while keeping the same intent, recipient context, and call-to-action. The rewritten message should score 85+ on voice matching.
+
+Return JSON (no markdown, no code blocks):
+{
+  "message": "rewritten message",
+  "wordCount": number,
+  "hook": "same hook as before",
+  "voiceScore": 0-100,
+  "changes": "brief description of what you changed and why"
+}`;
 
   return prompt;
 }
 
-export function getVoiceExtractionPrompt(exampleMessages: string[]): string {
-  return `Analyze these ${exampleMessages.length} example messages to extract the writer's unique voice:
-
-EXAMPLES:
-${exampleMessages.map((msg, i) => `---\nExample ${i + 1}:\n${msg}`).join('\n\n')}
-
-Return JSON in this exact format (no markdown, no code blocks, just raw JSON):
-{
-  "tone": 0-10,
-  "openingPatterns": ["3-5 common opening patterns"],
-  "closingPatterns": ["3-5 common closing patterns"],
-  "personalityMarkers": ["5-10 personality traits/signatures"],
-  "avoidPhrases": ["phrases this writer never uses"],
-  "vocabularySignature": ["5-10 characteristic words/phrases"]
-}`;
-}
+// ============================================
+// Follow-Up Prompt
+// ============================================
 
 export function getFollowUpPrompt(
   originalMessage: string,
@@ -208,10 +404,25 @@ ${JSON.stringify(analysis, null, 2)}
 
 `;
 
-  if (voiceProfile) {
+  if (voiceProfile && voiceProfile.register) {
+    // Use structured voice profile
     prompt += `VOICE PROFILE:
-- Tone: ${voiceProfile.tone}/10
-- Personality: ${voiceProfile.personalityMarkers.join(', ')}
+- Tone: ${voiceProfile.tone.primary}, ${voiceProfile.tone.secondary}
+- Confidence: ${voiceProfile.tone.confidence}
+- Rules: ${voiceProfile.rules.slice(0, 5).join('; ')}
+
+`;
+    if (voiceProfile.exemplars && voiceProfile.exemplars.length > 0) {
+      prompt += `STYLE REFERENCE:
+"${voiceProfile.exemplars[0].text}"
+
+`;
+    }
+  } else if (voiceProfile) {
+    // Legacy fallback
+    prompt += `VOICE PROFILE:
+- Tone: ${(voiceProfile as any).tone}/10
+- Personality: ${(voiceProfile as any).personalityMarkers?.join(', ') || 'N/A'}
 
 `;
   }
@@ -234,4 +445,25 @@ Rules:
 - Keep it shorter than the original (50-80 words)`;
 
   return prompt;
+}
+
+// ============================================
+// Legacy Voice Extraction Prompt (kept for compat)
+// ============================================
+
+export function getVoiceExtractionPrompt(exampleMessages: string[]): string {
+  return `Analyze these ${exampleMessages.length} example messages to extract the writer's unique voice:
+
+EXAMPLES:
+${exampleMessages.map((msg, i) => `---\nExample ${i + 1}:\n${msg}`).join('\n\n')}
+
+Return JSON in this exact format (no markdown, no code blocks, just raw JSON):
+{
+  "tone": 0-10,
+  "openingPatterns": ["3-5 common opening patterns"],
+  "closingPatterns": ["3-5 common closing patterns"],
+  "personalityMarkers": ["5-10 personality traits/signatures"],
+  "avoidPhrases": ["phrases this writer never uses"],
+  "vocabularySignature": ["5-10 characteristic words/phrases"]
+}`;
 }

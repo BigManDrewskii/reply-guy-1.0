@@ -34,6 +34,13 @@ import {
   BarChart3,
   SlidersHorizontal,
   AlertOctagon,
+  Shield,
+  Sparkles,
+  BookOpen,
+  Fingerprint,
+  Brain,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 
 // Re-export all icons for convenience
@@ -73,6 +80,13 @@ export {
   BarChart3,
   SlidersHorizontal,
   AlertOctagon,
+  Shield,
+  Sparkles,
+  BookOpen,
+  Fingerprint,
+  Brain,
+  ChevronDown,
+  ChevronUp,
 };
 
 // Icon size variants

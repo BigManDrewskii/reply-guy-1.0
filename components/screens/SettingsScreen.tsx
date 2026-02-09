@@ -38,6 +38,7 @@ export default function SettingsScreen({ onNavigateVoiceTraining }: SettingsScre
   const [error, setError] = useState('');
   const [showKey, setShowKey] = useState(false);
   const [voiceProfileCount, setVoiceProfileCount] = useState(0);
+  const [hasStructuredProfile, setHasStructuredProfile] = useState(false);
   const [showClearCacheDialog, setShowClearCacheDialog] = useState(false);
   const [showDeleteConvosDialog, setShowDeleteConvosDialog] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
@@ -48,7 +49,17 @@ export default function SettingsScreen({ onNavigateVoiceTraining }: SettingsScre
     const loadVoiceProfile = () => {
       chrome.storage.local.get('voiceProfile', (result) => {
         if (result.voiceProfile) {
-          setVoiceProfileCount(result.voiceProfile.exampleMessages?.length || 0);
+          const vp = result.voiceProfile;
+          const isStructured = !!(vp.registerDimensions || vp.quantitativeAnchors);
+          setHasStructuredProfile(isStructured);
+          setVoiceProfileCount(
+            isStructured
+              ? (vp.exemplars?.length || vp.exampleMessages?.length || 0)
+              : (vp.exampleMessages?.length || 0)
+          );
+        } else {
+          setHasStructuredProfile(false);
+          setVoiceProfileCount(0);
         }
       });
     };
@@ -245,9 +256,11 @@ export default function SettingsScreen({ onNavigateVoiceTraining }: SettingsScre
                 <div className="text-left">
                   <p className="text-sm font-medium text-foreground">Train Your Voice</p>
                   <p className="text-[11px] text-muted-foreground">
-                    {voiceProfileCount > 0
-                      ? `${voiceProfileCount} example${voiceProfileCount !== 1 ? 's' : ''} · ${voiceProfileCount >= 10 ? 'Great' : 'Add more'}`
-                      : 'No examples yet'
+                    {hasStructuredProfile
+                      ? `${voiceProfileCount} exemplar${voiceProfileCount !== 1 ? 's' : ''} \u00b7 Style DNA active`
+                      : voiceProfileCount > 0
+                      ? `${voiceProfileCount} example${voiceProfileCount !== 1 ? 's' : ''} \u00b7 Retrain for Style DNA`
+                      : 'No profile yet'
                     }
                   </p>
                 </div>
