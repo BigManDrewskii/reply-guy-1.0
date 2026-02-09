@@ -50,12 +50,12 @@ export default function SettingsScreen({ onNavigateVoiceTraining }: SettingsScre
       chrome.storage.local.get('voiceProfile', (result) => {
         if (result.voiceProfile) {
           const vp = result.voiceProfile;
-          const isStructured = !!(vp.registerDimensions || vp.quantitativeAnchors);
+          const isStructured = !!(vp.register || vp.registerDimensions || vp.quantitativeAnchors);
           setHasStructuredProfile(isStructured);
           setVoiceProfileCount(
             isStructured
-              ? (vp.exemplars?.length || vp.exampleMessages?.length || 0)
-              : (vp.exampleMessages?.length || 0)
+              ? (vp.exemplars?.length || vp.sampleCount || 0)
+              : (vp.sampleCount || vp.exampleMessages?.length || 0)
           );
         } else {
           setHasStructuredProfile(false);

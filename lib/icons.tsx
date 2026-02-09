@@ -41,6 +41,10 @@ import {
   Brain,
   ChevronDown,
   ChevronUp,
+  Link,
+  Plus,
+  FileText,
+  Type,
 } from 'lucide-react';
 
 // Re-export all icons for convenience
@@ -87,6 +91,10 @@ export {
   Brain,
   ChevronDown,
   ChevronUp,
+  Link,
+  Plus,
+  FileText,
+  Type,
 };
 
 // Icon size variants

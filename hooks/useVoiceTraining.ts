@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useStore } from '@/lib/store';
 import { streamCompletion, extractJsonFromResponse } from '@/lib/openrouter';
 import { db } from '@/lib/db';
@@ -8,11 +8,19 @@ import {
   formatMetricsForPrompt,
   type LocalStyleMetrics,
 } from '@/lib/voice-analyzer';
+import {
+  fetchUrlContent,
+  segmentContentWithAI,
+  segmentTextLocally,
+  detectUrls,
+  isUrl,
+  urlToLabel,
+  generateSourceId,
+  type IngestedSource,
+  type WritingSample,
+} from '@/lib/content-ingestion';
 import type {
   VoiceProfile,
-  RegisterDimensions,
-  ToneProfile,
-  SignaturePatterns,
   VoiceExemplar,
 } from '@/types';
 import { computeProfileQuality } from '@/types';
@@ -97,30 +105,52 @@ CRITICAL RULES:
 }
 
 // ============================================
-// Voice Training Hook
+// Voice Training Hook — with Multi-Source Ingestion
 // ============================================
 
 export interface VoiceTrainingState {
+  // Step navigation
   step: number;
   setStep: (step: number) => void;
-  exampleMessages: string;
-  setExampleMessages: (messages: string) => void;
-  messageCount: number;
+
+  // Multi-source content ingestion
+  sources: IngestedSource[];
+  addTextSource: (text: string) => void;
+  addUrlSource: (url: string) => Promise<void>;
+  removeSource: (id: string) => void;
+  autoDetectAndAdd: (input: string) => Promise<void>;
+
+  // Writing samples (extracted from sources)
+  writingSamples: WritingSample[];
+  isSegmenting: boolean;
+  segmentSources: () => Promise<void>;
+
+  // Legacy: raw text input for backward compat
+  rawTextInput: string;
+  setRawTextInput: (text: string) => void;
+
+  // Analysis state
+  sampleCount: number;
   voiceProfile: VoiceProfile | null;
   localMetrics: LocalStyleMetrics | null;
   localMetricsSummary: string | null;
   isExtracting: boolean;
-  extractionStage: 'idle' | 'local-nlp' | 'llm-analysis' | 'building-profile' | 'complete';
+  extractionStage: 'idle' | 'segmenting' | 'local-nlp' | 'llm-analysis' | 'building-profile' | 'complete';
   extractionProgress: string;
   error: string | null;
+
+  // Actions
   analyzeVoice: () => Promise<void>;
-  saveVoiceProfile: () => Promise<void>;
+  saveVoiceProfile: () => Promise<boolean>;
   reset: () => void;
 }
 
 export function useVoiceTraining(): VoiceTrainingState {
   const [step, setStep] = useState(1);
-  const [exampleMessages, setExampleMessages] = useState('');
+  const [sources, setSources] = useState<IngestedSource[]>([]);
+  const [writingSamples, setWritingSamples] = useState<WritingSample[]>([]);
+  const [isSegmenting, setIsSegmenting] = useState(false);
+  const [rawTextInput, setRawTextInput] = useState('');
   const [voiceProfile, setVoiceProfile] = useState<VoiceProfile | null>(null);
   const [localMetrics, setLocalMetrics] = useState<LocalStyleMetrics | null>(null);
   const [localMetricsSummary, setLocalMetricsSummary] = useState<string | null>(null);
@@ -130,32 +160,217 @@ export function useVoiceTraining(): VoiceTrainingState {
   const [error, setError] = useState<string | null>(null);
   const apiKey = useStore((state) => state.apiKey);
 
-  const messageCount = exampleMessages
-    .split('---')
-    .map((m) => m.trim())
-    .filter((m) => m.length > 0).length;
+  // Ref to prevent double-analysis
+  const analysisInProgress = useRef(false);
 
-  const analyzeVoice = useCallback(async () => {
+  const sampleCount = writingSamples.length;
+
+  // ── Source Management ──
+
+  const addTextSource = useCallback((text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+
+    const source: IngestedSource = {
+      id: generateSourceId(),
+      type: 'text',
+      label: `Pasted text (${trimmed.split(/\s+/).length} words)`,
+      rawContent: trimmed,
+      status: 'ready',
+    };
+
+    setSources((prev) => [...prev, source]);
+    setError(null);
+  }, []);
+
+  const addUrlSource = useCallback(async (url: string) => {
+    const sourceId = generateSourceId();
+    const source: IngestedSource = {
+      id: sourceId,
+      type: 'url',
+      label: urlToLabel(url),
+      rawContent: '',
+      status: 'fetching',
+    };
+
+    setSources((prev) => [...prev, source]);
+    setError(null);
+
+    try {
+      const content = await fetchUrlContent(url);
+
+      setSources((prev) =>
+        prev.map((s) =>
+          s.id === sourceId
+            ? { ...s, rawContent: content, status: 'ready' as const }
+            : s
+        )
+      );
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to fetch URL';
+      setSources((prev) =>
+        prev.map((s) =>
+          s.id === sourceId
+            ? { ...s, status: 'error' as const, error: errorMsg }
+            : s
+        )
+      );
+    }
+  }, []);
+
+  const removeSource = useCallback((id: string) => {
+    setSources((prev) => prev.filter((s) => s.id !== id));
+    setWritingSamples((prev) => prev.filter((ws) => ws.sourceId !== id));
+  }, []);
+
+  /**
+   * Auto-detect input type and add appropriate source(s).
+   * Handles: single URL, text with embedded URLs, plain text.
+   */
+  const autoDetectAndAdd = useCallback(async (input: string) => {
+    const trimmed = input.trim();
+    if (!trimmed) return;
+
+    // Case 1: Single URL
+    if (isUrl(trimmed)) {
+      await addUrlSource(trimmed);
+      return;
+    }
+
+    // Case 2: Text with embedded URLs — extract URLs and add remaining text
+    const urls = detectUrls(trimmed);
+    if (urls.length > 0) {
+      // Add each URL as a source
+      for (const url of urls) {
+        await addUrlSource(url);
+      }
+
+      // Add remaining text (with URLs removed) if substantial
+      let remainingText = trimmed;
+      for (const url of urls) {
+        remainingText = remainingText.replace(url, '').trim();
+      }
+      if (remainingText.split(/\s+/).length >= 10) {
+        addTextSource(remainingText);
+      }
+      return;
+    }
+
+    // Case 3: Plain text
+    addTextSource(trimmed);
+  }, [addUrlSource, addTextSource]);
+
+  // ── Segmentation ──
+
+  /**
+   * Segment all ready sources into discrete writing samples.
+   * Uses AI for URL-extracted content, local segmentation for pasted text.
+   */
+  const segmentSources = useCallback(async () => {
     if (!apiKey) {
       setError('No API key configured');
       return;
     }
 
-    if (messageCount < 3) {
-      setError('Please provide at least 3 example messages (5+ recommended)');
+    const readySources = sources.filter((s) => s.status === 'ready' && s.rawContent.length > 0);
+    if (readySources.length === 0) {
+      setError('No content to analyze. Add some writing samples first.');
       return;
     }
 
+    setIsSegmenting(true);
+    setError(null);
+    setExtractionStage('segmenting');
+    setExtractionProgress('Extracting writing samples from your content...');
+
+    const allSamples: WritingSample[] = [];
+
+    for (const source of readySources) {
+      try {
+        let segments: string[];
+
+        if (source.type === 'url') {
+          // URL content needs AI segmentation — it's messy extracted HTML
+          setExtractionProgress(`AI segmenting content from ${source.label}...`);
+          segments = await segmentContentWithAI(
+            source.rawContent,
+            apiKey,
+            (msg) => setExtractionProgress(msg),
+          );
+        } else {
+          // Pasted text — try local segmentation first
+          segments = segmentTextLocally(source.rawContent);
+
+          // If local segmentation only found 1-2 segments and text is long,
+          // use AI to find better boundaries
+          if (segments.length < 3 && source.rawContent.split(/\s+/).length > 100) {
+            setExtractionProgress(`AI segmenting pasted text...`);
+            try {
+              segments = await segmentContentWithAI(
+                source.rawContent,
+                apiKey,
+                (msg) => setExtractionProgress(msg),
+              );
+            } catch {
+              // Fall back to local segments if AI fails
+            }
+          }
+        }
+
+        for (const text of segments) {
+          allSamples.push({
+            text,
+            sourceId: source.id,
+            sourceLabel: source.label,
+            wordCount: text.split(/\s+/).length,
+          });
+        }
+      } catch (err) {
+        console.warn(`[useVoiceTraining] Failed to segment source ${source.id}:`, err);
+        // Still try to use the raw content as a single sample
+        if (source.rawContent.split(/\s+/).length >= 10) {
+          allSamples.push({
+            text: source.rawContent,
+            sourceId: source.id,
+            sourceLabel: source.label,
+            wordCount: source.rawContent.split(/\s+/).length,
+          });
+        }
+      }
+    }
+
+    setWritingSamples(allSamples);
+    setIsSegmenting(false);
+    setExtractionStage('idle');
+    setExtractionProgress('');
+
+    if (allSamples.length < 3) {
+      setError(`Only ${allSamples.length} sample(s) found. Need at least 3 for voice analysis. Try adding more content.`);
+    }
+  }, [apiKey, sources]);
+
+  // ── Voice Analysis ──
+
+  const analyzeVoice = useCallback(async () => {
+    if (analysisInProgress.current) return;
+    if (!apiKey) {
+      setError('No API key configured');
+      return;
+    }
+
+    if (writingSamples.length < 3) {
+      setError('Please provide at least 3 writing samples (5+ recommended)');
+      return;
+    }
+
+    analysisInProgress.current = true;
     setIsExtracting(true);
     setError(null);
     setLocalMetrics(null);
     setLocalMetricsSummary(null);
     setVoiceProfile(null);
 
-    const messages = exampleMessages
-      .split('---')
-      .map((m) => m.trim())
-      .filter((m) => m.length > 0);
+    const messages = writingSamples.map((ws) => ws.text);
 
     // ── Stage 1: Local NLP Analysis (instant, no API call) ──
     setExtractionStage('local-nlp');
@@ -171,6 +386,7 @@ export function useVoiceTraining(): VoiceTrainingState {
       setError('Failed to analyze writing samples locally');
       setIsExtracting(false);
       setExtractionStage('idle');
+      analysisInProgress.current = false;
       return;
     }
 
@@ -197,7 +413,6 @@ export function useVoiceTraining(): VoiceTrainingState {
         {
           onChunk: (chunk) => {
             fullResponse += chunk;
-            // Update progress with character count
             setExtractionProgress(
               `Analyzing voice patterns... (${fullResponse.length} chars received)`
             );
@@ -210,12 +425,10 @@ export function useVoiceTraining(): VoiceTrainingState {
               const jsonStr = extractJsonFromResponse(finalText);
               const parsed = JSON.parse(jsonStr);
 
-              // Validate required fields
               if (!parsed.register || !parsed.tone || !parsed.rules) {
                 throw new Error('Missing required fields in LLM response');
               }
 
-              // ── Stage 3: Build Structured Voice Profile ──
               const exemplars: VoiceExemplar[] = messages.slice(0, 5).map((text) => ({
                 text,
                 context: 'outreach message',
@@ -267,12 +480,14 @@ export function useVoiceTraining(): VoiceTrainingState {
               setExtractionStage('complete');
               setExtractionProgress('Voice profile complete!');
               setIsExtracting(false);
+              analysisInProgress.current = false;
               setStep(3);
             } catch (parseError) {
               console.error('[useVoiceTraining] Parse error:', parseError, '\nRaw:', finalText);
               setError('Failed to parse voice analysis. Please try again.');
               setIsExtracting(false);
               setExtractionStage('idle');
+              analysisInProgress.current = false;
             }
           },
           onError: (err) => {
@@ -280,6 +495,7 @@ export function useVoiceTraining(): VoiceTrainingState {
             setError(err.message);
             setIsExtracting(false);
             setExtractionStage('idle');
+            analysisInProgress.current = false;
           },
         }
       );
@@ -287,51 +503,76 @@ export function useVoiceTraining(): VoiceTrainingState {
       setError(err instanceof Error ? err.message : 'Voice analysis failed');
       setIsExtracting(false);
       setExtractionStage('idle');
+      analysisInProgress.current = false;
     }
-  }, [apiKey, exampleMessages, messageCount]);
+  }, [apiKey, writingSamples]);
 
-  const saveVoiceProfile = useCallback(async () => {
-    if (!voiceProfile) return;
+  // ── Save Profile (with proper serialization and error handling) ──
+
+  const saveVoiceProfile = useCallback(async (): Promise<boolean> => {
+    if (!voiceProfile) return false;
 
     try {
-      // Save to Dexie
-      await db.voiceProfiles.put(voiceProfile);
+      // Serialize the profile to a plain JSON-safe object
+      // This ensures no class instances or non-serializable data gets stored
+      const serializedProfile = JSON.parse(JSON.stringify(voiceProfile));
 
-      // Also save to chrome.storage.local for easy access by other hooks
-      chrome.storage.local.set({ voiceProfile });
+      // Save to Dexie (IndexedDB)
+      await db.voiceProfiles.put(serializedProfile);
 
-      // Update store
+      // Save to chrome.storage.local for easy access by other hooks
+      await new Promise<void>((resolve, reject) => {
+        chrome.storage.local.set({ voiceProfile: serializedProfile }, () => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else {
+            resolve();
+          }
+        });
+      });
+
+      // Update store AFTER successful save
       useStore.getState().setVoiceProfileLoaded(true);
 
-      setStep(1);
-      setExampleMessages('');
-      setVoiceProfile(null);
-      setLocalMetrics(null);
-      setLocalMetricsSummary(null);
-      setExtractionStage('idle');
-      setExtractionProgress('');
+      return true;
     } catch (err) {
-      setError('Failed to save voice profile');
+      console.error('[useVoiceTraining] Save failed:', err);
+      setError(`Failed to save voice profile: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      return false;
     }
   }, [voiceProfile]);
 
+  // ── Reset ──
+
   const reset = useCallback(() => {
     setStep(1);
-    setExampleMessages('');
+    setSources([]);
+    setWritingSamples([]);
+    setRawTextInput('');
     setVoiceProfile(null);
     setLocalMetrics(null);
     setLocalMetricsSummary(null);
     setExtractionStage('idle');
     setExtractionProgress('');
     setError(null);
+    setIsSegmenting(false);
+    analysisInProgress.current = false;
   }, []);
 
   return {
     step,
     setStep,
-    exampleMessages,
-    setExampleMessages,
-    messageCount,
+    sources,
+    addTextSource,
+    addUrlSource,
+    removeSource,
+    autoDetectAndAdd,
+    writingSamples,
+    isSegmenting,
+    segmentSources,
+    rawTextInput,
+    setRawTextInput,
+    sampleCount,
     voiceProfile,
     localMetrics,
     localMetricsSummary,

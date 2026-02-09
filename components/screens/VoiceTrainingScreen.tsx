@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   ArrowLeft,
   Check,
@@ -14,9 +15,17 @@ import {
   Sparkles,
   ChevronDown,
   ChevronUp,
+  Link,
+  Plus,
+  FileText,
+  Type,
+  Globe,
+  Loader2,
+  Trash2,
+  XCircle,
 } from '@/lib/icons';
 import { useToast } from '@/components/ui/useToast';
-import type { VoiceProfile, RegisterDimensions } from '@/types';
+import type { VoiceProfile } from '@/types';
 import type { LocalStyleMetrics } from '@/lib/voice-analyzer';
 
 interface VoiceTrainingScreenProps {
@@ -27,9 +36,17 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
   const {
     step,
     setStep,
-    exampleMessages,
-    setExampleMessages,
-    messageCount,
+    sources,
+    addTextSource,
+    addUrlSource,
+    removeSource,
+    autoDetectAndAdd,
+    writingSamples,
+    isSegmenting,
+    segmentSources,
+    rawTextInput,
+    setRawTextInput,
+    sampleCount,
     voiceProfile,
     localMetrics,
     localMetricsSummary,
@@ -44,6 +61,9 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
 
   const { add: addToast } = useToast();
   const [hasExistingProfile, setHasExistingProfile] = useState(false);
+  const [urlInput, setUrlInput] = useState('');
+  const [isFetchingUrl, setIsFetchingUrl] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     register: true,
     metrics: false,
@@ -58,28 +78,20 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
     });
   }, []);
 
-  // Auto-advance from step 2 to step 3 when profile is ready
-  useEffect(() => {
-    if (step === 2 && voiceProfile && !isExtracting) {
-      setStep(3);
-    }
-  }, [step, voiceProfile, isExtracting, setStep]);
-
-  // Auto-start analysis when entering step 2
-  useEffect(() => {
-    if (step === 2 && !isExtracting && !voiceProfile && !error) {
-      analyzeVoice();
-    }
-  }, [step, isExtracting, voiceProfile, error, analyzeVoice]);
-
   const toggleSection = (key: string) => {
     setExpandedSections((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   const handleSaveAndExit = async () => {
-    await saveVoiceProfile();
-    addToast({ type: 'success', message: 'Voice profile saved successfully' });
-    if (onBack) onBack();
+    setIsSaving(true);
+    const success = await saveVoiceProfile();
+    setIsSaving(false);
+
+    if (success) {
+      addToast({ type: 'success', message: 'Voice profile saved successfully' });
+      if (onBack) onBack();
+    }
+    // Error is set inside saveVoiceProfile if it fails
   };
 
   const handleBack = () => {
@@ -89,33 +101,88 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
     }
   };
 
+  const handleAddUrl = async () => {
+    const url = urlInput.trim();
+    if (!url) return;
+
+    setIsFetchingUrl(true);
+    await addUrlSource(url);
+    setUrlInput('');
+    setIsFetchingUrl(false);
+  };
+
+  const handleAddText = () => {
+    if (!rawTextInput.trim()) return;
+    addTextSource(rawTextInput);
+    setRawTextInput('');
+  };
+
+  const handleSmartPaste = async () => {
+    if (!rawTextInput.trim()) return;
+    await autoDetectAndAdd(rawTextInput);
+    setRawTextInput('');
+  };
+
+  const handleProceedToSegment = async () => {
+    await segmentSources();
+  };
+
+  const handleProceedToAnalyze = () => {
+    setStep(2);
+  };
+
+  // Auto-start analysis when entering step 2
+  useEffect(() => {
+    if (step === 2 && !isExtracting && !voiceProfile && !error && writingSamples.length >= 3) {
+      analyzeVoice();
+    }
+  }, [step]);
+
+  // Auto-advance from step 2 to step 3 when profile is ready
+  useEffect(() => {
+    if (step === 2 && voiceProfile && !isExtracting) {
+      setStep(3);
+    }
+  }, [step, voiceProfile, isExtracting, setStep]);
+
   // ── Step Progress Indicator ──
-  const StepIndicator = ({ current }: { current: number }) => (
-    <div className="flex items-center gap-2 mb-5">
-      {[1, 2, 3].map((s) => (
-        <div key={s} className="flex items-center gap-2 flex-1">
-          <div
-            className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold transition-all duration-300 ${
-              s < current
-                ? 'bg-primary text-primary-foreground'
-                : s === current
-                ? 'bg-primary text-primary-foreground ring-2 ring-primary/30 ring-offset-1 ring-offset-background'
-                : 'bg-muted text-muted-foreground'
-            }`}
-          >
-            {s < current ? <Check size={10} /> : s}
+  const StepIndicator = ({ current }: { current: number }) => {
+    const steps = [
+      { num: 1, label: 'Add Content' },
+      { num: 2, label: 'Analyze' },
+      { num: 3, label: 'Review' },
+    ];
+
+    return (
+      <div className="flex items-center gap-1.5 mb-5">
+        {steps.map((s, i) => (
+          <div key={s.num} className="flex items-center gap-1.5 flex-1">
+            <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
+              <div
+                className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold transition-all duration-300 ${
+                  s.num < current
+                    ? 'bg-primary text-primary-foreground'
+                    : s.num === current
+                    ? 'bg-primary text-primary-foreground ring-2 ring-primary/30 ring-offset-1 ring-offset-background'
+                    : 'bg-muted text-muted-foreground'
+                }`}
+              >
+                {s.num < current ? <Check size={10} /> : s.num}
+              </div>
+              <span className="text-[9px] text-muted-foreground">{s.label}</span>
+            </div>
+            {i < steps.length - 1 && (
+              <div
+                className={`flex-1 h-0.5 rounded-full transition-colors duration-300 mb-3 ${
+                  s.num < current ? 'bg-primary' : 'bg-muted'
+                }`}
+              />
+            )}
           </div>
-          {s < 3 && (
-            <div
-              className={`flex-1 h-0.5 rounded-full transition-colors duration-300 ${
-                s < current ? 'bg-primary' : 'bg-muted'
-              }`}
-            />
-          )}
-        </div>
-      ))}
-    </div>
-  );
+        ))}
+      </div>
+    );
+  };
 
   // ── Header ──
   const Header = () => (
@@ -174,19 +241,13 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
   };
 
   // ════════════════════════════════════════════
-  // STEP 1: Input Example Messages
+  // STEP 1: Multi-Source Content Input
   // ════════════════════════════════════════════
   if (step === 1) {
-    const qualityLabel =
-      messageCount >= 15
-        ? { text: 'Optimal', color: 'text-success' }
-        : messageCount >= 10
-        ? { text: 'Excellent', color: 'text-success' }
-        : messageCount >= 5
-        ? { text: 'Good', color: 'text-primary' }
-        : messageCount >= 3
-        ? { text: 'Minimum', color: 'text-warning' }
-        : { text: 'Need more', color: 'text-muted-foreground' };
+    const readySources = sources.filter((s) => s.status === 'ready');
+    const fetchingSources = sources.filter((s) => s.status === 'fetching');
+    const hasContent = readySources.length > 0;
+    const hasSamples = writingSamples.length >= 3;
 
     return (
       <div className="space-y-4">
@@ -199,73 +260,331 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
           </Alert>
         )}
 
+        {/* Intro */}
         <div>
           <p className="text-[13px] text-foreground font-medium mb-1">
-            Paste your writing samples
+            Feed your writing to the AI
           </p>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Add 5-20 example messages, DMs, or posts that represent your natural voice.
-            Separate each with <code className="text-[10px] bg-muted px-1 py-0.5 rounded">---</code>
+            Paste text, drop in URLs to your posts/articles, or paste entire documents.
+            The AI will extract and segment your writing samples automatically.
           </p>
         </div>
 
-        <textarea
-          value={exampleMessages}
-          onChange={(e) => setExampleMessages(e.target.value)}
-          placeholder={`Hey! Saw your post about design systems...\n\n---\n\nThat's a really interesting take. I've been working on something similar...\n\n---\n\nWould love to chat more about this. Free for a quick call?`}
-          className="w-full h-52 px-3 py-2.5 bg-background border border-border/60 rounded-lg text-[13px] leading-relaxed text-foreground placeholder-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring resize-none font-mono transition-colors"
-        />
+        {/* Tabbed Input */}
+        <Tabs defaultValue="smart">
+          <TabsList>
+            <TabsTrigger value="smart">
+              <div className="flex items-center gap-1.5">
+                <Sparkles size={11} />
+                Smart Paste
+              </div>
+            </TabsTrigger>
+            <TabsTrigger value="url">
+              <div className="flex items-center gap-1.5">
+                <Link size={11} />
+                Add URL
+              </div>
+            </TabsTrigger>
+            <TabsTrigger value="text">
+              <div className="flex items-center gap-1.5">
+                <Type size={11} />
+                Paste Text
+              </div>
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Sample counter with quality indicator */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] tabular-nums text-muted-foreground">
-              {messageCount} sample{messageCount !== 1 ? 's' : ''}
-            </span>
-            <span className={`text-[10px] font-medium ${qualityLabel.color}`}>
-              {qualityLabel.text}
-            </span>
+          {/* Smart Paste — auto-detects URLs vs text */}
+          <TabsContent value="smart" className="mt-3 space-y-2.5">
+            <p className="text-[10px] text-muted-foreground leading-relaxed">
+              Paste anything — URLs, documents, emails, tweets, blog posts.
+              The AI auto-detects the format and extracts writing samples.
+            </p>
+            <textarea
+              value={rawTextInput}
+              onChange={(e) => setRawTextInput(e.target.value)}
+              placeholder={`Paste anything here:\n\n• A URL to your blog post or tweet\n• An email you wrote\n• A document or essay\n• Multiple messages (any format)\n\nThe AI will figure out the rest...`}
+              className="w-full h-40 px-3 py-2.5 bg-background border border-border/60 rounded-lg text-[13px] leading-relaxed text-foreground placeholder-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring resize-none font-mono transition-colors"
+            />
+            <Button
+              onClick={handleSmartPaste}
+              disabled={!rawTextInput.trim()}
+              variant="primary"
+              size="sm"
+              className="w-full"
+            >
+              <Plus size={13} className="mr-1.5" />
+              Add to Sources
+            </Button>
+          </TabsContent>
+
+          {/* URL Input */}
+          <TabsContent value="url" className="mt-3 space-y-2.5">
+            <p className="text-[10px] text-muted-foreground leading-relaxed">
+              Add URLs to your tweets, blog posts, LinkedIn posts, or any page with your writing.
+              Content is extracted using Jina Reader AI.
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="url"
+                value={urlInput}
+                onChange={(e) => setUrlInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddUrl()}
+                placeholder="https://x.com/you/status/..."
+                className="flex-1 px-3 py-2 bg-background border border-border/60 rounded-lg text-[13px] text-foreground placeholder-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring transition-colors"
+              />
+              <Button
+                onClick={handleAddUrl}
+                disabled={!urlInput.trim() || isFetchingUrl}
+                variant="primary"
+                size="sm"
+              >
+                {isFetchingUrl ? (
+                  <Loader2 size={13} className="animate-spin" />
+                ) : (
+                  <Plus size={13} />
+                )}
+              </Button>
+            </div>
+          </TabsContent>
+
+          {/* Plain Text Input */}
+          <TabsContent value="text" className="mt-3 space-y-2.5">
+            <p className="text-[10px] text-muted-foreground leading-relaxed">
+              Paste raw text — emails, DMs, documents, essays. The AI will segment
+              it into individual writing samples for analysis.
+            </p>
+            <textarea
+              value={rawTextInput}
+              onChange={(e) => setRawTextInput(e.target.value)}
+              placeholder={`Paste your writing here...\n\nYou can paste:\n• A single long document\n• Multiple messages/emails\n• Copy-pasted social media posts\n\nNo special formatting needed.`}
+              className="w-full h-40 px-3 py-2.5 bg-background border border-border/60 rounded-lg text-[13px] leading-relaxed text-foreground placeholder-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring resize-none font-mono transition-colors"
+            />
+            <Button
+              onClick={handleAddText}
+              disabled={!rawTextInput.trim()}
+              variant="primary"
+              size="sm"
+              className="w-full"
+            >
+              <FileText size={13} className="mr-1.5" />
+              Add Text Source
+            </Button>
+          </TabsContent>
+        </Tabs>
+
+        {/* Source List */}
+        {sources.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] font-semibold text-foreground">
+                Sources ({sources.length})
+              </p>
+              {fetchingSources.length > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <Loader2 size={10} className="animate-spin text-primary" />
+                  <span className="text-[10px] text-muted-foreground">
+                    Fetching {fetchingSources.length}...
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              {sources.map((source) => (
+                <div
+                  key={source.id}
+                  className={`flex items-center gap-2.5 px-3 py-2 rounded-lg border transition-colors ${
+                    source.status === 'error'
+                      ? 'border-destructive/30 bg-destructive/5'
+                      : source.status === 'fetching'
+                      ? 'border-primary/30 bg-primary/5'
+                      : 'border-border/40 bg-card'
+                  }`}
+                >
+                  {/* Icon */}
+                  <div className={`flex-shrink-0 ${
+                    source.status === 'error' ? 'text-destructive' :
+                    source.status === 'fetching' ? 'text-primary' :
+                    'text-muted-foreground'
+                  }`}>
+                    {source.type === 'url' ? (
+                      source.status === 'fetching' ? (
+                        <Loader2 size={13} className="animate-spin" />
+                      ) : (
+                        <Globe size={13} />
+                      )
+                    ) : (
+                      <FileText size={13} />
+                    )}
+                  </div>
+
+                  {/* Label */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] text-foreground truncate font-medium">
+                      {source.label}
+                    </p>
+                    {source.status === 'ready' && (
+                      <p className="text-[9px] text-muted-foreground">
+                        {source.rawContent.split(/\s+/).length} words extracted
+                      </p>
+                    )}
+                    {source.status === 'error' && (
+                      <p className="text-[9px] text-destructive">{source.error}</p>
+                    )}
+                    {source.status === 'fetching' && (
+                      <p className="text-[9px] text-primary">Fetching content...</p>
+                    )}
+                  </div>
+
+                  {/* Status badge */}
+                  <Badge
+                    variant={
+                      source.status === 'error' ? 'destructive' :
+                      source.status === 'fetching' ? 'info' :
+                      'outline'
+                    }
+                    size="sm"
+                  >
+                    {source.status === 'ready' ? 'Ready' :
+                     source.status === 'fetching' ? 'Loading' :
+                     'Error'}
+                  </Badge>
+
+                  {/* Remove button */}
+                  <button
+                    onClick={() => removeSource(source.id)}
+                    className="text-muted-foreground hover:text-destructive transition-colors p-0.5"
+                    aria-label="Remove source"
+                  >
+                    <XCircle size={13} />
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
+        )}
+
+        {/* Writing Samples Preview (after segmentation) */}
+        {writingSamples.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] font-semibold text-foreground">
+                Writing Samples ({writingSamples.length})
+              </p>
+              <span className={`text-[10px] font-medium ${
+                writingSamples.length >= 10 ? 'text-green-500' :
+                writingSamples.length >= 5 ? 'text-primary' :
+                writingSamples.length >= 3 ? 'text-yellow-500' :
+                'text-muted-foreground'
+              }`}>
+                {writingSamples.length >= 10 ? 'Excellent' :
+                 writingSamples.length >= 5 ? 'Good' :
+                 writingSamples.length >= 3 ? 'Minimum' :
+                 'Need more'}
+              </span>
+            </div>
+
+            <div className="max-h-48 overflow-y-auto space-y-1.5 scrollbar-thin">
+              {writingSamples.slice(0, 10).map((sample, i) => (
+                <div
+                  key={i}
+                  className="bg-muted/50 rounded-md px-2.5 py-2 border border-border/20"
+                >
+                  <p className="text-[11px] text-foreground leading-relaxed line-clamp-2 font-mono">
+                    {sample.text}
+                  </p>
+                  <p className="text-[9px] text-muted-foreground mt-1 tabular-nums">
+                    {sample.wordCount} words · from {sample.sourceLabel}
+                  </p>
+                </div>
+              ))}
+              {writingSamples.length > 10 && (
+                <p className="text-[10px] text-muted-foreground text-center py-1">
+                  +{writingSamples.length - 10} more samples
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Quality bar */}
+        {(sources.length > 0 || writingSamples.length > 0) && (
           <div className="flex gap-0.5">
             {Array.from({ length: 5 }).map((_, i) => (
               <div
                 key={i}
-                className={`w-5 h-1 rounded-full transition-colors duration-300 ${
-                  i < Math.min(5, Math.ceil(messageCount / 4))
+                className={`flex-1 h-1 rounded-full transition-colors duration-300 ${
+                  i < Math.min(5, Math.ceil(
+                    (writingSamples.length > 0 ? writingSamples.length : readySources.length) / 3
+                  ))
                     ? 'bg-primary'
                     : 'bg-muted'
                 }`}
               />
             ))}
           </div>
-        </div>
+        )}
 
         {error && <p className="text-[11px] text-destructive">{error}</p>}
 
-        <Button
-          onClick={() => setStep(2)}
-          disabled={messageCount < 3}
-          variant="primary"
-          size="md"
-          className="w-full"
-        >
-          <Fingerprint size={14} className="mr-1.5" />
-          Analyze My Voice
-        </Button>
+        {/* Action Buttons */}
+        <div className="space-y-2">
+          {/* Step 1: Segment sources if we have content but no samples yet */}
+          {hasContent && !hasSamples && !isSegmenting && (
+            <Button
+              onClick={handleProceedToSegment}
+              disabled={fetchingSources.length > 0}
+              variant="primary"
+              size="md"
+              className="w-full"
+            >
+              <Brain size={14} className="mr-1.5" />
+              Extract Writing Samples
+              {fetchingSources.length > 0 && ' (waiting for URLs...)'}
+            </Button>
+          )}
+
+          {isSegmenting && (
+            <Button disabled variant="primary" size="md" className="w-full">
+              <Loader2 size={14} className="mr-1.5 animate-spin" />
+              {extractionProgress || 'Segmenting...'}
+            </Button>
+          )}
+
+          {/* Step 2: Analyze if we have enough samples */}
+          {hasSamples && (
+            <Button
+              onClick={handleProceedToAnalyze}
+              variant="primary"
+              size="md"
+              className="w-full"
+            >
+              <Fingerprint size={14} className="mr-1.5" />
+              Analyze My Voice ({writingSamples.length} samples)
+            </Button>
+          )}
+        </div>
 
         <p className="text-[10px] text-muted-foreground/60 text-center leading-relaxed">
-          Your samples are analyzed locally first, then sent to AI for deep style extraction.
-          Nothing is stored externally.
+          URLs are fetched via Jina Reader AI. Your text is analyzed locally first,
+          then sent to AI for deep style extraction. Nothing is stored externally.
         </p>
       </div>
     );
   }
 
   // ════════════════════════════════════════════
-  // STEP 2: Analyzing (3-stage pipeline)
+  // STEP 2: Analyzing (4-stage pipeline)
   // ════════════════════════════════════════════
   if (step === 2) {
     const stages = [
+      {
+        key: 'segmenting',
+        label: 'Content Segmentation',
+        description: 'Extracting discrete writing samples',
+        icon: FileText,
+      },
       {
         key: 'local-nlp',
         label: 'Local NLP Analysis',
@@ -286,7 +605,7 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
       },
     ];
 
-    const stageOrder = ['idle', 'local-nlp', 'llm-analysis', 'building-profile', 'complete'];
+    const stageOrder = ['idle', 'segmenting', 'local-nlp', 'llm-analysis', 'building-profile', 'complete'];
     const currentStageIndex = stageOrder.indexOf(extractionStage);
 
     return (
@@ -306,7 +625,7 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
         {/* Pipeline stages */}
         <Card variant="default">
           <CardContent className="py-3 space-y-3">
-            {stages.map((stage, i) => {
+            {stages.map((stage) => {
               const stageIdx = stageOrder.indexOf(stage.key);
               const isActive = extractionStage === stage.key;
               const isDone = currentStageIndex > stageIdx;
@@ -317,7 +636,7 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
                   <div
                     className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-500 ${
                       isDone
-                        ? 'bg-success/15 text-success'
+                        ? 'bg-green-500/15 text-green-500'
                         : isActive
                         ? 'bg-primary/15 text-primary animate-pulse'
                         : 'bg-muted text-muted-foreground'
@@ -328,11 +647,7 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
                   <div className="flex-1 min-w-0 pt-0.5">
                     <p
                       className={`text-xs font-medium transition-colors duration-300 ${
-                        isDone
-                          ? 'text-foreground'
-                          : isActive
-                          ? 'text-foreground'
-                          : 'text-muted-foreground'
+                        isDone || isActive ? 'text-foreground' : 'text-muted-foreground'
                       }`}
                     >
                       {stage.label}
@@ -358,9 +673,9 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
                 {localMetricsSummary}
               </p>
               <div className="grid grid-cols-2 gap-2">
-                <MetricBar label="Readability" value={localMetrics.readabilityGrade} max={100} />
+                <MetricBar label="Readability" value={localMetrics.fleschReadingEase} max={100} />
                 <MetricBar label="Formality" value={localMetrics.formalityScore} max={100} />
-                <MetricBar label="Avg sentence" value={localMetrics.sentenceLengthMean} suffix=" words" />
+                <MetricBar label="Avg sentence" value={localMetrics.sentenceLength.mean} suffix=" words" />
                 <MetricBar label="Vocab richness" value={Math.round(localMetrics.vocabularyRichness * 100)} suffix="%" />
               </div>
             </CardContent>
@@ -399,8 +714,8 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
           </div>
           <div className="text-right">
             <p className={`text-sm font-bold tabular-nums ${
-              voiceProfile.quality.score >= 90 ? 'text-success' :
-              voiceProfile.quality.score >= 70 ? 'text-primary' : 'text-warning'
+              voiceProfile.quality.score >= 90 ? 'text-green-500' :
+              voiceProfile.quality.score >= 70 ? 'text-primary' : 'text-yellow-500'
             }`}>
               {voiceProfile.quality.score}%
             </p>
@@ -422,7 +737,7 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
               <Badge variant="outline" size="sm">{voiceProfile.tone.secondary}</Badge>
               {voiceProfile.tone.humor !== 'none' && (
                 <>
-                  <span className="text-[10px] text-muted-foreground">·</span>
+                  <span className="text-[10px] text-muted-foreground">&middot;</span>
                   <Badge variant="outline" size="sm">{voiceProfile.tone.humor} humor</Badge>
                 </>
               )}
@@ -466,12 +781,12 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
         {/* Register Dimensions */}
         <Section id="register" title="Register Dimensions" icon={Brain} badge="Biber's 6D">
           <div className="space-y-2.5 mt-2">
-            <RegisterBar label="Involved ↔ Informational" value={voiceProfile.register.involvedVsInformational} leftLabel="Personal" rightLabel="Factual" />
-            <RegisterBar label="Narrative ↔ Non-narrative" value={voiceProfile.register.narrativeVsNonNarrative} leftLabel="Story-like" rightLabel="Expository" />
-            <RegisterBar label="Situation ↔ Explicit" value={voiceProfile.register.situationDependentVsExplicit} leftLabel="Contextual" rightLabel="Explicit" />
-            <RegisterBar label="Neutral ↔ Persuasive" value={voiceProfile.register.nonPersuasiveVsPersuasive} leftLabel="Neutral" rightLabel="Persuasive" />
-            <RegisterBar label="Concrete ↔ Abstract" value={voiceProfile.register.concreteVsAbstract} leftLabel="Concrete" rightLabel="Abstract" />
-            <RegisterBar label="Casual ↔ Formal" value={voiceProfile.register.casualVsFormalElaboration} leftLabel="Casual" rightLabel="Formal" />
+            <RegisterBar label="Involved / Informational" value={voiceProfile.register.involvedVsInformational} leftLabel="Personal" rightLabel="Factual" />
+            <RegisterBar label="Narrative / Non-narrative" value={voiceProfile.register.narrativeVsNonNarrative} leftLabel="Story-like" rightLabel="Expository" />
+            <RegisterBar label="Situation / Explicit" value={voiceProfile.register.situationDependentVsExplicit} leftLabel="Contextual" rightLabel="Explicit" />
+            <RegisterBar label="Neutral / Persuasive" value={voiceProfile.register.nonPersuasiveVsPersuasive} leftLabel="Neutral" rightLabel="Persuasive" />
+            <RegisterBar label="Concrete / Abstract" value={voiceProfile.register.concreteVsAbstract} leftLabel="Concrete" rightLabel="Abstract" />
+            <RegisterBar label="Casual / Formal" value={voiceProfile.register.casualVsFormalElaboration} leftLabel="Casual" rightLabel="Formal" />
           </div>
         </Section>
 
@@ -479,14 +794,14 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
         {localMetrics && (
           <Section id="metrics" title="Style Metrics" icon={Fingerprint} badge={`${voiceProfile.sampleCount} samples`}>
             <div className="grid grid-cols-2 gap-2.5 mt-2">
-              <MetricBar label="Readability" value={localMetrics.readabilityGrade} max={100} />
+              <MetricBar label="Readability" value={localMetrics.fleschReadingEase} max={100} />
               <MetricBar label="Formality" value={localMetrics.formalityScore} max={100} />
-              <MetricBar label="Avg sentence" value={localMetrics.sentenceLengthMean} suffix=" words" />
+              <MetricBar label="Avg sentence" value={localMetrics.sentenceLength.mean} suffix=" words" />
               <MetricBar label="Vocab richness" value={Math.round(localMetrics.vocabularyRichness * 100)} suffix="%" />
-              <MetricBar label="Questions" value={Math.round(localMetrics.questionRatio * 100)} suffix="%" />
-              <MetricBar label="Contractions" value={Math.round(localMetrics.contractionRate * 100)} suffix="%" />
-              <MetricBar label="Active voice" value={Math.round(localMetrics.activeVoiceRatio * 100)} suffix="%" />
-              <MetricBar label="Exclamations" value={Math.round(localMetrics.exclamationRatio * 100)} suffix="%" />
+              <MetricBar label="Questions" value={Math.round(localMetrics.punctuation.questionRate)} suffix="%" />
+              <MetricBar label="Contractions" value={Math.round(localMetrics.contractionRate)} suffix="%" />
+              <MetricBar label="Active voice" value={Math.round(localMetrics.activeVoiceRate)} suffix="%" />
+              <MetricBar label="Exclamations" value={Math.round(localMetrics.punctuation.exclamationRate)} suffix="%" />
             </div>
 
             {localMetrics.topBigrams.length > 0 && (
@@ -495,7 +810,7 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
                   Signature phrases
                 </p>
                 <div className="flex flex-wrap gap-1">
-                  {localMetrics.topBigrams.slice(0, 8).map(([phrase], i) => (
+                  {localMetrics.topBigrams.slice(0, 8).map((phrase, i) => (
                     <Badge key={i} variant="outline" size="sm">{phrase}</Badge>
                   ))}
                 </div>
@@ -532,7 +847,7 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
                 </p>
                 <div className="flex flex-wrap gap-1">
                   {voiceProfile.signatures.catchphrases.map((c, i) => (
-                    <Badge key={i} variant="info" size="sm">"{c}"</Badge>
+                    <Badge key={i} variant="info" size="sm">&ldquo;{c}&rdquo;</Badge>
                   ))}
                 </div>
               </div>
@@ -547,8 +862,8 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
               <div className="space-y-1.5">
                 {voiceProfile.rules.map((rule, i) => (
                   <div key={i} className="flex items-start gap-2">
-                    <Check size={10} className="text-success mt-0.5 flex-shrink-0" />
-                    <p className="text-[11px] text-foreground leading-relaxed">{rule}</p>
+                    <Check size={10} className="text-green-500 mt-0.5 flex-shrink-0" />
+                    <p className="text-[11px] text-foreground/80 leading-relaxed">{rule}</p>
                   </div>
                 ))}
               </div>
@@ -562,7 +877,7 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
                 <div className="space-y-1.5">
                   {voiceProfile.antiPatterns.map((ap, i) => (
                     <div key={i} className="flex items-start gap-2">
-                      <span className="text-destructive text-[10px] mt-0.5 flex-shrink-0">✕</span>
+                      <span className="text-destructive text-[10px] mt-0.5 flex-shrink-0">&times;</span>
                       <p className="text-[11px] text-muted-foreground leading-relaxed">{ap}</p>
                     </div>
                   ))}
@@ -576,7 +891,7 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
         <Section id="exemplars" title="Stored Exemplars" icon={Mic} badge={`${voiceProfile.exemplars.length} samples`}>
           <div className="space-y-2 mt-2">
             <p className="text-[10px] text-muted-foreground leading-relaxed">
-              These actual writing samples are injected into every generation prompt for 23.5x better style matching.
+              These actual writing samples are injected into every generation prompt for better style matching.
             </p>
             {voiceProfile.exemplars.map((ex, i) => (
               <div
@@ -587,7 +902,7 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
                   {ex.text}
                 </p>
                 <p className="text-[9px] text-muted-foreground mt-1 tabular-nums">
-                  {ex.wordCount} words · {ex.context}
+                  {ex.wordCount} words &middot; {ex.context}
                 </p>
               </div>
             ))}
@@ -599,9 +914,19 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
           <Button onClick={() => setStep(1)} variant="ghost" size="sm" className="flex-1">
             Redo
           </Button>
-          <Button onClick={handleSaveAndExit} variant="primary" size="sm" className="flex-1">
-            <Fingerprint size={13} className="mr-1.5" />
-            Save Profile
+          <Button
+            onClick={handleSaveAndExit}
+            disabled={isSaving}
+            variant="primary"
+            size="sm"
+            className="flex-1"
+          >
+            {isSaving ? (
+              <Loader2 size={13} className="mr-1.5 animate-spin" />
+            ) : (
+              <Fingerprint size={13} className="mr-1.5" />
+            )}
+            {isSaving ? 'Saving...' : 'Save Profile'}
           </Button>
         </div>
 
