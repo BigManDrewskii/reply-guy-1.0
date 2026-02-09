@@ -41,64 +41,64 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={disabled || loading}
         aria-busy={loading}
         className={cn(
-          // Base styles
-          'relative inline-flex items-center justify-center font-semibold',
+          // Base
+          'relative inline-flex items-center justify-center font-medium',
           'transition-all duration-150 ease-out',
-          'rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:ring-primary/50',
-          'active:scale-95 data-[state=pressed]:scale-95 active:duration-100 active:ease-in',
+          'rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-background focus-visible:ring-ring',
+          'active:scale-[0.97] active:duration-75',
           'disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100',
 
-          // Sizes using spacing tokens
+          // Sizes
           {
-            'h-7 px-3 text-xs gap-1.5': size === 'xs',
-            'h-8 px-4 text-sm gap-2': size === 'sm',
-            'h-9 px-5 text-base gap-2': size === 'md',
-            'h-11 px-6 text-lg gap-3': size === 'lg',
-            'h-12 px-7 text-xl gap-3': size === 'xl',
+            'h-7 px-2.5 text-xs gap-1.5': size === 'xs',
+            'h-8 px-3 text-xs gap-1.5': size === 'sm',
+            'h-9 px-4 text-sm gap-2': size === 'md',
+            'h-10 px-5 text-sm gap-2': size === 'lg',
+            'h-11 px-6 text-base gap-2.5': size === 'xl',
           },
 
-          // Icon button sizing (square buttons)
+          // Icon button
           icon && hasChildren === false && {
-            'h-7 w-7': size === 'xs',
-            'h-8 w-8': size === 'sm',
-            'h-9 w-9': size === 'md',
-            'h-11 w-11': size === 'lg',
-            'h-12 w-12': size === 'xl',
+            'h-7 w-7 px-0': size === 'xs',
+            'h-8 w-8 px-0': size === 'sm',
+            'h-9 w-9 px-0': size === 'md',
+            'h-10 w-10 px-0': size === 'lg',
+            'h-11 w-11 px-0': size === 'xl',
           },
 
-          // Variants using design tokens
+          // Variants
           {
-            // Primary & CTA - inverted CTA style (white bg, black text)
-            'bg-cta text-cta-foreground hover:bg-cta-hover active:bg-cta-active border border-transparent':
+            // Primary / CTA — high contrast
+            'bg-primary text-primary-foreground hover:bg-primary-hover active:bg-primary-active':
               variant === 'primary' || variant === 'cta',
 
-            // Secondary - card background
-            'bg-card text-card-foreground border border-border hover:bg-card-hover active:bg-accent':
+            // Secondary
+            'bg-card text-card-foreground border border-border/60 hover:bg-card-hover':
               variant === 'secondary',
 
-            // Ghost - transparent with hover
-            'bg-transparent text-muted-foreground hover:bg-muted/50 hover:text-foreground active:bg-muted-hover':
+            // Ghost
+            'bg-transparent text-muted-foreground hover:bg-muted/50 hover:text-foreground':
               variant === 'ghost',
 
+            // Outline
+            'bg-transparent text-foreground border border-border hover:bg-muted':
+              variant === 'outline',
+
             // Danger
-            'bg-destructive text-destructive-foreground hover:bg-destructive-hover active:opacity-80 border border-transparent':
+            'bg-destructive text-destructive-foreground hover:bg-destructive-hover':
               variant === 'danger',
 
             // Success
-            'bg-success text-success-foreground hover:bg-success-hover active:opacity-80 border border-transparent':
+            'bg-success text-success-foreground hover:bg-success-hover':
               variant === 'success',
 
             // Warning
-            'bg-warning text-warning-foreground hover:bg-warning-hover active:opacity-80 border border-transparent':
+            'bg-warning text-warning-foreground hover:bg-warning-hover':
               variant === 'warning',
 
             // Info
-            'bg-info text-info-foreground hover:bg-info-hover active:opacity-80 border border-transparent':
+            'bg-info text-info-foreground hover:bg-info-hover':
               variant === 'info',
-
-            // Outline - transparent with border
-            'bg-transparent text-foreground border border-border hover:bg-muted hover:border-border active:bg-muted-hover':
-              variant === 'outline',
           },
 
           className
@@ -110,7 +110,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             className={cn(
               'absolute inset-0 flex items-center justify-center rounded-lg',
               {
-                'bg-cta': variant === 'primary' || variant === 'cta',
+                'bg-primary': variant === 'primary' || variant === 'cta',
                 'bg-card': variant === 'secondary',
                 'bg-transparent': variant === 'ghost' || variant === 'outline',
                 'bg-destructive': variant === 'danger',
@@ -123,21 +123,13 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           >
             <Loader2
               size={
-                size === 'xs'
-                  ? 12
-                  : size === 'sm'
-                    ? 14
-                    : size === 'lg'
-                      ? 20
-                      : size === 'xl'
-                        ? 24
-                        : 16
+                size === 'xs' ? 12 : size === 'sm' ? 14 : size === 'lg' ? 18 : size === 'xl' ? 20 : 16
               }
               className="animate-spin"
             />
           </span>
         )}
-        <span className={cn('transition-opacity', loading && 'opacity-0')}>
+        <span className={cn('inline-flex items-center gap-1.5 transition-opacity', loading && 'opacity-0')}>
           {children}
         </span>
       </button>

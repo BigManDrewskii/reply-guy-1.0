@@ -19,8 +19,7 @@ function CopyButton({ text, onCopy }: CopyButtonProps) {
         onCopy();
       }
 
-      // Reset after 1 second
-      setTimeout(() => setCopied(false), 1000);
+      setTimeout(() => setCopied(false), 1500);
     } catch (err) {
       console.error('Failed to copy:', err);
     }
@@ -30,17 +29,18 @@ function CopyButton({ text, onCopy }: CopyButtonProps) {
     <Button
       variant={copied ? 'success' : 'primary'}
       onClick={handleCopy}
-      aria-label={copied ? "Copied!" : "Copy to clipboard"}
+      aria-label={copied ? 'Copied!' : 'Copy to clipboard'}
+      size="md"
       className="w-full"
     >
       {copied ? (
         <>
-          <Check size={16} />
-          Copied
+          <Check size={15} />
+          Copied!
         </>
       ) : (
         <>
-          <Copy size={16} />
+          <Copy size={15} />
           Copy Message
         </>
       )}
@@ -49,6 +49,5 @@ function CopyButton({ text, onCopy }: CopyButtonProps) {
 }
 
 export default memo(CopyButton, (prevProps, nextProps) => {
-  // Only re-render if text changes
   return prevProps.text === nextProps.text;
 });

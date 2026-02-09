@@ -5,7 +5,7 @@ import { useMessageGeneration } from '@/hooks/useMessageGeneration';
 import { RefreshCw, Edit } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { Tabs } from '@/components/ui/tabs';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { PageData, AnalysisResult, OutreachAngle } from '@/types';
 
@@ -18,9 +18,6 @@ interface MessageCardProps {
   onRegenerate?: () => void;
 }
 
-/**
- * Get a human-readable tone label from the voice score.
- */
 function getVoiceLabel(score: number): { label: string; variant: 'success' | 'warning' | 'error' | 'info' } {
   if (score >= 80) return { label: 'Sounds like you', variant: 'success' };
   if (score >= 60) return { label: 'Close match', variant: 'info' };
@@ -43,7 +40,6 @@ function MessageCard({
   const currentMessage = messages[selectedAngle];
   const isLoading = isGenerating[selectedAngle];
 
-  // Auto-generate message when angle changes
   const handleAngleChange = (angle: string) => {
     onSelectAngle(angle as OutreachAngle['angle']);
     if (!messages[angle] && !isGenerating[angle]) {
@@ -70,8 +66,11 @@ function MessageCard({
   const voiceInfo = currentMessage ? getVoiceLabel(currentMessage.voiceScore) : null;
 
   return (
-    <Card variant="default" className="space-y-4">
-      <CardContent className="space-y-4">
+    <Card variant="default">
+      <CardHeader>
+        <CardTitle>Message</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
         {/* Angle tabs */}
         {analysis?.outreachAngles && (
           <Tabs.Root defaultValue={selectedAngle} value={selectedAngle} onValueChange={handleAngleChange}>
@@ -91,74 +90,77 @@ function MessageCard({
             role="status"
             aria-live="polite"
             aria-label="Generating message"
-            className="space-y-3 py-4"
+            className="space-y-2.5 py-3"
           >
-            <div className="h-3 bg-muted rounded w-full animate-pulse"></div>
-            <div className="h-3 bg-muted rounded w-5/6 animate-pulse"></div>
-            <div className="h-3 bg-muted rounded w-4/6 animate-pulse"></div>
+            <div className="h-2.5 bg-muted rounded-full w-full animate-pulse"></div>
+            <div className="h-2.5 bg-muted rounded-full w-5/6 animate-pulse"></div>
+            <div className="h-2.5 bg-muted rounded-full w-4/6 animate-pulse"></div>
+            <div className="h-2.5 bg-muted rounded-full w-full animate-pulse"></div>
+            <div className="h-2.5 bg-muted rounded-full w-3/5 animate-pulse"></div>
           </div>
         )}
 
         {/* Message content */}
         {currentMessage && (
           <>
-            <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
-              {currentMessage.message}
-            </p>
+            {/* The message text */}
+            <div className="rounded-lg bg-background/50 p-3">
+              <p className="text-[13px] text-foreground whitespace-pre-wrap leading-relaxed">
+                {currentMessage.message}
+              </p>
+            </div>
 
-            {/* Metadata with voice score badge */}
-            <div className="flex items-center justify-between text-xs text-muted-foreground pt-3 border-t border-border">
+            {/* Metadata row */}
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {voiceInfo && (
                   <Badge variant={voiceInfo.variant} size="sm">
                     {voiceInfo.label}
                   </Badge>
                 )}
-                <span className="font-numerical">
+                <span className="text-[10px] text-muted-foreground font-numerical tabular-nums">
                   {currentMessage.voiceScore}%
                 </span>
               </div>
-              <span className="font-numerical">
+              <span className="text-[10px] text-muted-foreground font-numerical tabular-nums">
                 {currentMessage.wordCount}w
               </span>
             </div>
 
             {/* Hook explanation */}
             {currentMessage.hook && (
-              <p className="text-xs text-muted-foreground italic">
+              <p className="text-[11px] text-muted-foreground/70 italic leading-relaxed">
                 Hook: {currentMessage.hook}
               </p>
             )}
 
-            {/* Copy button */}
+            {/* Primary CTA: Copy */}
             <CopyButton text={currentMessage.message} onCopy={handleCopy} />
-          </>
-        )}
 
-        {/* Actions */}
-        {currentMessage && (
-          <div className="flex gap-2 pt-3 border-t border-border">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleRegenerate}
-              disabled={isLoading}
-              className="flex-1"
-            >
-              <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
-              Regenerate
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsEditing(true)}
-              className="flex-1"
-              aria-label="Edit this message"
-            >
-              <Edit size={14} />
-              Edit
-            </Button>
-          </div>
+            {/* Secondary actions */}
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRegenerate}
+                disabled={isLoading}
+                className="flex-1"
+              >
+                <RefreshCw size={13} className={isLoading ? 'animate-spin' : ''} />
+                Regenerate
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsEditing(true)}
+                className="flex-1"
+                aria-label="Edit this message"
+              >
+                <Edit size={13} />
+                Edit
+              </Button>
+            </div>
+          </>
         )}
       </CardContent>
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store';
 import { db } from '@/lib/db';
-import { Eye, EyeOff, Mic } from '@/lib/icons';
+import { Eye, EyeOff, Mic, ChevronRight } from '@/lib/icons';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,14 @@ import { useToast } from '@/components/ui/useToast';
 
 interface SettingsScreenProps {
   onNavigateVoiceTraining?: () => void;
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
+      {children}
+    </h2>
+  );
 }
 
 export default function SettingsScreen({ onNavigateVoiceTraining }: SettingsScreenProps) {
@@ -100,121 +108,124 @@ export default function SettingsScreen({ onNavigateVoiceTraining }: SettingsScre
     setShowKey(false);
   };
 
-  const handleVoiceTraining = () => {
-    if (onNavigateVoiceTraining) {
-      onNavigateVoiceTraining();
-    }
-  };
-
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* API Key Section */}
       <div>
-        <h2 className="text-base font-semibold leading-tight text-foreground mb-3">API Key</h2>
-
-        {!isEditing ? (
-          <div className="space-y-3">
-            <Card variant="default">
-              <CardContent className="px-4 py-3 flex items-center justify-between">
-                <span className="text-[13px] leading-relaxed text-foreground font-mono">
-                  {showKey ? apiKey : maskedKey}
-                </span>
-                <button
-                  onClick={() => setShowKey(!showKey)}
-                  className="text-muted-foreground hover:text-foreground ml-2 flex items-center"
-                  type="button"
-                  aria-label={showKey ? 'Hide API key' : 'Show API key'}
-                >
-                  {showKey ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </CardContent>
-            </Card>
-
-            <Badge variant="success" dot size="md">Connected</Badge>
-
-            <Button
-              onClick={() => {
-                setIsEditing(true);
-                setNewKey(apiKey || '');
-              }}
-              variant="secondary"
-              size="md"
-              className="w-full"
-            >
-              Update API Key
-            </Button>
-          </div>
-        ) : (
-          <form onSubmit={handleSave} className="space-y-3">
-            <Input
-              type={showKey ? 'text' : 'password'}
-              value={newKey}
-              onChange={(e) => setNewKey(e.target.value)}
-              placeholder="sk-or-..."
-              variant="bordered"
-              size="md"
-              error={!!error}
-              disabled={isValidating}
-            />
-            {error && (
-              <p className="text-xs leading-normal text-destructive">{error}</p>
-            )}
-
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                onClick={handleCancel}
-                disabled={isValidating}
-                variant="secondary"
-                size="md"
-                className="flex-1"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={!newKey.trim() || isValidating}
-                variant="primary"
-                size="md"
-                className="flex-1"
-              >
-                {isValidating ? 'Validating...' : 'Save'}
-              </Button>
-            </div>
-          </form>
-        )}
-      </div>
-
-      <div className="border-t border-border pt-4">
-        <h2 className="text-base font-semibold leading-tight text-foreground mb-3">Voice Training</h2>
-        <Button
-          onClick={handleVoiceTraining}
-          variant="secondary"
-          size="md"
-          className="w-full"
-        >
-          <Mic size={16} className="mr-2" />
-          Train Your Voice →
-        </Button>
-        {voiceProfileCount > 0 ? (
-          <div className="mt-2 text-center">
-            <Badge variant={voiceProfileCount >= 10 ? "success" : "warning"} size="sm">
-              {voiceProfileCount} examples · {voiceProfileCount >= 10 ? 'Great' : 'Add more'}
-            </Badge>
-          </div>
-        ) : (
-          <p className="text-xs leading-normal text-muted-foreground mt-2 text-center">No examples yet</p>
-        )}
-      </div>
-
-      <div className="border-t border-border pt-4">
-        <h2 className="text-base font-semibold leading-tight text-foreground mb-3">Appearance</h2>
+        <SectionLabel>API Key</SectionLabel>
         <Card variant="default">
-          <CardContent className="px-4 py-3">
+          <CardContent className="p-3">
+            {!isEditing ? (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <code className="text-xs text-foreground/80 font-mono truncate flex-1 mr-2">
+                    {showKey ? apiKey : maskedKey}
+                  </code>
+                  <button
+                    onClick={() => setShowKey(!showKey)}
+                    className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded"
+                    type="button"
+                    aria-label={showKey ? 'Hide API key' : 'Show API key'}
+                  >
+                    {showKey ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Badge variant="success" dot size="sm">Connected</Badge>
+                  <button
+                    onClick={() => {
+                      setIsEditing(true);
+                      setNewKey(apiKey || '');
+                    }}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Change
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleSave} className="space-y-2.5">
+                <Input
+                  type={showKey ? 'text' : 'password'}
+                  value={newKey}
+                  onChange={(e) => setNewKey(e.target.value)}
+                  placeholder="sk-or-..."
+                  size="sm"
+                  error={!!error}
+                  disabled={isValidating}
+                />
+                {error && (
+                  <p className="text-[11px] text-destructive">{error}</p>
+                )}
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    onClick={handleCancel}
+                    disabled={isValidating}
+                    variant="ghost"
+                    size="sm"
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={!newKey.trim() || isValidating}
+                    variant="primary"
+                    size="sm"
+                    className="flex-1"
+                  >
+                    {isValidating ? 'Validating...' : 'Save'}
+                  </Button>
+                </div>
+              </form>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Voice Training Section */}
+      <div>
+        <SectionLabel>Voice Training</SectionLabel>
+        <Card variant="default">
+          <CardContent className="p-0">
+            <button
+              onClick={onNavigateVoiceTraining}
+              className="w-full flex items-center justify-between p-3 hover:bg-card-hover transition-colors rounded-xl"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+                  <Mic size={14} className="text-muted-foreground" />
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-medium text-foreground">Train Your Voice</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {voiceProfileCount > 0
+                      ? `${voiceProfileCount} example${voiceProfileCount !== 1 ? 's' : ''} · ${voiceProfileCount >= 10 ? 'Great' : 'Add more'}`
+                      : 'No examples yet'
+                    }
+                  </p>
+                </div>
+              </div>
+              <ChevronRight size={14} className="text-muted-foreground" />
+            </button>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Appearance Section */}
+      <div>
+        <SectionLabel>Appearance</SectionLabel>
+        <Card variant="default">
+          <CardContent className="p-3">
             <label className="flex items-center justify-between cursor-pointer">
-              <span className="text-[13px] leading-relaxed text-foreground">
-                Keep page glow on
-              </span>
+              <div>
+                <p className="text-sm text-foreground">Page glow</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  {persistentGlow ? 'Stays on while panel is open' : 'Fades after 10 seconds'}
+                </p>
+              </div>
               <div className="relative">
                 <input
                   type="checkbox"
@@ -223,60 +234,62 @@ export default function SettingsScreen({ onNavigateVoiceTraining }: SettingsScre
                   className="sr-only"
                 />
                 <div className={`
-                  w-10 h-6 rounded-full transition-colors duration-200
-                  ${persistentGlow ? 'bg-accent' : 'bg-muted'}
+                  w-9 h-5 rounded-full transition-colors duration-200
+                  ${persistentGlow ? 'bg-primary' : 'bg-muted'}
                 `}>
                   <div className={`
-                    w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-200
-                    ${persistentGlow ? 'translate-x-5' : 'translate-x-0.5'}
-                    relative top-0.5
+                    w-4 h-4 bg-white rounded-full shadow-xs transform transition-transform duration-200
+                    ${persistentGlow ? 'translate-x-[18px]' : 'translate-x-[2px]'}
+                    relative top-[2px]
                   `} />
                 </div>
               </div>
             </label>
-            <p className="text-[11px] leading-normal text-muted-foreground mt-2">
-              {persistentGlow
-                ? 'Glow stays on while side panel is open'
-                : 'Glow fades after 10 seconds'}
-            </p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="border-t border-border pt-4">
-        <h2 className="text-base font-semibold leading-tight text-foreground mb-3">Data</h2>
-        <div className="space-y-2">
-          <Button
-            onClick={() => setShowClearCacheDialog(true)}
-            variant="ghost"
-            size="md"
-            className="w-full justify-start"
-            disabled={isClearingCache}
-          >
-            {isClearingCache ? 'Clearing...' : 'Clear cache'}
-          </Button>
-          <Button
-            onClick={() => setShowDeleteConvosDialog(true)}
-            variant="ghost"
-            size="md"
-            className="w-full justify-start"
-            disabled={isDeletingConvos}
-          >
-            {isDeletingConvos ? 'Deleting...' : 'Delete conversations'}
-          </Button>
-          <Button
-            onClick={() => setShowResetDialog(true)}
-            variant="danger"
-            size="md"
-            className="w-full justify-start"
-          >
-            Reset everything
-          </Button>
-        </div>
+      {/* Data Section */}
+      <div>
+        <SectionLabel>Data</SectionLabel>
+        <Card variant="default">
+          <CardContent className="p-1">
+            <button
+              onClick={() => setShowClearCacheDialog(true)}
+              disabled={isClearingCache}
+              className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-card-hover transition-colors rounded-lg text-left disabled:opacity-50"
+            >
+              <span className="text-sm text-foreground">
+                {isClearingCache ? 'Clearing...' : 'Clear cache'}
+              </span>
+              <ChevronRight size={14} className="text-muted-foreground" />
+            </button>
+            <div className="mx-3 border-t border-border/40" />
+            <button
+              onClick={() => setShowDeleteConvosDialog(true)}
+              disabled={isDeletingConvos}
+              className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-card-hover transition-colors rounded-lg text-left disabled:opacity-50"
+            >
+              <span className="text-sm text-foreground">
+                {isDeletingConvos ? 'Deleting...' : 'Delete conversations'}
+              </span>
+              <ChevronRight size={14} className="text-muted-foreground" />
+            </button>
+            <div className="mx-3 border-t border-border/40" />
+            <button
+              onClick={() => setShowResetDialog(true)}
+              className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-card-hover transition-colors rounded-lg text-left"
+            >
+              <span className="text-sm text-destructive">Reset everything</span>
+              <ChevronRight size={14} className="text-destructive/60" />
+            </button>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="border-t border-border pt-4 text-center">
-        <p className="text-[10px] leading-normal text-muted-foreground">v0.1.0 · Studio Drewskii</p>
+      {/* Footer */}
+      <div className="text-center pb-2">
+        <p className="text-[10px] text-muted-foreground/60">v0.1.0 · Studio Drewskii</p>
       </div>
 
       {showClearCacheDialog && (

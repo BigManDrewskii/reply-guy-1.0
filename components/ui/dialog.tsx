@@ -1,7 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { X } from '@/lib/icons';
 
 interface ConfirmDialogProps {
   title: string;
@@ -22,21 +20,40 @@ export default function ConfirmDialog({
   onConfirm,
   onClose,
 }: ConfirmDialogProps) {
-  const dialogRef = useRef<HTMLDivElement>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
+  const confirmRef = useRef<HTMLButtonElement>(null);
 
   // Focus the cancel button on mount (safe default)
   useEffect(() => {
     cancelRef.current?.focus();
   }, []);
 
-  // Keyboard handler: Escape to close
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      onClose();
-    }
-  }, [onClose]);
+  // Keyboard handler: Escape to close, Tab to trap focus
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+
+      // Simple focus trap between cancel and confirm
+      if (e.key === 'Tab') {
+        const focusable = [cancelRef.current, confirmRef.current].filter(Boolean) as HTMLElement[];
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last?.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first?.focus();
+        }
+      }
+    },
+    [onClose]
+  );
 
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);
@@ -52,59 +69,48 @@ export default function ConfirmDialog({
 
   return (
     <div
-      className="fixed inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center z-50 p-4 animate-in fade-in duration-150"
+      className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-4 animate-fade-in"
       onClick={handleBackdropClick}
       role="dialog"
       aria-modal="true"
       aria-labelledby="dialog-title"
       aria-describedby="dialog-description"
     >
-      <Card
-        ref={dialogRef}
-        className="w-full max-w-sm animate-in zoom-in-95 duration-150"
-      >
-        <CardContent className="p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 id="dialog-title" className="text-base font-semibold text-foreground">
-              {title}
-            </h3>
-            <button
-              onClick={onClose}
-              className="text-muted-foreground hover:text-foreground transition-colors rounded-md p-1"
-              aria-label="Close dialog"
-            >
-              <X size={18} />
-            </button>
-          </div>
+      <div className="w-full max-w-sm rounded-xl bg-card border border-border/60 shadow-lg animate-slide-up">
+        <div className="p-4 space-y-3">
+          <h3 id="dialog-title" className="text-sm font-semibold text-foreground">
+            {title}
+          </h3>
 
-          <p id="dialog-description" className="text-sm text-muted-foreground leading-relaxed">
+          <p id="dialog-description" className="text-xs text-muted-foreground leading-relaxed">
             {description}
           </p>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 pt-1">
             <Button
               ref={cancelRef}
               onClick={onClose}
-              variant="secondary"
-              size="md"
+              variant="ghost"
+              size="sm"
               className="flex-1"
             >
               {cancelLabel}
             </Button>
             <Button
+              ref={confirmRef}
               onClick={() => {
                 onConfirm();
                 onClose();
               }}
               variant={variant === 'danger' ? 'danger' : 'primary'}
-              size="md"
+              size="sm"
               className="flex-1"
             >
               {confirmLabel}
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

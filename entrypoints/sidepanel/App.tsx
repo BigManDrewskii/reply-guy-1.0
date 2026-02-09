@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils/cn';
 import Skeleton from '@/components/ui/skeleton';
 import { ProfileCardSkeleton, MessageCardSkeleton } from '@/components/ui/skeleton';
 
-// Lazy load screens to reduce initial bundle size
+// Lazy load screens
 const OnboardingScreen = lazy(() => import('@/components/screens/OnboardingScreen'));
 const IdleScreen = lazy(() => import('@/components/screens/IdleScreen'));
 const OutreachScreen = lazy(() => import('@/components/screens/OutreachScreen'));
@@ -19,16 +19,13 @@ const VoiceTrainingScreen = lazy(() => import('@/components/screens/VoiceTrainin
 
 type Screen = 'outreach' | 'history' | 'settings' | 'voiceTraining';
 
-/**
- * Skeleton-based loading fallback (never spinners per design rules).
- */
 function ScreenLoader() {
   return (
-    <div className="space-y-4 p-4 animate-fade-in">
+    <div className="space-y-3 animate-fade-in">
       <ProfileCardSkeleton />
       <div className="space-y-2">
-        <Skeleton variant="text" className="w-1/3 h-5" />
-        <Skeleton variant="pulse" className="h-2 w-full rounded-full" />
+        <Skeleton variant="text" className="w-1/3 h-4" />
+        <Skeleton variant="pulse" className="h-1.5 w-full rounded-full" />
       </div>
       <MessageCardSkeleton />
     </div>
@@ -43,7 +40,7 @@ export default function App() {
   const apiKey = useStore((state) => state.apiKey);
   const { toasts, remove } = useToast();
 
-  // Scroll position preservation per screen
+  // Scroll position preservation
   const scrollPositions = useRef<Record<Screen, number>>({
     outreach: 0,
     history: 0,
@@ -52,7 +49,6 @@ export default function App() {
   });
   const mainRef = useRef<HTMLDivElement>(null);
 
-  // Save scroll position before switching screens
   const handleScreenChange = (newScreen: Screen) => {
     if (mainRef.current) {
       scrollPositions.current[screen] = mainRef.current.scrollTop;
@@ -60,7 +56,6 @@ export default function App() {
     setScreen(newScreen);
   };
 
-  // Restore scroll position after screen transition
   useEffect(() => {
     if (mainRef.current && displayScreen === screen) {
       mainRef.current.scrollTop = scrollPositions.current[screen];
@@ -68,13 +63,11 @@ export default function App() {
   }, [displayScreen, screen]);
 
   useEffect(() => {
-    // Subscribe to page data from content script (via background → storage.session)
     const listener = (changes: Record<string, chrome.storage.StorageChange>) => {
       if (changes.currentPageData) {
         const newData = changes.currentPageData.newValue;
         setPageData(newData);
 
-        // Notify content script that analysis is complete
         chrome.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
           if (tab?.id) {
             chrome.tabs.sendMessage(tab.id, {
@@ -87,12 +80,10 @@ export default function App() {
     };
     chrome.storage.session.onChanged.addListener(listener);
 
-    // Load existing data on mount
     chrome.storage.session.get('currentPageData', (result) => {
       if (result.currentPageData) setPageData(result.currentPageData);
     });
 
-    // Start analysis when side panel opens
     chrome.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
       if (tab?.id) {
         chrome.tabs.sendMessage(tab.id, { type: 'START_ANALYSIS' }).catch(() => {});
@@ -101,8 +92,6 @@ export default function App() {
 
     return () => {
       chrome.storage.session.onChanged.removeListener(listener);
-
-      // Clean up glow when side panel unmounts
       chrome.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
         if (tab?.id) {
           chrome.tabs.sendMessage(tab.id, { type: 'CLOSE_PANEL' }).catch(() => {});
@@ -114,18 +103,15 @@ export default function App() {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Escape to close voice training
       if (e.key === 'Escape' && screen === 'voiceTraining') {
         handleScreenChange('settings');
         return;
       }
 
-      // Don't intercept if user is typing in an input/textarea
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;
       }
 
-      // Alt+1/2/3 for tab switching
       if (e.altKey && e.key === '1') { handleScreenChange('outreach'); e.preventDefault(); }
       if (e.altKey && e.key === '2') { handleScreenChange('history'); e.preventDefault(); }
       if (e.altKey && e.key === '3') { handleScreenChange('settings'); e.preventDefault(); }
@@ -136,11 +122,9 @@ export default function App() {
   }, [screen]);
 
   useEffect(() => {
-    // Check for reduced motion preference
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     if (screen !== displayScreen && !prefersReducedMotion) {
-      // Apply slide-out animation
       setAnimationClass('animate-slide-out-right');
 
       const timeout1 = setTimeout(() => {
@@ -157,18 +141,21 @@ export default function App() {
         clearTimeout(timeout2);
       };
     } else if (screen !== displayScreen && prefersReducedMotion) {
-      // Instant switch for users who prefer reduced motion
       setDisplayScreen(screen);
     }
   }, [screen, displayScreen]);
 
-  // If no API key, show onboarding
+  // Onboarding
   if (!apiKey) {
     return (
       <div className="h-screen flex flex-col bg-background text-foreground">
-        <header className="h-11 flex items-center px-4 border-b border-border bg-card shrink-0">
-          <Zap size={16} className="mr-2" />
-          <span className="text-sm font-semibold">Reply Guy</span>
+        <header className="h-12 flex items-center px-4 border-b border-border/60 bg-card shrink-0">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md bg-primary flex items-center justify-center">
+              <Zap size={13} className="text-primary-foreground" />
+            </div>
+            <span className="text-sm font-semibold tracking-tight">Reply Guy</span>
+          </div>
         </header>
         <main className="flex-1 overflow-y-auto">
           <ErrorBoundary>
@@ -234,7 +221,6 @@ export default function App() {
     return null;
   };
 
-  // Only show bottom nav for main screens (not voice training)
   const showNav = displayScreen !== 'voiceTraining';
   const navScreens: Array<{ key: Screen; icon: typeof Home; label: string }> = [
     { key: 'outreach', icon: Home, label: 'Outreach' },
@@ -242,26 +228,35 @@ export default function App() {
     { key: 'settings', icon: Settings, label: 'Settings' },
   ];
 
+  const activeIndex = navScreens.findIndex(n => n.key === screen);
+
   return (
     <div className="h-screen flex flex-col bg-background text-foreground">
-      <header className="h-11 flex items-center px-4 border-b border-border bg-card shrink-0">
-        <Zap size={16} className="mr-2" />
-        <span className="text-sm font-semibold">Reply Guy</span>
+      {/* Header */}
+      <header className="h-12 flex items-center px-4 border-b border-border/60 bg-card shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-md bg-primary flex items-center justify-center">
+            <Zap size={13} className="text-primary-foreground" />
+          </div>
+          <span className="text-sm font-semibold tracking-tight">Reply Guy</span>
+        </div>
       </header>
 
+      {/* Main content */}
       <main ref={mainRef} className={cn('flex-1 overflow-y-auto p-4', animationClass)}>
         {renderMainContent()}
       </main>
 
+      {/* Bottom navigation */}
       {showNav && (
-        <nav className="h-12 flex flex-col border-t border-border bg-card px-2 shrink-0">
+        <nav className="h-14 flex flex-col border-t border-border/60 bg-card px-3 shrink-0">
           <div className="relative flex flex-1">
-            {/* Sliding indicator */}
+            {/* Sliding active indicator */}
             <div
-              className="absolute top-0 h-[2px] bg-foreground transition-all duration-[250ms] ease-out"
+              className="absolute top-0 h-[2px] bg-foreground rounded-full transition-all duration-200 ease-out"
               style={{
-                left: screen === 'outreach' ? '0%' : screen === 'history' ? '33.33%' : '66.66%',
-                width: '33.33%'
+                left: `${(activeIndex / navScreens.length) * 100}%`,
+                width: `${100 / navScreens.length}%`,
               }}
             />
             {navScreens.map(({ key, icon: Icon, label }) => {
@@ -274,16 +269,16 @@ export default function App() {
                   aria-label={label}
                   aria-current={isActive ? 'page' : undefined}
                   className={cn(
-                    'relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full',
-                    'transition-colors duration-150 rounded-md',
-                    'focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/50',
+                    'relative flex flex-col items-center justify-center gap-1 flex-1 h-full',
+                    'transition-colors duration-150',
+                    'focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
                     isActive
                       ? 'text-foreground'
                       : 'text-muted-foreground hover:text-foreground/70'
                   )}
                 >
-                  <Icon size={16} />
-                  <span className="text-[10px] capitalize font-medium">{label}</span>
+                  <Icon size={18} strokeWidth={isActive ? 2.2 : 1.8} />
+                  <span className="text-[10px] font-medium">{label}</span>
                 </button>
               );
             })}

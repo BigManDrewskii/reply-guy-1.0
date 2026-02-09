@@ -17,15 +17,17 @@ export default function PostCopySheet({ isOpen, onClose, onLogged }: PostCopyShe
     }
   }, [isOpen]);
 
-  // Keyboard support: Escape to dismiss, Enter to confirm sent
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (!isOpen) return;
-    if (e.key === 'Escape') {
-      handleNotSent();
-    } else if (e.key === 'Enter') {
-      handleSent();
-    }
-  }, [isOpen]);
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (!isOpen) return;
+      if (e.key === 'Escape') {
+        handleNotSent();
+      } else if (e.key === 'Enter') {
+        handleSent();
+      }
+    },
+    [isOpen]
+  );
 
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);
@@ -37,19 +39,19 @@ export default function PostCopySheet({ isOpen, onClose, onLogged }: PostCopyShe
   const handleSent = () => {
     onLogged();
     setVisible(false);
-    setTimeout(() => onClose(), 300);
+    setTimeout(() => onClose(), 200);
   };
 
   const handleNotSent = () => {
     setVisible(false);
-    setTimeout(() => onClose(), 300);
+    setTimeout(() => onClose(), 200);
   };
 
   return (
     <div
       className={`
-        fixed inset-0 bg-black/50 backdrop-blur-[1px] flex items-end justify-center z-50
-        transition-opacity duration-300
+        fixed inset-0 bg-background/60 backdrop-blur-sm flex items-end justify-center z-50
+        transition-opacity duration-200
         ${visible ? 'opacity-100' : 'opacity-0'}
       `}
       onClick={handleNotSent}
@@ -59,46 +61,41 @@ export default function PostCopySheet({ isOpen, onClose, onLogged }: PostCopyShe
     >
       <div
         className={`
-          w-full max-w-md bg-card border-t border-border rounded-t-xl p-6
-          transition-transform duration-300
+          w-full bg-card border-t border-border/60 rounded-t-2xl p-5 pb-6
+          transition-transform duration-200 ease-out
           ${visible ? 'translate-y-0' : 'translate-y-full'}
         `}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="w-10 h-1 bg-muted rounded-full mx-auto mb-4" />
+        {/* Handle */}
+        <div className="w-8 h-1 bg-muted-foreground/20 rounded-full mx-auto mb-4" />
 
-        <p className="text-sm font-medium text-foreground text-center mb-2">
-          Message copied!
+        <p className="text-sm font-medium text-foreground text-center mb-1">
+          Message copied
         </p>
-        <p className="text-xs text-muted-foreground text-center mb-6">
-          Did you send it? We'll track it in your history.
+        <p className="text-[11px] text-muted-foreground text-center mb-5">
+          Did you send it? We'll track it for you.
         </p>
 
-        <div className="flex gap-3">
+        <div className="flex gap-2">
           <Button
             onClick={handleSent}
             variant="primary"
             size="md"
             className="flex-1"
           >
-            <Check size={16} className="mr-2" />
-            Yes, sent it
+            <Check size={14} />
+            Sent it
           </Button>
           <Button
             onClick={handleNotSent}
-            variant="secondary"
+            variant="ghost"
             size="md"
             className="flex-1"
           >
-            <X size={16} className="mr-2" />
             Not yet
           </Button>
         </div>
-
-        <p className="text-[10px] text-muted-foreground text-center mt-3">
-          Press <kbd className="px-1 py-0.5 rounded bg-muted border border-border font-mono">Enter</kbd> to confirm
-          or <kbd className="px-1 py-0.5 rounded bg-muted border border-border font-mono">Esc</kbd> to dismiss
-        </p>
       </div>
     </div>
   );

@@ -54,7 +54,7 @@ export const TabsList = forwardRef<HTMLDivElement, TabsListProps>(
         role="tablist"
         aria-orientation="horizontal"
         className={cn(
-          'relative inline-flex items-center gap-1 rounded-lg bg-muted/50 border border-border/50 p-1',
+          'inline-flex w-full items-center gap-0.5 rounded-lg bg-muted/40 p-0.5',
           className
         )}
       >
@@ -129,12 +129,12 @@ export const TabsTrigger = forwardRef<HTMLButtonElement, TabsTriggerProps>(
           }
         }}
         className={cn(
-          'relative px-4 py-2 rounded-md font-medium text-sm transition-all duration-150 ease-in-out',
-          'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background',
+          'relative flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-150 ease-in-out',
+          'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background',
           'disabled:opacity-50 disabled:cursor-not-allowed',
           {
-            'bg-primary text-primary-foreground': isActive,
-            'text-muted-foreground hover:text-foreground hover:bg-card/50': !isActive,
+            'bg-card text-foreground shadow-xs': isActive,
+            'text-muted-foreground hover:text-foreground': !isActive,
           },
           className
         )}

@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { useStore } from '@/lib/store';
-import { Key, ExternalLink, Zap, Mic, ChevronRight } from '@/lib/icons';
+import { Key, ExternalLink, Zap, ChevronRight } from '@/lib/icons';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 
-type OnboardingStep = 'welcome' | 'apiKey' | 'voicePrompt';
+type OnboardingStep = 'welcome' | 'apiKey';
 
 export default function OnboardingScreen() {
   const [step, setStep] = useState<OnboardingStep>('welcome');
@@ -34,7 +33,6 @@ export default function OnboardingScreen() {
       if (response.ok) {
         const data = await response.json();
         if (data.data) {
-          // Key is valid — store it and advance to voice prompt
           setStoredApiKey(apiKey.trim());
         } else {
           setError('Invalid API key');
@@ -43,7 +41,7 @@ export default function OnboardingScreen() {
         setError('Invalid API key');
       }
     } catch {
-      setError('Failed to validate API key. Please try again.');
+      setError('Failed to validate. Please try again.');
     } finally {
       setIsValidating(false);
     }
@@ -57,36 +55,33 @@ export default function OnboardingScreen() {
   // Step 1: Welcome
   if (step === 'welcome') {
     return (
-      <div className="flex flex-col items-center justify-center h-full p-6 animate-fade-in">
-        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-foreground/10 to-foreground/5 flex items-center justify-center mb-6 border border-border">
-          <Zap size={36} className="text-foreground" />
+      <div className="flex flex-col items-center justify-center min-h-[70vh] p-6 animate-fade-in">
+        {/* Logo */}
+        <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center mb-6">
+          <Zap size={26} className="text-primary-foreground" />
         </div>
 
-        <h1 className="text-lg font-semibold leading-tight text-foreground mb-2">
-          Welcome to Reply Guy
+        <h1 className="text-lg font-semibold text-foreground mb-1.5">
+          Reply Guy
         </h1>
 
-        <p className="text-[13px] leading-relaxed text-muted-foreground mb-8 text-center max-w-xs">
-          AI-powered outreach that sounds like you. Analyze any profile and generate personalized messages in seconds.
+        <p className="text-xs text-muted-foreground text-center max-w-[220px] leading-relaxed mb-8">
+          AI-powered outreach that sounds like you. Analyze profiles and craft personalized messages.
         </p>
 
-        <div className="w-full max-w-sm space-y-3 mb-8">
+        {/* Steps */}
+        <div className="w-full max-w-[260px] space-y-3 mb-8">
           {[
-            { icon: '1', title: 'Connect your API key', desc: 'Powered by OpenRouter for flexible model access' },
-            { icon: '2', title: 'Train your voice', desc: 'Optional: teach the AI your writing style' },
-            { icon: '3', title: 'Start reaching out', desc: 'Analyze profiles and generate messages' },
+            { num: '1', label: 'Connect API key' },
+            { num: '2', label: 'Train your voice (optional)' },
+            { num: '3', label: 'Start reaching out' },
           ].map((item) => (
-            <Card key={item.icon} variant="default">
-              <CardContent className="p-3 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center text-xs font-bold shrink-0">
-                  {item.icon}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-foreground">{item.title}</p>
-                  <p className="text-xs text-muted-foreground">{item.desc}</p>
-                </div>
-              </CardContent>
-            </Card>
+            <div key={item.num} className="flex items-center gap-3">
+              <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-semibold text-muted-foreground shrink-0">
+                {item.num}
+              </div>
+              <span className="text-[13px] text-foreground/80">{item.label}</span>
+            </div>
           ))}
         </div>
 
@@ -94,10 +89,10 @@ export default function OnboardingScreen() {
           onClick={() => setStep('apiKey')}
           variant="primary"
           size="md"
-          className="w-full max-w-sm"
+          className="w-full max-w-[260px]"
         >
           Get Started
-          <ChevronRight size={16} className="ml-1" />
+          <ChevronRight size={14} />
         </Button>
       </div>
     );
@@ -105,33 +100,32 @@ export default function OnboardingScreen() {
 
   // Step 2: API Key
   return (
-    <div className="flex flex-col items-center justify-center h-full p-6 animate-fade-in">
-      <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-6">
-        <Key size={32} className="text-foreground" />
+    <div className="flex flex-col items-center justify-center min-h-[70vh] p-6 animate-fade-in">
+      <div className="w-10 h-10 rounded-xl bg-muted/60 flex items-center justify-center mb-5">
+        <Key size={18} className="text-muted-foreground" />
       </div>
 
-      <h1 className="text-base font-semibold leading-tight text-foreground mb-3">
-        Set up your API key
+      <h1 className="text-base font-semibold text-foreground mb-1">
+        Connect your API key
       </h1>
 
-      <p className="text-[13px] leading-relaxed text-muted-foreground mb-6 text-center">
-        Reply Guy uses OpenRouter to analyze pages and generate outreach messages.
+      <p className="text-xs text-muted-foreground text-center max-w-[240px] leading-relaxed mb-5">
+        Reply Guy uses OpenRouter for AI. You'll need an API key to get started.
       </p>
 
-      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-6">
+      <form onSubmit={handleSubmit} className="w-full max-w-[280px] space-y-3">
         <div>
           <Input
             type="password"
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
             placeholder="sk-or-..."
-            variant="bordered"
             size="md"
             error={!!error}
             disabled={isValidating}
           />
           {error && (
-            <p className="text-xs leading-normal text-destructive mt-2">{error}</p>
+            <p className="text-[11px] text-destructive mt-1.5">{error}</p>
           )}
         </div>
 
@@ -140,28 +134,29 @@ export default function OnboardingScreen() {
           variant="primary"
           size="md"
           disabled={!apiKey.trim() || isValidating}
+          loading={isValidating}
           className="w-full"
         >
-          {isValidating ? 'Validating...' : 'Connect API Key →'}
+          {isValidating ? 'Validating...' : 'Connect'}
         </Button>
       </form>
 
-      <div className="mt-6 flex flex-col items-center gap-3">
+      <div className="mt-5 flex flex-col items-center gap-2.5">
         <a
           href="https://openrouter.ai/keys"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs leading-normal text-primary hover:underline inline-flex items-center"
+          className="text-[11px] text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
         >
           Get a key at openrouter.ai
-          <ExternalLink size={12} className="ml-1" />
+          <ExternalLink size={10} />
         </a>
 
         <button
           onClick={() => setStep('welcome')}
-          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+          className="text-[11px] text-muted-foreground/60 hover:text-muted-foreground transition-colors"
         >
-          ← Back
+          Back
         </button>
       </div>
     </div>

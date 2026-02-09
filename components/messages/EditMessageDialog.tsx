@@ -1,7 +1,6 @@
-import { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { X, Check } from '@/lib/icons';
+import { Check } from '@/lib/icons';
 
 interface EditMessageDialogProps {
   initialMessage: string;
@@ -15,42 +14,62 @@ export default function EditMessageDialog({
   onClose,
 }: EditMessageDialogProps) {
   const [edited, setEdited] = useState(initialMessage);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const wordCount = edited.split(/\s+/).filter(Boolean).length;
   const isDisabled = !edited.trim() || edited === initialMessage;
 
+  useEffect(() => {
+    // Focus textarea and move cursor to end
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+      textareaRef.current.setSelectionRange(edited.length, edited.length);
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50">
-      <Card className="w-full max-w-md rounded-t-lg animate-slide-up">
-        <CardContent className="p-4 space-y-4">
+    <div
+      className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-end justify-center z-50 animate-fade-in"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Edit message"
+    >
+      <div
+        className="w-full bg-card border-t border-border/60 rounded-t-2xl animate-slide-up"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Handle */}
+        <div className="w-8 h-1 bg-muted-foreground/20 rounded-full mx-auto mt-3 mb-2" />
+
+        <div className="p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-base font-semibold">Edit Message</h3>
-            <button
-              onClick={onClose}
-              className="text-muted-foreground hover:text-foreground"
-              aria-label="Close editor"
-            >
-              <X size={18} />
-            </button>
+            <h3 className="text-sm font-semibold text-foreground">Edit Message</h3>
+            <span className="text-[10px] text-muted-foreground tabular-nums">{wordCount}w</span>
           </div>
 
           <textarea
+            ref={textareaRef}
             value={edited}
             onChange={(e) => setEdited(e.target.value)}
-            className="w-full h-48 px-3 py-2 rounded-lg bg-card border border-border text-sm text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full h-40 px-3 py-2.5 rounded-lg bg-background border border-border/60 text-[13px] text-foreground leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring transition-colors"
             placeholder="Edit your message..."
             aria-label="Edit message content"
           />
 
-          <p className="text-xs text-muted-foreground text-right font-numerical">
-            {wordCount} words
-          </p>
-
           <div className="flex gap-2">
             <Button
               onClick={onClose}
-              variant="secondary"
-              size="md"
+              variant="ghost"
+              size="sm"
               className="flex-1"
             >
               Cancel
@@ -58,16 +77,16 @@ export default function EditMessageDialog({
             <Button
               onClick={() => onSave(edited)}
               variant="primary"
-              size="md"
+              size="sm"
               className="flex-1"
               disabled={isDisabled}
             >
-              <Check size={16} className="mr-2" />
-              Save Changes
+              <Check size={13} />
+              Save
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

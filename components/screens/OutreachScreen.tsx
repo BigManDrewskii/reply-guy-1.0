@@ -5,14 +5,14 @@ import PageCard from '@/components/profile/PageCard';
 import MessageCard from '@/components/messages/MessageCard';
 import PostCopySheet from '@/components/messages/PostCopySheet';
 import { ProfileCardSkeleton } from '@/components/ui/skeleton';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useAnalysis } from '@/hooks/useAnalysis';
 import { db } from '@/lib/db';
-import { AlertOctagon } from '@/lib/icons';
+import { AlertOctagon, Zap } from '@/lib/icons';
 
 interface OutreachScreenProps {
   initialData?: PageData | null;
@@ -29,7 +29,6 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
   const { analysis, isAnalyzing, isDebouncing, debounceCountdown, error, analyzePage, cancelAnalysis } = useAnalysis();
 
   useEffect(() => {
-    // Subscribe to page data updates
     const listener = (changes: Record<string, chrome.storage.StorageChange>) => {
       if (changes.currentPageData) {
         const newData = changes.currentPageData.newValue;
@@ -44,7 +43,6 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
     return () => chrome.storage.session.onChanged.removeListener(listener);
   }, []);
 
-  // Check for duplicate contacts when page data changes
   useEffect(() => {
     const checkDuplicate = async () => {
       if (!pageData?.url) return;
@@ -59,7 +57,7 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
           setDuplicateWarning(null);
         }
       } catch {
-        // Silently fail — non-critical
+        // Silently fail
       }
     };
     checkDuplicate();
@@ -76,7 +74,6 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
     if (message) {
       setLastCopiedMessage(message);
     }
-    // Show post-copy sheet after a short delay
     setTimeout(() => setShowPostCopySheet(true), 100);
   };
 
@@ -102,7 +99,7 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
   // Loading state
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-3">
         <ProfileCardSkeleton />
         <div className="space-y-2">
           <div className="h-3 bg-muted rounded w-1/4"></div>
@@ -122,11 +119,10 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
     );
   }
 
-  // Check if this is a profile page or generic page
   const isProfile = pageData.isProfile || pageData.name;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {isProfile ? (
         <ProfileCard data={pageData} />
       ) : (
@@ -143,23 +139,26 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
         </Alert>
       )}
 
-      {/* Analysis section */}
+      {/* Error */}
       {error && (
         <Alert variant="error">{error}</Alert>
       )}
 
-      {/* Show analyze button when data exists but not yet analyzed */}
+      {/* Analyze CTA — before analysis */}
       {pageData && !analysis && !isAnalyzing && !isDebouncing && !hasAnalyzed && (
         <Card variant="default">
-          <CardContent className="p-4 text-center">
-            <div className="mb-4 flex justify-center">
-              <Badge variant="info" size="md">Ready to analyze</Badge>
+          <CardContent className="p-5 text-center">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+              <Zap size={18} className="text-primary" />
             </div>
-            <h3 className="text-sm font-semibold leading-tight text-foreground mb-2">
-              {pageData.name || pageData.ogTitle || pageData.hostname}
-            </h3>
-            <p className="text-[13px] leading-relaxed text-muted-foreground mb-6">
-              We'll analyze this {pageData.isProfile ? 'profile' : 'page'} and generate personalized outreach messages.
+            <p className="text-sm font-medium text-foreground mb-1">
+              Ready to analyze
+            </p>
+            <p className="text-xs text-muted-foreground mb-4">
+              Generate personalized outreach for{' '}
+              <span className="text-foreground font-medium">
+                {pageData.name || pageData.ogTitle || pageData.hostname}
+              </span>
             </p>
             <Button
               onClick={handleAnalyze}
@@ -173,21 +172,22 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
         </Card>
       )}
 
-      {/* Show debouncing countdown */}
+      {/* Debouncing countdown */}
       {isDebouncing && (
         <Card variant="default">
           <CardContent className="p-4 text-center">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <Badge variant="info" size="sm">Starting analysis...</Badge>
+              <div className="w-2 h-2 rounded-full bg-info animate-pulse" />
+              <span className="text-xs font-medium text-foreground">Starting analysis...</span>
             </div>
-            <p className="text-xs leading-normal text-muted-foreground">
-              Analyzing in {debounceCountdown} second{debounceCountdown !== 1 ? 's' : ''}
+            <p className="text-[11px] text-muted-foreground">
+              Analyzing in {debounceCountdown}s
             </p>
             <Button
               onClick={cancelAnalysis}
               variant="ghost"
               size="xs"
-              className="mt-3"
+              className="mt-2"
             >
               Cancel
             </Button>
@@ -195,26 +195,36 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
         </Card>
       )}
 
+      {/* Analyzing state */}
       {isAnalyzing && !analysis && (
         <Card variant="default">
           <CardContent className="p-4 text-center">
-            <Badge variant="info" size="sm">Analyzing page...</Badge>
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-info animate-pulse" />
+              <span className="text-xs font-medium text-foreground">Analyzing page...</span>
+            </div>
+            <div className="mt-3 space-y-2">
+              <div className="h-2 bg-muted rounded-full w-full animate-pulse"></div>
+              <div className="h-2 bg-muted rounded-full w-3/4 animate-pulse"></div>
+            </div>
           </CardContent>
         </Card>
       )}
 
+      {/* Analysis results */}
       {analysis && (
         <>
+          {/* Confidence */}
           <Card variant="default">
-            <CardContent className="p-4">
-              <div className="mb-3">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs leading-normal text-muted-foreground">Confidence</span>
-                </div>
-                <Progress value={analysis.confidence} showValue size="md" />
-              </div>
+            <CardHeader>
+              <CardTitle>Confidence</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Progress value={analysis.confidence} showValue size="md" />
               {analysis.confidenceReason && (
-                <p className="text-xs leading-normal text-muted-foreground mt-2">{analysis.confidenceReason}</p>
+                <p className="text-[11px] leading-relaxed text-muted-foreground mt-2">
+                  {analysis.confidenceReason}
+                </p>
               )}
             </CardContent>
           </Card>
@@ -222,9 +232,13 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
           {/* Summary */}
           {analysis.summary && (
             <Card variant="default">
-              <CardContent className="p-4">
-                <h3 className="text-sm font-semibold leading-tight text-muted-foreground mb-2">Summary</h3>
-                <p className="text-[13px] leading-relaxed text-muted-foreground">{analysis.summary}</p>
+              <CardHeader>
+                <CardTitle>Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-[13px] leading-relaxed text-muted-foreground">
+                  {analysis.summary}
+                </p>
               </CardContent>
             </Card>
           )}
@@ -232,11 +246,13 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
           {/* Interests */}
           {analysis.interests && analysis.interests.length > 0 && (
             <Card variant="default">
-              <CardContent className="p-4">
-                <h3 className="text-sm font-semibold leading-tight text-muted-foreground mb-2">Interests</h3>
-                <div className="flex flex-wrap gap-2">
+              <CardHeader>
+                <CardTitle>Interests</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-1.5">
                   {analysis.interests.map((interest, i) => (
-                    <Badge key={i} variant="default" size="sm">
+                    <Badge key={i} variant="outline" size="sm">
                       {interest}
                     </Badge>
                   ))}

@@ -8,7 +8,7 @@ export interface ProgressProps extends HTMLAttributes<HTMLDivElement> {
   variant?: 'default' | 'success' | 'warning' | 'error';
   showValue?: boolean;
   label?: string;
-  color?: string; // Override auto-color
+  color?: string;
 }
 
 export function Progress({
@@ -22,22 +22,25 @@ export function Progress({
   className,
   ...props
 }: ProgressProps) {
-  // Normalize value to 0-100
   const normalizedValue = Math.min(Math.max((value / max) * 100, 0), 100);
 
-  // Auto-coloring based on value
   const autoVariant =
     variant ||
     (normalizedValue >= 60 ? 'success' : normalizedValue >= 30 ? 'warning' : 'error');
 
-  const colorClasses = {
+  const barColors = {
     default: 'bg-muted-foreground',
     success: 'bg-success',
     warning: 'bg-warning',
     error: 'bg-destructive',
   };
 
-  const progressColor = color;
+  const textColors = {
+    default: 'text-muted-foreground',
+    success: 'text-success',
+    warning: 'text-warning',
+    error: 'text-destructive',
+  };
 
   return (
     <div className={cn('space-y-2', className)} {...props}>
@@ -49,8 +52,8 @@ export function Progress({
           {showValue && (
             <span
               className={cn(
-                'text-sm font-semibold font-numerical',
-                colorClasses[autoVariant]
+                'text-xs font-semibold font-numerical tabular-nums',
+                textColors[autoVariant]
               )}
             >
               {Math.round(normalizedValue)}%
@@ -66,14 +69,14 @@ export function Progress({
         aria-valuemax={100}
         className={cn('w-full bg-muted rounded-full overflow-hidden', {
           'h-1': size === 'sm',
-          'h-2': size === 'md',
-          'h-3': size === 'lg',
+          'h-1.5': size === 'md',
+          'h-2': size === 'lg',
         })}
       >
         <div
           className={cn(
-            'h-full rounded-full transition-all duration-300',
-            color ? '' : colorClasses[autoVariant]
+            'h-full rounded-full transition-all duration-500',
+            color ? '' : barColors[autoVariant]
           )}
           style={{
             width: `${normalizedValue}%`,

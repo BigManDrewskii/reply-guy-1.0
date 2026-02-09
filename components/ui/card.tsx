@@ -2,7 +2,7 @@ import { HTMLAttributes, forwardRef } from 'react';
 import { cn } from '@/lib/utils/cn';
 
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  variant?: 'default' | 'bordered' | 'elevated';
+  variant?: 'default' | 'bordered' | 'elevated' | 'ghost';
 }
 
 export const Card = forwardRef<HTMLDivElement, CardProps>(
@@ -11,13 +11,12 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
       <div
         ref={ref}
         className={cn(
-          'rounded-lg bg-card',
-          'transition-all duration-150 ease-out',
-          'active:scale-[0.98]',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50',
+          'rounded-xl transition-all duration-150 ease-out',
           {
-            'border border-border hover:border-border/80': variant === 'default' || variant === 'elevated',
-            'border-2 border-border hover:border-2 hover:border-border/80': variant === 'bordered',
+            'bg-card border border-border/60': variant === 'default',
+            'bg-card border-2 border-border': variant === 'bordered',
+            'bg-card border border-border/60 shadow-sm': variant === 'elevated',
+            'bg-transparent': variant === 'ghost',
           },
           className
         )}
@@ -33,7 +32,7 @@ Card.displayName = 'Card';
 
 export const CardHeader = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn('flex flex-col space-y-1.5 p-4', className)} {...props} />
+    <div ref={ref} className={cn('flex flex-col space-y-1.5 p-4 pb-2', className)} {...props} />
   )
 );
 
@@ -41,7 +40,7 @@ CardHeader.displayName = 'CardHeader';
 
 export const CardTitle = forwardRef<HTMLHeadingElement, HTMLAttributes<HTMLHeadingElement>>(
   ({ className, ...props }, ref) => (
-    <h3 ref={ref} className={cn('text-base font-semibold leading-none tracking-tight text-foreground', className)} {...props} />
+    <h3 ref={ref} className={cn('text-[11px] font-medium uppercase tracking-wider text-muted-foreground', className)} {...props} />
   )
 );
 

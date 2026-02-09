@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useVoiceTraining } from '@/hooks/useVoiceTraining';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -38,14 +38,12 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
     });
   }, []);
 
-  // Auto-start voice analysis when transitioning to step 2
   useEffect(() => {
     if (step === 2 && !isExtracting && !voiceProfile && !error) {
       analyzeVoice();
     }
   }, [step, isExtracting, voiceProfile, error, analyzeVoice]);
 
-  // Auto-advance to step 3 when extraction completes
   useEffect(() => {
     if (step === 2 && voiceProfile && !isExtracting) {
       setStep(3);
@@ -54,10 +52,8 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
 
   const handleSaveAndExit = async () => {
     await saveVoiceProfile();
-    addToast({ type: 'success', message: 'Voice profile saved successfully' });
-    if (onBack) {
-      onBack();
-    }
+    addToast({ type: 'success', message: 'Voice profile saved' });
+    if (onBack) onBack();
   };
 
   const handleBack = () => {
@@ -67,66 +63,57 @@ export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps
     }
   };
 
+  // Header component
+  const Header = () => (
+    <div className="flex items-center gap-2 mb-4">
+      <button
+        onClick={handleBack}
+        className="text-muted-foreground hover:text-foreground transition-colors p-1 -ml-1 rounded-md"
+        aria-label="Back to settings"
+      >
+        <ArrowLeft size={16} />
+      </button>
+      <h2 className="text-sm font-semibold text-foreground">Voice Training</h2>
+    </div>
+  );
+
   // Step 1: Input example messages
   if (step === 1) {
     return (
-      <div className="space-y-6">
-        {/* Back button header */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleBack}
-            className="text-muted-foreground hover:text-foreground transition-colors p-1 -ml-1"
-            aria-label="Back to settings"
-          >
-            <ArrowLeft size={18} />
-          </button>
-          <h2 className="text-base font-semibold leading-tight text-foreground">
-            Voice Training
-          </h2>
-        </div>
+      <div className="space-y-4">
+        <Header />
 
         {hasExistingProfile && (
-          <Alert variant="warning" action={{ label: "Cancel", onClick: handleBack }}>
+          <Alert variant="warning">
             You already have a voice profile. Training a new one will replace it.
           </Alert>
         )}
 
         <div>
-          <h3 className="text-sm font-medium leading-tight text-foreground mb-2">
-            Step 1: Add Your Messages
-          </h3>
-          <p className="text-[13px] leading-relaxed text-muted-foreground mb-4">
-            Paste 10-20 example DMs you've sent. Separate each message with "---".
+          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1">
+            Step 1 of 3
+          </p>
+          <p className="text-[13px] text-foreground font-medium mb-1">Add your messages</p>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Paste 10-20 example DMs. Separate each with "---".
           </p>
         </div>
 
         <textarea
           value={exampleMessages}
           onChange={(e) => setExampleMessages(e.target.value)}
-          placeholder={`Hey! Saw your post about...
-
----
-
-That's really interesting. I've been...
-
----
-
-Would love to chat more about...`}
-          className="w-full h-64 px-4 py-3 bg-card border border-border rounded-lg text-[13px] leading-relaxed text-foreground placeholder-muted-foreground focus:outline-none focus:border-foreground/30 resize-none font-mono transition-colors"
+          placeholder={`Hey! Saw your post about...\n\n---\n\nThat's really interesting. I've been...\n\n---\n\nWould love to chat more about...`}
+          className="w-full h-56 px-3 py-2.5 bg-background border border-border/60 rounded-lg text-[13px] leading-relaxed text-foreground placeholder-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring resize-none font-mono transition-colors"
         />
 
-        <div className="flex items-center justify-between">
-          <span className="text-xs leading-normal text-muted-foreground font-numerical">
-            {messageCount} message{messageCount !== 1 ? 's' : ''} detected
+        <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+          <span className="tabular-nums">
+            {messageCount} message{messageCount !== 1 ? 's' : ''}
           </span>
-          <span className="text-xs leading-normal text-muted-foreground">
-            Min: 5 · Recommended: 10-20
-          </span>
+          <span>Min 5 · Best 10-20</span>
         </div>
 
-        {error && (
-          <p className="text-xs leading-normal text-destructive">{error}</p>
-        )}
+        {error && <p className="text-[11px] text-destructive">{error}</p>}
 
         <Button
           onClick={() => setStep(2)}
@@ -135,208 +122,158 @@ Would love to chat more about...`}
           size="md"
           className="w-full"
         >
-          Analyze My Voice →
+          Analyze My Voice
         </Button>
       </div>
     );
   }
 
-  // Step 2: Voice analysis in progress
+  // Step 2: Analyzing
   if (step === 2) {
+    const progressItems = [
+      { key: 'tone', label: 'Tone detected', done: extractionProgress.tone !== undefined },
+      { key: 'opening', label: 'Opening patterns', done: !!extractionProgress.openingPatterns },
+      { key: 'closing', label: 'Closing patterns', done: !!extractionProgress.closingPatterns },
+      { key: 'personality', label: 'Personality markers', done: !!extractionProgress.personalityMarkers },
+      { key: 'avoid', label: 'Avoidances', done: !!extractionProgress.avoidPhrases },
+      { key: 'vocab', label: 'Vocabulary signature', done: !!extractionProgress.vocabularySignature },
+    ];
+
     return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleBack}
-            className="text-muted-foreground hover:text-foreground transition-colors p-1 -ml-1"
-            aria-label="Back to settings"
-          >
-            <ArrowLeft size={18} />
-          </button>
-          <h2 className="text-base font-semibold leading-tight text-foreground">
-            Voice Training
-          </h2>
-        </div>
+      <div className="space-y-4">
+        <Header />
 
         <div>
-          <h3 className="text-sm font-medium leading-tight text-foreground mb-2">
-            Step 2: Analyzing Your Voice
-          </h3>
-          <p className="text-[13px] leading-relaxed text-muted-foreground">
+          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1">
+            Step 2 of 3
+          </p>
+          <p className="text-[13px] text-foreground font-medium mb-1">Analyzing your voice</p>
+          <p className="text-xs text-muted-foreground leading-relaxed">
             Extracting your unique writing style...
           </p>
         </div>
 
         {isExtracting && (
-          <div className="space-y-3">
-            {extractionProgress.tone !== undefined && (
-              <div className="animate-fade-in">
-                <Badge variant="success" dot size="md">Tone detected</Badge>
-              </div>
-            )}
-
-            {extractionProgress.openingPatterns && (
-              <div className="animate-fade-in">
-                <Badge variant="success" dot size="md">Opening patterns found</Badge>
-              </div>
-            )}
-
-            {extractionProgress.closingPatterns && (
-              <div className="animate-fade-in">
-                <Badge variant="success" dot size="md">Closing patterns found</Badge>
-              </div>
-            )}
-
-            {extractionProgress.personalityMarkers && (
-              <div className="animate-fade-in">
-                <Badge variant="success" dot size="md">Personality markers identified</Badge>
-              </div>
-            )}
-
-            {extractionProgress.avoidPhrases && (
-              <div className="animate-fade-in">
-                <Badge variant="success" dot size="md">Avoidances analyzed</Badge>
-              </div>
-            )}
-
-            {extractionProgress.vocabularySignature && (
-              <div className="animate-fade-in">
-                <Badge variant="success" dot size="md">Vocabulary signature captured</Badge>
-              </div>
-            )}
-          </div>
+          <Card variant="default">
+            <CardContent className="p-3 space-y-2">
+              {progressItems.map((item) => (
+                <div key={item.key} className="flex items-center gap-2.5">
+                  <div className={`w-1.5 h-1.5 rounded-full transition-colors duration-300 ${
+                    item.done ? 'bg-success' : 'bg-muted animate-pulse'
+                  }`} />
+                  <span className={`text-xs transition-colors duration-300 ${
+                    item.done ? 'text-foreground' : 'text-muted-foreground'
+                  }`}>
+                    {item.label}
+                  </span>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
         )}
 
         {error && (
-          <Alert variant="error" action={{ label: "← Go back", onClick: () => setStep(1) }}>
+          <Alert variant="error" action={{ label: 'Go back', onClick: () => setStep(1) }}>
             {error}
           </Alert>
         )}
 
-        <Button
-          onClick={() => {
-            reset();
-            setStep(1);
-          }}
-          variant="ghost"
-          size="md"
-          className="w-full"
-        >
+        <Button onClick={() => { reset(); setStep(1); }} variant="ghost" size="sm" className="w-full">
           Cancel
         </Button>
       </div>
     );
   }
 
-  // Step 3: Review and save
+  // Step 3: Review
   if (step === 3 && voiceProfile) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleBack}
-            className="text-muted-foreground hover:text-foreground transition-colors p-1 -ml-1"
-            aria-label="Back to settings"
-          >
-            <ArrowLeft size={18} />
-          </button>
-          <h2 className="text-base font-semibold leading-tight text-foreground">
-            Voice Training
-          </h2>
-        </div>
+      <div className="space-y-4">
+        <Header />
 
         <div>
-          <h3 className="text-sm font-medium leading-tight text-foreground mb-2">
-            Step 3: Review Your Voice Profile
-          </h3>
-          <p className="text-[13px] leading-relaxed text-muted-foreground">
-            Review and edit your voice fingerprint before saving.
+          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1">
+            Step 3 of 3
+          </p>
+          <p className="text-[13px] text-foreground font-medium mb-1">Review your profile</p>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Check your voice fingerprint before saving.
           </p>
         </div>
 
-        <div className="space-y-4">
-          {/* Tone */}
-          <Card variant="default">
-            <CardContent className="p-4">
-              <label className="text-xs leading-normal text-muted-foreground block mb-2">Tone</label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="range"
-                  min="0"
-                  max="10"
-                  value={voiceProfile.tone}
-                  readOnly
-                  className="flex-1 accent-foreground"
+        {/* Tone */}
+        <Card variant="default">
+          <CardHeader>
+            <CardTitle>Tone</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-primary rounded-full transition-all"
+                  style={{ width: `${(voiceProfile.tone / 10) * 100}%` }}
                 />
-                <span className="text-[13px] leading-relaxed font-numerical text-foreground w-8 text-right">
-                  {voiceProfile.tone}/10
-                </span>
               </div>
-              <p className="text-xs leading-normal text-muted-foreground mt-2">
-                {voiceProfile.tone <= 3 ? 'Formal & Professional' : voiceProfile.tone <= 7 ? 'Balanced' : 'Casual & Friendly'}
-              </p>
-            </CardContent>
-          </Card>
+              <span className="text-xs tabular-nums text-foreground font-medium w-8 text-right">
+                {voiceProfile.tone}/10
+              </span>
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-1.5">
+              {voiceProfile.tone <= 3 ? 'Formal & Professional' : voiceProfile.tone <= 7 ? 'Balanced' : 'Casual & Friendly'}
+            </p>
+          </CardContent>
+        </Card>
 
-          {/* Opening patterns */}
-          <Card variant="default">
-            <CardContent className="p-4">
-              <label className="text-xs leading-normal text-muted-foreground block mb-2">Opening Patterns</label>
-              <div className="space-y-1">
-                {voiceProfile.openingPatterns.map((pattern, i) => (
-                  <p key={i} className="text-xs leading-normal text-muted-foreground font-mono">
-                    "{pattern}"
-                  </p>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+        {/* Opening patterns */}
+        <Card variant="default">
+          <CardHeader>
+            <CardTitle>Opening Patterns</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-1">
+              {voiceProfile.openingPatterns.map((pattern: string, i: number) => (
+                <p key={i} className="text-xs text-muted-foreground font-mono">
+                  "{pattern}"
+                </p>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Personality markers */}
-          <Card variant="default">
-            <CardContent className="p-4">
-              <label className="text-xs leading-normal text-muted-foreground block mb-2">Personality Markers</label>
-              <div className="flex flex-wrap gap-2">
-                {voiceProfile.personalityMarkers.map((marker, i) => (
-                  <Badge key={i} variant="default" size="sm">
-                    {marker}
-                  </Badge>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+        {/* Personality markers */}
+        <Card variant="default">
+          <CardHeader>
+            <CardTitle>Personality</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-1.5">
+              {voiceProfile.personalityMarkers.map((marker: string, i: number) => (
+                <Badge key={i} variant="outline" size="sm">{marker}</Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Vocabulary signature */}
-          <Card variant="default">
-            <CardContent className="p-4">
-              <label className="text-xs leading-normal text-muted-foreground block mb-2">Vocabulary Signature</label>
-              <div className="flex flex-wrap gap-2">
-                {voiceProfile.vocabularySignature.map((word, i) => (
-                  <Badge key={i} variant="info" size="sm">
-                    {word}
-                  </Badge>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Vocabulary */}
+        <Card variant="default">
+          <CardHeader>
+            <CardTitle>Vocabulary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-1.5">
+              {voiceProfile.vocabularySignature.map((word: string, i: number) => (
+                <Badge key={i} variant="info" size="sm">{word}</Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="flex gap-2">
-          <Button
-            onClick={() => setStep(1)}
-            variant="secondary"
-            size="md"
-            className="flex-1"
-          >
-            ← Back
+          <Button onClick={() => setStep(1)} variant="ghost" size="sm" className="flex-1">
+            Redo
           </Button>
-          <Button
-            onClick={handleSaveAndExit}
-            variant="primary"
-            size="md"
-            className="flex-1"
-          >
-            Save Voice Profile
+          <Button onClick={handleSaveAndExit} variant="primary" size="sm" className="flex-1">
+            Save Profile
           </Button>
         </div>
       </div>
