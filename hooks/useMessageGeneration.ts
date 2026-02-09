@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useStore } from '@/lib/store';
 import { getMessagePrompt } from '@/lib/prompts';
-import { streamCompletion } from '@/lib/openrouter';
+import { streamCompletion, extractJsonFromResponse } from '@/lib/openrouter';
 import type { PageData, AnalysisResult, VoiceProfile, GeneratedMessage, OutreachAngle } from '@/types';
 
 interface UseMessageGenerationResult {
@@ -11,6 +11,7 @@ interface UseMessageGenerationResult {
   setSelectedAngle: (angle: OutreachAngle['angle']) => void;
   generateMessage: (pageData: PageData, analysis: AnalysisResult, angle: OutreachAngle['angle']) => Promise<void>;
   regenerateMessage: (pageData: PageData, analysis: AnalysisResult, angle: OutreachAngle['angle']) => Promise<void>;
+  cancelGeneration: () => void;
   setMessages: React.Dispatch<React.SetStateAction<Record<string, GeneratedMessage | null>>>;
 }
 
@@ -25,6 +26,7 @@ export function useMessageGeneration(): UseMessageGenerationResult {
   const pageDataRef = useRef<PageData | null>(null);
   const analysisRef = useRef<AnalysisResult | null>(null);
   const angleRef = useRef<OutreachAngle['angle'] | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const MAX_RETRIES = 3;
 
@@ -42,8 +44,14 @@ export function useMessageGeneration(): UseMessageGenerationResult {
 
     const listener = () => loadVoiceProfile();
     chrome.storage.onChanged.addListener(listener);
-
     return () => chrome.storage.onChanged.removeListener(listener);
+  }, []);
+
+  const cancelGeneration = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
   }, []);
 
   const generateMessage = useCallback(async (
@@ -51,14 +59,17 @@ export function useMessageGeneration(): UseMessageGenerationResult {
     analysis: AnalysisResult,
     angle: OutreachAngle['angle']
   ) => {
-    if (!apiKey) {
-      console.error('No API key configured');
-      return;
-    }
+    if (!apiKey) return;
 
     pageDataRef.current = pageData;
     analysisRef.current = analysis;
     angleRef.current = angle;
+
+    // Cancel any in-flight generation for this angle
+    cancelGeneration();
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     setIsGenerating((prev) => ({ ...prev, [angle]: true }));
 
@@ -73,17 +84,11 @@ export function useMessageGeneration(): UseMessageGenerationResult {
         ],
         apiKey,
         {
+          signal: controller.signal,
           onChunk: (chunk) => {
             fullResponse += chunk;
             try {
-              // Extract JSON from the response
-              let jsonStr = fullResponse;
-              const codeBlockMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
-              if (codeBlockMatch) {
-                jsonStr = codeBlockMatch[1];
-              }
-
-              // Try to parse partial JSON
+              const jsonStr = extractJsonFromResponse(fullResponse);
               const parsed = JSON.parse(jsonStr) as GeneratedMessage;
               if (parsed.message) {
                 setMessages((prev) => ({ ...prev, [angle]: parsed }));
@@ -94,23 +99,22 @@ export function useMessageGeneration(): UseMessageGenerationResult {
           },
           onComplete: (finalText) => {
             try {
-              // Extract JSON from the response
-              let jsonStr = finalText;
-              const codeBlockMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
-              if (codeBlockMatch) {
-                jsonStr = codeBlockMatch[1];
-              }
-
+              const jsonStr = extractJsonFromResponse(finalText);
               const parsed = JSON.parse(jsonStr) as GeneratedMessage;
               setMessages((prev) => ({ ...prev, [angle]: parsed }));
               setIsGenerating((prev) => ({ ...prev, [angle]: false }));
               setRetryCount(0);
-            } catch (parseError) {
-              console.error('Failed to parse message response:', parseError);
+            } catch {
               setIsGenerating((prev) => ({ ...prev, [angle]: false }));
             }
+            abortControllerRef.current = null;
           },
           onError: (err) => {
+            if (err instanceof DOMException && err.name === 'AbortError') {
+              setIsGenerating((prev) => ({ ...prev, [angle]: false }));
+              return;
+            }
+
             const errorMessage = err instanceof Error ? err.message : 'Generation failed';
             const isRetryable =
               errorMessage.includes('network') ||
@@ -119,7 +123,6 @@ export function useMessageGeneration(): UseMessageGenerationResult {
               errorMessage.includes('502');
 
             if (isRetryable && retryCount < MAX_RETRIES) {
-              console.log(`[useMessageGeneration] Retrying (${retryCount + 1}/${MAX_RETRIES})...`);
               setRetryCount((prev) => prev + 1);
 
               const backoffDelay = Math.pow(2, retryCount) * 1000;
@@ -129,36 +132,28 @@ export function useMessageGeneration(): UseMessageGenerationResult {
                 }
               }, backoffDelay);
             } else {
-              console.error('[useMessageGeneration] Generation error:', {
-                error: err,
-                angle,
-                pageUrl: pageData.url,
-                timestamp: new Date().toISOString(),
-                retries: retryCount,
-              });
               setIsGenerating((prev) => ({ ...prev, [angle]: false }));
               setRetryCount(0);
             }
+            abortControllerRef.current = null;
           }
         }
       );
     } catch (err) {
-      console.error('[useMessageGeneration] Unexpected error:', {
-        error: err,
-        angle,
-        pageUrl: pageData.url,
-        timestamp: new Date().toISOString(),
-      });
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        setIsGenerating((prev) => ({ ...prev, [angle]: false }));
+        return;
+      }
       setIsGenerating((prev) => ({ ...prev, [angle]: false }));
+      abortControllerRef.current = null;
     }
-  }, [apiKey, voiceProfile, retryCount]);
+  }, [apiKey, voiceProfile, retryCount, cancelGeneration]);
 
   const regenerateMessage = useCallback(async (
     pageData: PageData,
     analysis: AnalysisResult,
     angle: OutreachAngle['angle']
   ) => {
-    // Clear existing message and regenerate
     setMessages((prev) => ({ ...prev, [angle]: null }));
     await generateMessage(pageData, analysis, angle);
   }, [generateMessage]);
@@ -170,6 +165,7 @@ export function useMessageGeneration(): UseMessageGenerationResult {
     setSelectedAngle,
     generateMessage,
     regenerateMessage,
+    cancelGeneration,
     setMessages,
   };
 }

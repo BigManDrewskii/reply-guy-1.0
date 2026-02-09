@@ -1,32 +1,30 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Conversation } from '@/lib/db';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search, Trash2 } from '@/lib/icons';
+import { Badge } from '@/components/ui/badge';
+import { Search, Trash2, BarChart3 } from '@/lib/icons';
+import ConfirmDialog from '@/components/ui/dialog';
 
 type FilterType = 'all' | 'x' | 'linkedin' | 'github' | 'generic';
 
 export default function HistoryScreen() {
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [filtered, setFiltered] = useState<Conversation[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [showStats, setShowStats] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
   const STAGGER_DELAY = 30; // ms per item
 
-  useEffect(() => {
-    const loadConversations = async () => {
-      const all = await db.conversations
-        .orderBy('sentAt')
-        .reverse()
-        .limit(50)
-        .toArray();
-      setConversations(all);
-    };
-    loadConversations();
-  }, []);
+  // Live query — auto-updates when Dexie data changes
+  const conversations = useLiveQuery(
+    () => db.conversations.orderBy('sentAt').reverse().limit(100).toArray(),
+    [],
+    []
+  );
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -34,11 +32,11 @@ export default function HistoryScreen() {
 
     const handleChange = () => setPrefersReducedMotion(mediaQuery.matches);
     mediaQuery.addEventListener('change', handleChange);
-
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
-  useEffect(() => {
+  // Filtered conversations
+  const filtered = useMemo(() => {
     let result = conversations;
 
     if (activeFilter !== 'all') {
@@ -54,14 +52,36 @@ export default function HistoryScreen() {
       );
     }
 
-    setFiltered(result);
+    return result;
   }, [conversations, activeFilter, searchQuery]);
 
+  // Analytics stats
+  const stats = useMemo(() => {
+    if (!conversations.length) return null;
+
+    const total = conversations.length;
+    const byPlatform: Record<string, number> = {};
+    const byStatus: Record<string, number> = { sent: 0, responded: 0, no_response: 0 };
+    const last7Days = conversations.filter(
+      (c) => Date.now() - c.sentAt < 7 * 24 * 60 * 60 * 1000
+    ).length;
+
+    conversations.forEach((c) => {
+      byPlatform[c.platform] = (byPlatform[c.platform] || 0) + 1;
+      byStatus[c.status] = (byStatus[c.status] || 0) + 1;
+    });
+
+    const responseRate = total > 0
+      ? Math.round((byStatus.responded / total) * 100)
+      : 0;
+
+    return { total, byPlatform, byStatus, last7Days, responseRate };
+  }, [conversations]);
+
   const handleDelete = async (id: string) => {
-    if (confirm('Delete this conversation?')) {
-      await db.conversations.delete(id);
-      setConversations((prev) => prev.filter((c) => c.id !== id));
-    }
+    await db.conversations.delete(id);
+    setDeleteTarget(null);
+    setExpandedId(null);
   };
 
   const groupByDate = (convs: Conversation[]) => {
@@ -78,29 +98,76 @@ export default function HistoryScreen() {
 
   const getPlatformIcon = (platform: string) => {
     switch (platform) {
-      case 'x':
-        return '𝕏';
-      case 'linkedin':
-        return 'in';
-      case 'github':
-        return 'GH';
-      default:
-        return '🌐';
+      case 'x': return '𝕏';
+      case 'linkedin': return 'in';
+      case 'github': return 'GH';
+      default: return '🌐';
     }
   };
 
   return (
     <div className="space-y-3">
-      <Input
-        placeholder="Search conversations..."
-        variant="bordered"
-        size="md"
-        leftIcon={<Search size={16} />}
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        aria-label="Search conversations"
-      />
+      {/* Stats toggle + search */}
+      <div className="flex gap-2">
+        <div className="flex-1">
+          <Input
+            placeholder="Search conversations..."
+            variant="bordered"
+            size="md"
+            leftIcon={<Search size={16} />}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            aria-label="Search conversations"
+          />
+        </div>
+        {stats && (
+          <button
+            onClick={() => setShowStats(!showStats)}
+            className={`px-3 rounded-lg border transition-colors ${
+              showStats
+                ? 'bg-foreground text-background border-foreground'
+                : 'bg-card text-muted-foreground border-border hover:text-foreground'
+            }`}
+            aria-label="Toggle analytics"
+            aria-pressed={showStats}
+          >
+            <BarChart3 size={16} />
+          </button>
+        )}
+      </div>
 
+      {/* Analytics dashboard */}
+      {showStats && stats && (
+        <Card variant="default">
+          <CardContent className="p-4 space-y-3">
+            <h3 className="text-sm font-semibold leading-tight text-foreground">Analytics</h3>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="text-center">
+                <p className="text-lg font-bold font-numerical text-foreground">{stats.total}</p>
+                <p className="text-[10px] text-muted-foreground">Total Sent</p>
+              </div>
+              <div className="text-center">
+                <p className="text-lg font-bold font-numerical text-foreground">{stats.last7Days}</p>
+                <p className="text-[10px] text-muted-foreground">Last 7 Days</p>
+              </div>
+              <div className="text-center">
+                <p className="text-lg font-bold font-numerical text-foreground">{stats.responseRate}%</p>
+                <p className="text-[10px] text-muted-foreground">Response Rate</p>
+              </div>
+            </div>
+            {/* Platform breakdown */}
+            <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
+              {Object.entries(stats.byPlatform).map(([platform, count]) => (
+                <Badge key={platform} variant="default" size="sm">
+                  {getPlatformIcon(platform)} {count}
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Platform filters */}
       <div className="flex gap-2 flex-wrap">
         {(['all', 'x', 'linkedin', 'github', 'generic'] as FilterType[]).map(
           (filter) => (
@@ -109,7 +176,7 @@ export default function HistoryScreen() {
               onClick={() => setActiveFilter(filter)}
               className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                 activeFilter === filter
-                  ? 'bg-primary text-primary-foreground'
+                  ? 'bg-foreground text-background'
                   : 'bg-muted text-muted-foreground hover:bg-card'
               }`}
               aria-pressed={activeFilter === filter}
@@ -120,13 +187,14 @@ export default function HistoryScreen() {
         )}
       </div>
 
+      {/* Conversation list */}
       {filtered.length === 0 ? (
         <Card variant="default">
           <CardContent className="p-8 text-center">
             <p className="text-[13px] leading-relaxed text-muted-foreground">
               {searchQuery || activeFilter !== 'all'
                 ? 'No conversations match your search'
-                : 'No conversations yet'}
+                : 'No conversations yet. Copy and send a message to start tracking.'}
             </p>
           </CardContent>
         </Card>
@@ -143,7 +211,7 @@ export default function HistoryScreen() {
                   key={conv.id}
                   variant="default"
                   className={`cursor-pointer transition-all ${
-                    expandedId === conv.id ? 'ring-2 ring-primary' : ''
+                    expandedId === conv.id ? 'ring-1 ring-foreground/20' : ''
                   }`}
                   style={
                     prefersReducedMotion
@@ -176,7 +244,7 @@ export default function HistoryScreen() {
                         </span>
                       </div>
 
-                      {!expandedId && (
+                      {expandedId !== conv.id && (
                         <p className="text-[13px] leading-relaxed text-muted-foreground truncate mt-1">
                           {conv.sentMessage}
                         </p>
@@ -209,7 +277,7 @@ export default function HistoryScreen() {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleDelete(conv.id);
+                                setDeleteTarget({ id: conv.id, name: conv.pageName });
                               }}
                               className="text-destructive hover:text-destructive/80 transition-colors"
                               aria-label={`Delete conversation with ${conv.pageName}`}
@@ -227,6 +295,17 @@ export default function HistoryScreen() {
             })}
           </div>
         ))
+      )}
+
+      {/* Delete confirmation dialog */}
+      {deleteTarget && (
+        <ConfirmDialog
+          title="Delete Conversation?"
+          description={`Delete the conversation with ${deleteTarget.name}? This action cannot be undone.`}
+          confirmLabel="Delete"
+          onConfirm={() => handleDelete(deleteTarget.id)}
+          onClose={() => setDeleteTarget(null)}
+        />
       )}
     </div>
   );

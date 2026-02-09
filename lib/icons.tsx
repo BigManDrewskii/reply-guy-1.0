@@ -30,6 +30,10 @@ import {
   Target,
   Search,
   Trash2,
+  ArrowLeft,
+  BarChart3,
+  SlidersHorizontal,
+  AlertOctagon,
 } from 'lucide-react';
 
 // Re-export all icons for convenience
@@ -65,6 +69,10 @@ export {
   Target,
   Search,
   Trash2,
+  ArrowLeft,
+  BarChart3,
+  SlidersHorizontal,
+  AlertOctagon,
 };
 
 // Icon size variants

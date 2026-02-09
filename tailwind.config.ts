@@ -17,93 +17,93 @@ export default {
     },
     extend: {
       colors: {
-        // Core colors
-        background: 'hsl(var(--color-background))',
-        foreground: 'hsl(var(--color-foreground))',
+        // Core colors — using var() directly since design-tokens.css defines oklch values via @theme
+        background: 'var(--color-background)',
+        foreground: 'var(--color-foreground)',
 
         // Interactive surfaces
-        border: 'hsl(var(--color-border))',
-        input: 'hsl(var(--color-input))',
-        ring: 'hsl(var(--color-ring))',
+        border: 'var(--color-border)',
+        input: 'var(--color-input)',
+        ring: 'var(--color-ring)',
 
         // Semantic color variants
         card: {
-          DEFAULT: 'hsl(var(--color-card))',
-          hover: 'hsl(var(--color-card-hover))',
-          foreground: 'hsl(var(--color-card-foreground))',
+          DEFAULT: 'var(--color-card)',
+          hover: 'var(--color-card-hover)',
+          foreground: 'var(--color-card-foreground)',
         },
         muted: {
-          DEFAULT: 'hsl(var(--color-muted))',
-          hover: 'hsl(var(--color-muted-hover))',
-          foreground: 'hsl(var(--color-muted-foreground))',
+          DEFAULT: 'var(--color-muted)',
+          hover: 'var(--color-muted-hover)',
+          foreground: 'var(--color-muted-foreground)',
         },
         popover: {
-          DEFAULT: 'hsl(var(--color-popover))',
-          foreground: 'hsl(var(--color-popover-foreground))',
+          DEFAULT: 'var(--color-popover)',
+          foreground: 'var(--color-popover-foreground)',
         },
 
         // Button variants
         primary: {
-          DEFAULT: 'hsl(var(--color-primary))',
-          foreground: 'hsl(var(--color-primary-foreground))',
-          hover: 'hsl(var(--color-primary-hover))',
-          active: 'hsl(var(--color-primary-active))',
+          DEFAULT: 'var(--color-primary)',
+          foreground: 'var(--color-primary-foreground)',
+          hover: 'var(--color-primary-hover)',
+          active: 'var(--color-primary-active)',
         },
         secondary: {
-          DEFAULT: 'hsl(var(--color-secondary))',
-          foreground: 'hsl(var(--color-secondary-foreground))',
-          hover: 'hsl(var(--color-secondary-hover))',
+          DEFAULT: 'var(--color-secondary)',
+          foreground: 'var(--color-secondary-foreground)',
+          hover: 'var(--color-secondary-hover)',
         },
         accent: {
-          DEFAULT: 'hsl(var(--color-accent))',
-          foreground: 'hsl(var(--color-accent-foreground))',
-          hover: 'hsl(var(--color-accent-hover))',
+          DEFAULT: 'var(--color-accent)',
+          foreground: 'var(--color-accent-foreground)',
+          hover: 'var(--color-accent-hover)',
         },
 
         // CTA (inverted)
         cta: {
-          DEFAULT: 'hsl(var(--color-cta-background))',
-          foreground: 'hsl(var(--color-cta-foreground))',
-          hover: 'hsl(var(--color-cta-hover))',
-          active: 'hsl(var(--color-cta-active))',
+          DEFAULT: 'var(--color-cta-background)',
+          foreground: 'var(--color-cta-foreground)',
+          hover: 'var(--color-cta-hover)',
+          active: 'var(--color-cta-active)',
         },
 
         // Semantic colors
         destructive: {
-          DEFAULT: 'hsl(var(--color-destructive))',
-          foreground: 'hsl(var(--color-destructive-foreground))',
-          hover: 'hsl(var(--color-destructive-hover))',
-          subtle: 'hsl(var(--color-destructive-subtle))',
+          DEFAULT: 'var(--color-destructive)',
+          foreground: 'var(--color-destructive-foreground)',
+          hover: 'var(--color-destructive-hover)',
+          subtle: 'var(--color-destructive-subtle)',
         },
         success: {
-          DEFAULT: 'hsl(var(--color-success))',
-          foreground: 'hsl(var(--color-success-foreground))',
-          hover: 'hsl(var(--color-success-hover))',
-          subtle: 'hsl(var(--color-success-subtle))',
+          DEFAULT: 'var(--color-success)',
+          foreground: 'var(--color-success-foreground)',
+          hover: 'var(--color-success-hover)',
+          subtle: 'var(--color-success-subtle)',
         },
         warning: {
-          DEFAULT: 'hsl(var(--color-warning))',
-          foreground: 'hsl(var(--color-warning-foreground))',
-          hover: 'hsl(var(--color-warning-hover))',
-          subtle: 'hsl(var(--color-warning-subtle))',
+          DEFAULT: 'var(--color-warning)',
+          foreground: 'var(--color-warning-foreground)',
+          hover: 'var(--color-warning-hover)',
+          subtle: 'var(--color-warning-subtle)',
         },
         info: {
-          DEFAULT: 'hsl(var(--color-info))',
-          foreground: 'hsl(var(--color-info-foreground))',
-          hover: 'hsl(var(--color-info-hover))',
-          subtle: 'hsl(var(--color-info-subtle))',
+          DEFAULT: 'var(--color-info)',
+          foreground: 'var(--color-info-foreground)',
+          hover: 'var(--color-info-hover)',
+          subtle: 'var(--color-info-subtle)',
         },
 
         // Sidebar
         sidebar: {
-          DEFAULT: 'hsl(var(--color-sidebar))',
-          foreground: 'hsl(var(--color-sidebar-foreground))',
-          primary: 'hsl(var(--color-sidebar-primary))',
-          'primary-foreground': 'hsl(var(--color-sidebar-primary-foreground))',
-          accent: 'hsl(var(--color-sidebar-accent))',
-          'accent-foreground': 'hsl(var(--color-sidebar-accent-foreground))',
-          border: 'hsl(var(--color-sidebar-border))',
-          ring: 'hsl(var(--color-sidebar-ring))',
+          DEFAULT: 'var(--color-sidebar)',
+          foreground: 'var(--color-sidebar-foreground)',
+          primary: 'var(--color-sidebar-primary)',
+          'primary-foreground': 'var(--color-sidebar-primary-foreground)',
+          accent: 'var(--color-sidebar-accent)',
+          'accent-foreground': 'var(--color-sidebar-accent-foreground)',
+          border: 'var(--color-sidebar-border)',
+          ring: 'var(--color-sidebar-ring)',
         },
       },
 
@@ -188,7 +188,7 @@ export default {
         mono: ['var(--font-mono)', 'monospace'],
       },
 
-      // Keyframes (keep existing)
+      // Keyframes
       keyframes: {
         'accordion-down': {
           from: { height: '0' },

@@ -4,13 +4,15 @@ import ProfileCard from '@/components/profile/ProfileCard';
 import PageCard from '@/components/profile/PageCard';
 import MessageCard from '@/components/messages/MessageCard';
 import PostCopySheet from '@/components/messages/PostCopySheet';
-import { ProfileCardSkeleton } from '@/components/ui/Skeleton';
+import { ProfileCardSkeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useAnalysis } from '@/hooks/useAnalysis';
+import { db } from '@/lib/db';
+import { AlertOctagon } from '@/lib/icons';
 
 interface OutreachScreenProps {
   initialData?: PageData | null;
@@ -22,6 +24,8 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
   const [selectedAngle, setSelectedAngle] = useState<OutreachAngle['angle']>('service');
   const [showPostCopySheet, setShowPostCopySheet] = useState(false);
   const [hasAnalyzed, setHasAnalyzed] = useState(false);
+  const [lastCopiedMessage, setLastCopiedMessage] = useState('');
+  const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
   const { analysis, isAnalyzing, isDebouncing, debounceCountdown, error, analyzePage, cancelAnalysis } = useAnalysis();
 
   useEffect(() => {
@@ -31,15 +35,35 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
         const newData = changes.currentPageData.newValue;
         setPageData(newData);
         setIsLoading(false);
-        // Reset hasAnalyzed when page data changes (new page = new analysis needed)
         setHasAnalyzed(false);
+        setDuplicateWarning(null);
       }
     };
 
     chrome.storage.session.onChanged.addListener(listener);
-
     return () => chrome.storage.session.onChanged.removeListener(listener);
   }, []);
+
+  // Check for duplicate contacts when page data changes
+  useEffect(() => {
+    const checkDuplicate = async () => {
+      if (!pageData?.url) return;
+      try {
+        const existing = await db.conversations
+          .where('pageUrl')
+          .equals(pageData.url)
+          .count();
+        if (existing > 0) {
+          setDuplicateWarning(`You've already sent ${existing} message${existing > 1 ? 's' : ''} to this page.`);
+        } else {
+          setDuplicateWarning(null);
+        }
+      } catch {
+        // Silently fail — non-critical
+      }
+    };
+    checkDuplicate();
+  }, [pageData?.url]);
 
   const handleAnalyze = () => {
     if (pageData && !analysis && !isAnalyzing && !hasAnalyzed) {
@@ -48,14 +72,31 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
     }
   };
 
-  const handleCopy = () => {
+  const handleCopy = (message?: string) => {
+    if (message) {
+      setLastCopiedMessage(message);
+    }
     // Show post-copy sheet after a short delay
     setTimeout(() => setShowPostCopySheet(true), 100);
   };
 
-  const handleLogged = () => {
-    // Log conversation to history (Phase 7)
-    console.log('Conversation logged');
+  const handleLogged = async () => {
+    if (!pageData || !lastCopiedMessage) return;
+
+    try {
+      await db.conversations.add({
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+        platform: pageData.platform,
+        pageUrl: pageData.url,
+        pageName: analysis?.personName || pageData.name || pageData.ogTitle || pageData.hostname,
+        sentMessage: lastCopiedMessage,
+        angle: selectedAngle,
+        sentAt: Date.now(),
+        status: 'sent',
+      });
+    } catch (err) {
+      console.error('[OutreachScreen] Failed to log conversation:', err);
+    }
   };
 
   // Loading state
@@ -90,6 +131,16 @@ export default function OutreachScreen({ initialData }: OutreachScreenProps) {
         <ProfileCard data={pageData} />
       ) : (
         <PageCard data={pageData} />
+      )}
+
+      {/* Duplicate contact warning */}
+      {duplicateWarning && (
+        <Alert variant="warning">
+          <div className="flex items-center gap-2">
+            <AlertOctagon size={14} className="shrink-0" />
+            <span>{duplicateWarning}</span>
+          </div>
+        </Alert>
       )}
 
       {/* Analysis section */}

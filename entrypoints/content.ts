@@ -1,5 +1,6 @@
 import { initializeGlow, removeGlow, updateGlowState } from '@/lib/glow-manager';
 import { scrapeGeneric as enhancedScrapeGeneric } from '@/lib/scrapers';
+import { getMeta } from '@/lib/utils/meta';
 
 export default defineContentScript({
   matches: ['<all_urls>'],
@@ -38,13 +39,19 @@ export default defineContentScript({
       return true;
     });
 
-    // SPA navigation detection
+    // SPA navigation detection with debounced MutationObserver
     let lastUrl = location.href;
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
     new MutationObserver(() => {
       if (location.href !== lastUrl) {
         lastUrl = location.href;
-        // Wait for page to settle after navigation
-        setTimeout(() => {
+
+        // Debounce: cancel previous timer and set a new one
+        if (debounceTimer) clearTimeout(debounceTimer);
+
+        debounceTimer = setTimeout(() => {
+          debounceTimer = null;
           waitForPageReady().then(() => {
             scrapeAndSend();
           });
@@ -61,11 +68,9 @@ export default defineContentScript({
  */
 function waitForPageReady(): Promise<void> {
   return new Promise((resolve) => {
-    // Check if document is already loaded
     if (document.readyState === 'complete') {
       checkElementsAndResolve(resolve);
     } else {
-      // Wait for DOMContentLoaded
       const domReadyHandler = () => {
         checkElementsAndResolve(resolve);
         document.removeEventListener('DOMContentLoaded', domReadyHandler);
@@ -83,15 +88,15 @@ function checkElementsAndResolve(resolve: () => void) {
   const platform = detectPlatform(location.hostname);
   const keySelectors = getKeySelectors(platform);
 
-  // Check if any key elements exist already
   if (areKeyElementsPresent(keySelectors)) {
     resolve();
     return;
   }
 
-  // Wait for key elements to appear
+  let resolved = false;
   const observer = new MutationObserver(() => {
-    if (areKeyElementsPresent(keySelectors)) {
+    if (!resolved && areKeyElementsPresent(keySelectors)) {
+      resolved = true;
       observer.disconnect();
       resolve();
     }
@@ -102,10 +107,13 @@ function checkElementsAndResolve(resolve: () => void) {
     subtree: true,
   });
 
-  // Timeout after 5 seconds - resolve anyway to avoid blocking
+  // Timeout after 5 seconds
   setTimeout(() => {
-    observer.disconnect();
-    resolve();
+    if (!resolved) {
+      resolved = true;
+      observer.disconnect();
+      resolve();
+    }
   }, 5000);
 }
 
@@ -129,10 +137,7 @@ function getKeySelectors(platform: string): string[] {
  * Checks if any of the key elements are present in the DOM.
  */
 function areKeyElementsPresent(selectors: string[]): boolean {
-  return selectors.some(selector => {
-    const element = document.querySelector(selector);
-    return element !== null;
-  });
+  return selectors.some(selector => document.querySelector(selector) !== null);
 }
 
 function scrapeAndSend() {
@@ -153,14 +158,13 @@ function scrapePage() {
     ogDescription: getMeta('og:description'),
     ogImage: getMeta('og:image'),
     scrapedAt: new Date().toISOString(),
-    isReady: true, // Page was ready when scraped
+    isReady: true,
   };
 
   if (platform === 'x') return { ...base, ...scrapeX() };
   if (platform === 'linkedin') return { ...base, ...scrapeLinkedIn() };
   if (platform === 'github') return { ...base, ...scrapeGitHub() };
 
-  // Use enhanced generic scraper
   const genericData = enhancedScrapeGeneric();
   return { ...base, ...genericData };
 }
@@ -172,13 +176,6 @@ function detectPlatform(h: string) {
   return 'generic';
 }
 
-function getMeta(name: string) {
-  return (
-    document.querySelector(`meta[name="${name}"]`) ||
-    document.querySelector(`meta[property="${name}"]`)
-  )?.getAttribute('content') || '';
-}
-
 function scrapeX() {
   try {
     const name = document.querySelector('[data-testid="UserName"] span')?.textContent || '';
@@ -188,7 +185,6 @@ function scrapeX() {
     const recentPosts = Array.from(document.querySelectorAll('[data-testid="tweetText"]'))
       .slice(0, 6).map(el => el.textContent || '');
 
-    // Calculate confidence
     let confidence = 50;
     if (name) confidence += 15;
     if (bio) confidence += 10;
@@ -197,11 +193,7 @@ function scrapeX() {
     if (recentPosts.length > 0) confidence += 15;
 
     return {
-      name,
-      bio,
-      location,
-      followers,
-      recentPosts,
+      name, bio, location, followers, recentPosts,
       isProfile: true,
       confidence: Math.min(confidence, 100)
     };
@@ -215,7 +207,6 @@ function scrapeLinkedIn() {
     const about = document.querySelector('#about ~ div .visually-hidden + span')?.textContent?.trim() || '';
     const isProfile = !!document.querySelector('.text-heading-xlarge');
 
-    // Calculate confidence
     let confidence = 40;
     if (name) confidence += 20;
     if (headline) confidence += 15;
@@ -223,10 +214,7 @@ function scrapeLinkedIn() {
     if (isProfile) confidence += 10;
 
     return {
-      name,
-      headline,
-      about,
-      isProfile,
+      name, headline, about, isProfile,
       confidence: Math.min(confidence, 100)
     };
   } catch { return {}; }
@@ -239,7 +227,6 @@ function scrapeGitHub() {
     const company = document.querySelector('[itemprop="worksFor"]')?.textContent?.trim() || '';
     const isProfile = !!document.querySelector('.p-name');
 
-    // Calculate confidence
     let confidence = 40;
     if (name) confidence += 20;
     if (bio) confidence += 15;
@@ -247,10 +234,7 @@ function scrapeGitHub() {
     if (isProfile) confidence += 15;
 
     return {
-      name,
-      bio,
-      company,
-      isProfile,
+      name, bio, company, isProfile,
       confidence: Math.min(confidence, 100)
     };
   } catch { return {}; }

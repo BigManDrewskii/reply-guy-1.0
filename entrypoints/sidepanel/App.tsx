@@ -1,11 +1,13 @@
-import { useEffect, useState, lazy, Suspense } from 'react';
+import { useEffect, useState, useRef, lazy, Suspense } from 'react';
 import type { PageData } from '@/types';
 import { useStore } from '@/lib/store';
 import { Zap, Home, Clock, Settings } from '@/lib/icons';
 import { ErrorBoundary } from '@/components/error/ErrorBoundary';
 import { useToast } from '@/components/ui/useToast';
-import Toast from '@/components/ui/Toast';
+import Toast from '@/components/ui/toast';
 import { cn } from '@/lib/utils/cn';
+import Skeleton from '@/components/ui/skeleton';
+import { ProfileCardSkeleton, MessageCardSkeleton } from '@/components/ui/skeleton';
 
 // Lazy load screens to reduce initial bundle size
 const OnboardingScreen = lazy(() => import('@/components/screens/OnboardingScreen'));
@@ -13,17 +15,22 @@ const IdleScreen = lazy(() => import('@/components/screens/IdleScreen'));
 const OutreachScreen = lazy(() => import('@/components/screens/OutreachScreen'));
 const HistoryScreen = lazy(() => import('@/components/screens/HistoryScreen'));
 const SettingsScreen = lazy(() => import('@/components/screens/SettingsScreen'));
+const VoiceTrainingScreen = lazy(() => import('@/components/screens/VoiceTrainingScreen'));
 
-type Screen = 'outreach' | 'history' | 'settings';
+type Screen = 'outreach' | 'history' | 'settings' | 'voiceTraining';
 
-// Loading fallback for lazy-loaded screens
+/**
+ * Skeleton-based loading fallback (never spinners per design rules).
+ */
 function ScreenLoader() {
   return (
-    <div className="flex items-center justify-center h-full">
-      <div className="text-center space-y-2">
-        <div className="inline-block w-8 h-8 border-2 border-border border-t-[#0070f3] rounded-full animate-spin" />
-        <p className="text-xs text-muted-foreground">Loading...</p>
+    <div className="space-y-4 p-4 animate-fade-in">
+      <ProfileCardSkeleton />
+      <div className="space-y-2">
+        <Skeleton variant="text" className="w-1/3 h-5" />
+        <Skeleton variant="pulse" className="h-2 w-full rounded-full" />
       </div>
+      <MessageCardSkeleton />
     </div>
   );
 }
@@ -36,6 +43,30 @@ export default function App() {
   const apiKey = useStore((state) => state.apiKey);
   const { toasts, remove } = useToast();
 
+  // Scroll position preservation per screen
+  const scrollPositions = useRef<Record<Screen, number>>({
+    outreach: 0,
+    history: 0,
+    settings: 0,
+    voiceTraining: 0,
+  });
+  const mainRef = useRef<HTMLDivElement>(null);
+
+  // Save scroll position before switching screens
+  const handleScreenChange = (newScreen: Screen) => {
+    if (mainRef.current) {
+      scrollPositions.current[screen] = mainRef.current.scrollTop;
+    }
+    setScreen(newScreen);
+  };
+
+  // Restore scroll position after screen transition
+  useEffect(() => {
+    if (mainRef.current && displayScreen === screen) {
+      mainRef.current.scrollTop = scrollPositions.current[screen];
+    }
+  }, [displayScreen, screen]);
+
   useEffect(() => {
     // Subscribe to page data from content script (via background → storage.session)
     const listener = (changes: Record<string, chrome.storage.StorageChange>) => {
@@ -45,7 +76,7 @@ export default function App() {
 
         // Notify content script that analysis is complete
         chrome.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
-          if (tab.id) {
+          if (tab?.id) {
             chrome.tabs.sendMessage(tab.id, {
               type: 'ANALYSIS_COMPLETE',
               confidence: newData.confidence || 100
@@ -63,7 +94,7 @@ export default function App() {
 
     // Start analysis when side panel opens
     chrome.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
-      if (tab.id) {
+      if (tab?.id) {
         chrome.tabs.sendMessage(tab.id, { type: 'START_ANALYSIS' }).catch(() => {});
       }
     });
@@ -73,12 +104,36 @@ export default function App() {
 
       // Clean up glow when side panel unmounts
       chrome.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
-        if (tab.id) {
+        if (tab?.id) {
           chrome.tabs.sendMessage(tab.id, { type: 'CLOSE_PANEL' }).catch(() => {});
         }
       });
     };
   }, []);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Escape to close voice training
+      if (e.key === 'Escape' && screen === 'voiceTraining') {
+        handleScreenChange('settings');
+        return;
+      }
+
+      // Don't intercept if user is typing in an input/textarea
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      // Alt+1/2/3 for tab switching
+      if (e.altKey && e.key === '1') { handleScreenChange('outreach'); e.preventDefault(); }
+      if (e.altKey && e.key === '2') { handleScreenChange('history'); e.preventDefault(); }
+      if (e.altKey && e.key === '3') { handleScreenChange('settings'); e.preventDefault(); }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [screen]);
 
   useEffect(() => {
     // Check for reduced motion preference
@@ -127,8 +182,17 @@ export default function App() {
   }
 
   const renderMainContent = () => {
+    if (displayScreen === 'voiceTraining') {
+      return (
+        <ErrorBoundary>
+          <Suspense fallback={<ScreenLoader />}>
+            <VoiceTrainingScreen onBack={() => handleScreenChange('settings')} />
+          </Suspense>
+        </ErrorBoundary>
+      );
+    }
+
     if (displayScreen === 'outreach') {
-      // If no page data yet, show idle screen
       if (!pageData) {
         return (
           <ErrorBoundary>
@@ -138,7 +202,6 @@ export default function App() {
           </ErrorBoundary>
         );
       }
-      // Show page data
       return (
         <ErrorBoundary>
           <Suspense fallback={<ScreenLoader />}>
@@ -162,7 +225,7 @@ export default function App() {
       return (
         <ErrorBoundary>
           <Suspense fallback={<ScreenLoader />}>
-            <SettingsScreen />
+            <SettingsScreen onNavigateVoiceTraining={() => handleScreenChange('voiceTraining')} />
           </Suspense>
         </ErrorBoundary>
       );
@@ -171,6 +234,14 @@ export default function App() {
     return null;
   };
 
+  // Only show bottom nav for main screens (not voice training)
+  const showNav = displayScreen !== 'voiceTraining';
+  const navScreens: Array<{ key: Screen; icon: typeof Home; label: string }> = [
+    { key: 'outreach', icon: Home, label: 'Outreach' },
+    { key: 'history', icon: Clock, label: 'History' },
+    { key: 'settings', icon: Settings, label: 'Settings' },
+  ];
+
   return (
     <div className="h-screen flex flex-col bg-background text-foreground">
       <header className="h-11 flex items-center px-4 border-b border-border bg-card shrink-0">
@@ -178,48 +249,47 @@ export default function App() {
         <span className="text-sm font-semibold">Reply Guy</span>
       </header>
 
-      <main className={cn('flex-1 overflow-y-auto p-4', animationClass)}>
+      <main ref={mainRef} className={cn('flex-1 overflow-y-auto p-4', animationClass)}>
         {renderMainContent()}
       </main>
 
-      <nav className="h-12 flex flex-col border-t border-border bg-card px-2 shrink-0">
-        <div className="relative flex flex-1">
-          {/* Sliding indicator */}
-          <div
-            className="absolute top-0 h-[2px] bg-accent transition-all duration-[250ms] ease-out"
-            style={{
-              left: screen === 'outreach' ? '0%' : screen === 'history' ? '33.33%' : '66.66%',
-              width: '33.33%'
-            }}
-          />
-          {(['outreach', 'history', 'settings'] as Screen[]).map((s) => {
-            const icons = {
-              outreach: Home,
-              history: Clock,
-              settings: Settings,
-            } as const;
+      {showNav && (
+        <nav className="h-12 flex flex-col border-t border-border bg-card px-2 shrink-0">
+          <div className="relative flex flex-1">
+            {/* Sliding indicator */}
+            <div
+              className="absolute top-0 h-[2px] bg-foreground transition-all duration-[250ms] ease-out"
+              style={{
+                left: screen === 'outreach' ? '0%' : screen === 'history' ? '33.33%' : '66.66%',
+                width: '33.33%'
+              }}
+            />
+            {navScreens.map(({ key, icon: Icon, label }) => {
+              const isActive = screen === key;
 
-            const Icon = icons[s];
-            const isActive = screen === s;
-
-            return (
-              <button
-                key={s}
-                onClick={() => setScreen(s)}
-                className={`
-                  relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full
-                  transition-all duration-150
-                  ${isActive ? 'bg-cta text-cta-foreground' : 'text-muted-foreground hover:bg-muted/30'}
-                  focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary/50
-                `}
-              >
-                <Icon size={16} />
-                <span className="text-[10px] capitalize font-medium">{s}</span>
-              </button>
-            );
-          })}
-        </div>
-      </nav>
+              return (
+                <button
+                  key={key}
+                  onClick={() => handleScreenChange(key)}
+                  aria-label={label}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={cn(
+                    'relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full',
+                    'transition-colors duration-150 rounded-md',
+                    'focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/50',
+                    isActive
+                      ? 'text-foreground'
+                      : 'text-muted-foreground hover:text-foreground/70'
+                  )}
+                >
+                  <Icon size={16} />
+                  <span className="text-[10px] capitalize font-medium">{label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+      )}
 
       {toasts.map((toast, index) => (
         <Toast key={toast.id} toast={{ ...toast, index }} onRemove={remove} />

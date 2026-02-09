@@ -4,19 +4,20 @@ export interface Toast {
   id: string
   message: string
   type: 'success' | 'error' | 'info'
+  index?: number
 }
 
 export function useToast() {
   const [toasts, setToasts] = useState<Toast[]>([])
   const timeoutsRef = useRef<Map<string, NodeJS.Timeout>>(new Map())
 
-  const toast = useCallback(({ message, type }: Omit<Toast, 'id'>) => {
+  const add = useCallback(({ message, type }: Omit<Toast, 'id'>) => {
     const id = Math.random().toString(36).substring(2, 11)
-    const newToast = { id, message, type }
+    const newToast: Toast = { id, message, type }
 
     setToasts(prev => [...prev.slice(-2), newToast])
 
-    const duration = type === 'error' ? 0 : (type === 'info' ? 2000 : 3000)
+    const duration = type === 'error' ? 5000 : (type === 'info' ? 2000 : 3000)
     if (duration > 0) {
       const timeout = setTimeout(() => {
         setToasts(prev => prev.filter(t => t.id !== id))
@@ -35,5 +36,6 @@ export function useToast() {
     setToasts(prev => prev.filter(t => t.id !== id))
   }, [])
 
-  return { toasts, toast, remove }
+  // Expose both `toast` and `add` for backward compatibility
+  return { toasts, toast: add, add, remove }
 }

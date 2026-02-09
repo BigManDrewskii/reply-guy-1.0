@@ -1,5 +1,6 @@
 import { Readability } from '@mozilla/readability';
 import type { PageData } from '@/types';
+import { getMeta } from '@/lib/utils/meta';
 
 /**
  * Enhanced generic scraper using Mozilla Readability.
@@ -133,12 +134,3 @@ function calculateMetaConfidence(h1: string, metaDescription: string, bodyText: 
   return Math.min(score, 100);
 }
 
-/**
- * Get meta tag content by name or property.
- */
-function getMeta(name: string): string {
-  return (
-    document.querySelector(`meta[name="${name}"]`) ||
-    document.querySelector(`meta[property="${name}"]`)
-  )?.getAttribute('content') || '';
-}

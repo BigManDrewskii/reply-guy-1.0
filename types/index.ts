@@ -9,6 +9,7 @@ export interface PageData {
   ogImage: string;
   scrapedAt: string;
   isReady: boolean;
+  confidence?: number;
   // X (Twitter) specific
   name?: string;
   bio?: string;
@@ -26,6 +27,10 @@ export interface PageData {
   bodyText?: string;
   socialLinks?: string[];
   email?: string;
+  // Readability-extracted fields
+  excerpt?: string;
+  byline?: string;
+  method?: 'readability' | 'meta-tags';
 }
 
 export interface AnalysisResult {

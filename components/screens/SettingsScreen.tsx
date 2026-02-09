@@ -1,21 +1,25 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store';
 import { db } from '@/lib/db';
-import { useTheme } from '@/hooks/useTheme';
 import { Eye, EyeOff, Mic } from '@/lib/icons';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ConfirmDialog from '@/components/ui/dialog';
+import { useToast } from '@/components/ui/useToast';
 
-export default function SettingsScreen() {
-  const { theme, setTheme: toggleTheme } = useTheme();
+interface SettingsScreenProps {
+  onNavigateVoiceTraining?: () => void;
+}
+
+export default function SettingsScreen({ onNavigateVoiceTraining }: SettingsScreenProps) {
   const apiKey = useStore((state) => state.apiKey);
   const setApiKey = useStore((state) => state.setApiKey);
   const clearApiKey = useStore((state) => state.clearApiKey);
   const persistentGlow = useStore((state) => state.persistentGlow);
   const setPersistentGlow = useStore((state) => state.setPersistentGlow);
+  const { add: addToast } = useToast();
 
   const [isEditing, setIsEditing] = useState(false);
   const [newKey, setNewKey] = useState(apiKey || '');
@@ -23,12 +27,13 @@ export default function SettingsScreen() {
   const [error, setError] = useState('');
   const [showKey, setShowKey] = useState(false);
   const [voiceProfileCount, setVoiceProfileCount] = useState(0);
-  const [showVoiceTraining, setShowVoiceTraining] = useState(false);
   const [showClearCacheDialog, setShowClearCacheDialog] = useState(false);
   const [showDeleteConvosDialog, setShowDeleteConvosDialog] = useState(false);
+  const [showResetDialog, setShowResetDialog] = useState(false);
+  const [isClearingCache, setIsClearingCache] = useState(false);
+  const [isDeletingConvos, setIsDeletingConvos] = useState(false);
 
   useEffect(() => {
-    // Load voice profile count
     const loadVoiceProfile = () => {
       chrome.storage.local.get('voiceProfile', (result) => {
         if (result.voiceProfile) {
@@ -39,10 +44,8 @@ export default function SettingsScreen() {
 
     loadVoiceProfile();
 
-    // Listen for changes
     const listener = () => loadVoiceProfile();
     chrome.storage.onChanged.addListener(listener);
-
     return () => chrome.storage.onChanged.removeListener(listener);
   }, []);
 
@@ -71,6 +74,7 @@ export default function SettingsScreen() {
           setApiKey(newKey.trim());
           setIsEditing(false);
           setShowKey(false);
+          addToast({ type: 'success', message: 'API key updated successfully' });
         } else {
           setError('Invalid API key');
         }
@@ -96,28 +100,14 @@ export default function SettingsScreen() {
     setShowKey(false);
   };
 
-  // Show voice training screen in a modal or overlay
   const handleVoiceTraining = () => {
-    setShowVoiceTraining(true);
-    // Open a new window or use chrome.runtime to open voice training
-    chrome.tabs.create({
-      url: chrome.runtime.getURL('sidepanel.html?voiceTraining=true'),
-    });
-    window.close();
+    if (onNavigateVoiceTraining) {
+      onNavigateVoiceTraining();
+    }
   };
 
-  // Check if we're in voice training mode
-  const urlParams = new URLSearchParams(window.location.search);
-  const isVoiceTrainingMode = urlParams.get('voiceTraining') === 'true';
-
-  if (isVoiceTrainingMode) {
-    // Dynamically import and render VoiceTrainingScreen
-    const VoiceTrainingScreen = require('@/components/screens/VoiceTrainingScreen').default;
-    return <VoiceTrainingScreen />;
-  }
-
   return (
-    <div className="p-4 space-y-4">
+    <div className="space-y-4">
       {/* API Key Section */}
       <div>
         <h2 className="text-base font-semibold leading-tight text-foreground mb-3">API Key</h2>
@@ -219,49 +209,38 @@ export default function SettingsScreen() {
 
       <div className="border-t border-border pt-4">
         <h2 className="text-base font-semibold leading-tight text-foreground mb-3">Appearance</h2>
-        <div className="space-y-2">
-          <Button
-            onClick={toggleTheme}
-            variant="secondary"
-            size="md"
-            className="w-full"
-          >
-            {theme === 'dark' ? '☀️ Switch to Light Mode' : '🌙 Switch to Dark Mode'}
-          </Button>
-
-          <Card variant="default">
-            <CardContent className="px-4 py-3">
-              <label className="flex items-center justify-between cursor-pointer">
-                <span className="text-[13px] leading-relaxed text-foreground">
-                  Keep page glow on
-                </span>
-                <div className="relative">
-                  <input
-                    type="checkbox"
-                    checked={persistentGlow}
-                    onChange={(e) => setPersistentGlow(e.target.checked)}
-                    className="sr-only"
-                  />
+        <Card variant="default">
+          <CardContent className="px-4 py-3">
+            <label className="flex items-center justify-between cursor-pointer">
+              <span className="text-[13px] leading-relaxed text-foreground">
+                Keep page glow on
+              </span>
+              <div className="relative">
+                <input
+                  type="checkbox"
+                  checked={persistentGlow}
+                  onChange={(e) => setPersistentGlow(e.target.checked)}
+                  className="sr-only"
+                />
+                <div className={`
+                  w-10 h-6 rounded-full transition-colors duration-200
+                  ${persistentGlow ? 'bg-accent' : 'bg-muted'}
+                `}>
                   <div className={`
-                    w-10 h-6 rounded-full transition-colors duration-200
-                    ${persistentGlow ? 'bg-accent' : 'bg-muted'}
-                  `}>
-                    <div className={`
-                      w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-200
-                      ${persistentGlow ? 'translate-x-5' : 'translate-x-0.5'}
-                      relative top-0.5
-                    `} />
-                  </div>
+                    w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-200
+                    ${persistentGlow ? 'translate-x-5' : 'translate-x-0.5'}
+                    relative top-0.5
+                  `} />
                 </div>
-              </label>
-              <p className="text-[11px] leading-normal text-muted-foreground mt-2">
-                {persistentGlow
-                  ? 'Glow stays on while side panel is open'
-                  : 'Glow fades after 10 seconds'}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+              </div>
+            </label>
+            <p className="text-[11px] leading-normal text-muted-foreground mt-2">
+              {persistentGlow
+                ? 'Glow stays on while side panel is open'
+                : 'Glow fades after 10 seconds'}
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="border-t border-border pt-4">
@@ -272,24 +251,21 @@ export default function SettingsScreen() {
             variant="ghost"
             size="md"
             className="w-full justify-start"
+            disabled={isClearingCache}
           >
-            Clear cache
+            {isClearingCache ? 'Clearing...' : 'Clear cache'}
           </Button>
           <Button
             onClick={() => setShowDeleteConvosDialog(true)}
             variant="ghost"
             size="md"
             className="w-full justify-start"
+            disabled={isDeletingConvos}
           >
-            Delete conversations
+            {isDeletingConvos ? 'Deleting...' : 'Delete conversations'}
           </Button>
           <Button
-            onClick={() => {
-              if (confirm('Are you sure you want to reset everything? This will delete your API key and all data.')) {
-                clearApiKey();
-                chrome.storage.local.clear();
-              }
-            }}
+            onClick={() => setShowResetDialog(true)}
             variant="danger"
             size="md"
             className="w-full justify-start"
@@ -309,7 +285,15 @@ export default function SettingsScreen() {
           description="This will delete all cached page analyses. Your conversations and settings will be preserved."
           confirmLabel="Clear Cache"
           onConfirm={async () => {
-            await db.analysisCache.clear();
+            setIsClearingCache(true);
+            try {
+              await db.analysisCache.clear();
+              addToast({ type: 'success', message: 'Cache cleared successfully' });
+            } catch {
+              addToast({ type: 'error', message: 'Failed to clear cache' });
+            } finally {
+              setIsClearingCache(false);
+            }
           }}
           onClose={() => setShowClearCacheDialog(false)}
         />
@@ -321,9 +305,36 @@ export default function SettingsScreen() {
           description="This will permanently delete all your conversation history. This action cannot be undone."
           confirmLabel="Delete All"
           onConfirm={async () => {
-            await db.conversations.clear();
+            setIsDeletingConvos(true);
+            try {
+              await db.conversations.clear();
+              addToast({ type: 'success', message: 'Conversations deleted' });
+            } catch {
+              addToast({ type: 'error', message: 'Failed to delete conversations' });
+            } finally {
+              setIsDeletingConvos(false);
+            }
           }}
           onClose={() => setShowDeleteConvosDialog(false)}
+        />
+      )}
+
+      {showResetDialog && (
+        <ConfirmDialog
+          title="Reset Everything?"
+          description="This will delete your API key, voice profile, all conversations, and cached data. This action cannot be undone."
+          confirmLabel="Reset Everything"
+          onConfirm={async () => {
+            try {
+              clearApiKey();
+              await db.delete();
+              chrome.storage.local.clear();
+              addToast({ type: 'success', message: 'All data has been reset' });
+            } catch {
+              addToast({ type: 'error', message: 'Failed to reset data' });
+            }
+          }}
+          onClose={() => setShowResetDialog(false)}
         />
       )}
     </div>

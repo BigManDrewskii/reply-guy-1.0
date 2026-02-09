@@ -4,8 +4,14 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ArrowLeft } from '@/lib/icons';
+import { useToast } from '@/components/ui/useToast';
 
-export default function VoiceTrainingScreen() {
+interface VoiceTrainingScreenProps {
+  onBack?: () => void;
+}
+
+export default function VoiceTrainingScreen({ onBack }: VoiceTrainingScreenProps) {
   const {
     step,
     setStep,
@@ -21,10 +27,10 @@ export default function VoiceTrainingScreen() {
     reset,
   } = useVoiceTraining();
 
+  const { add: addToast } = useToast();
   const [hasExistingProfile, setHasExistingProfile] = useState(false);
 
   useEffect(() => {
-    // Check if voice profile exists
     chrome.storage.local.get('voiceProfile', (result) => {
       if (result.voiceProfile) {
         setHasExistingProfile(true);
@@ -32,26 +38,63 @@ export default function VoiceTrainingScreen() {
     });
   }, []);
 
+  // Auto-start voice analysis when transitioning to step 2
+  useEffect(() => {
+    if (step === 2 && !isExtracting && !voiceProfile && !error) {
+      analyzeVoice();
+    }
+  }, [step, isExtracting, voiceProfile, error, analyzeVoice]);
+
+  // Auto-advance to step 3 when extraction completes
+  useEffect(() => {
+    if (step === 2 && voiceProfile && !isExtracting) {
+      setStep(3);
+    }
+  }, [step, voiceProfile, isExtracting, setStep]);
+
   const handleSaveAndExit = async () => {
     await saveVoiceProfile();
-    // TODO: Navigate back to settings
-    window.close();
+    addToast({ type: 'success', message: 'Voice profile saved successfully' });
+    if (onBack) {
+      onBack();
+    }
+  };
+
+  const handleBack = () => {
+    if (onBack) {
+      reset();
+      onBack();
+    }
   };
 
   // Step 1: Input example messages
   if (step === 1) {
     return (
-      <div className="p-4 space-y-6">
+      <div className="space-y-6">
+        {/* Back button header */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleBack}
+            className="text-muted-foreground hover:text-foreground transition-colors p-1 -ml-1"
+            aria-label="Back to settings"
+          >
+            <ArrowLeft size={18} />
+          </button>
+          <h2 className="text-base font-semibold leading-tight text-foreground">
+            Voice Training
+          </h2>
+        </div>
+
         {hasExistingProfile && (
-          <Alert variant="warning" action={{ label: "Cancel", onClick: () => window.close() }}>
+          <Alert variant="warning" action={{ label: "Cancel", onClick: handleBack }}>
             You already have a voice profile. Training a new one will replace it.
           </Alert>
         )}
 
         <div>
-          <h2 className="text-base font-semibold leading-tight text-foreground mb-2">
+          <h3 className="text-sm font-medium leading-tight text-foreground mb-2">
             Step 1: Add Your Messages
-          </h2>
+          </h3>
           <p className="text-[13px] leading-relaxed text-muted-foreground mb-4">
             Paste 10-20 example DMs you've sent. Separate each message with "---".
           </p>
@@ -69,7 +112,7 @@ That's really interesting. I've been...
 ---
 
 Would love to chat more about...`}
-          className="w-full h-64 px-4 py-3 bg-card border border-border rounded-lg text-[13px] leading-relaxed text-foreground placeholder-[#666] focus:outline-none focus:border-[#0070f3] resize-none font-mono"
+          className="w-full h-64 px-4 py-3 bg-card border border-border rounded-lg text-[13px] leading-relaxed text-foreground placeholder-muted-foreground focus:outline-none focus:border-foreground/30 resize-none font-mono transition-colors"
         />
 
         <div className="flex items-center justify-between">
@@ -101,41 +144,65 @@ Would love to chat more about...`}
   // Step 2: Voice analysis in progress
   if (step === 2) {
     return (
-      <div className="p-4 space-y-6">
-        <div>
-          <h2 className="text-base font-semibold leading-tight text-foreground mb-2">
-            Step 2: Analyzing Your Voice
+      <div className="space-y-6">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleBack}
+            className="text-muted-foreground hover:text-foreground transition-colors p-1 -ml-1"
+            aria-label="Back to settings"
+          >
+            <ArrowLeft size={18} />
+          </button>
+          <h2 className="text-base font-semibold leading-tight text-foreground">
+            Voice Training
           </h2>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-medium leading-tight text-foreground mb-2">
+            Step 2: Analyzing Your Voice
+          </h3>
           <p className="text-[13px] leading-relaxed text-muted-foreground">
             Extracting your unique writing style...
           </p>
         </div>
 
         {isExtracting && (
-          <div className="space-y-4">
-            {/* Progress indicators */}
+          <div className="space-y-3">
             {extractionProgress.tone !== undefined && (
-              <Badge variant="success" dot size="md">Tone detected</Badge>
+              <div className="animate-fade-in">
+                <Badge variant="success" dot size="md">Tone detected</Badge>
+              </div>
             )}
 
             {extractionProgress.openingPatterns && (
-              <Badge variant="success" dot size="md">Opening patterns found</Badge>
+              <div className="animate-fade-in">
+                <Badge variant="success" dot size="md">Opening patterns found</Badge>
+              </div>
             )}
 
             {extractionProgress.closingPatterns && (
-              <Badge variant="success" dot size="md">Closing patterns found</Badge>
+              <div className="animate-fade-in">
+                <Badge variant="success" dot size="md">Closing patterns found</Badge>
+              </div>
             )}
 
             {extractionProgress.personalityMarkers && (
-              <Badge variant="success" dot size="md">Personality markers identified</Badge>
+              <div className="animate-fade-in">
+                <Badge variant="success" dot size="md">Personality markers identified</Badge>
+              </div>
             )}
 
             {extractionProgress.avoidPhrases && (
-              <Badge variant="success" dot size="md">Avoidances analyzed</Badge>
+              <div className="animate-fade-in">
+                <Badge variant="success" dot size="md">Avoidances analyzed</Badge>
+              </div>
             )}
 
             {extractionProgress.vocabularySignature && (
-              <Badge variant="success" dot size="md">Vocabulary signature captured</Badge>
+              <div className="animate-fade-in">
+                <Badge variant="success" dot size="md">Vocabulary signature captured</Badge>
+              </div>
             )}
           </div>
         )}
@@ -147,7 +214,10 @@ Would love to chat more about...`}
         )}
 
         <Button
-          onClick={reset}
+          onClick={() => {
+            reset();
+            setStep(1);
+          }}
           variant="ghost"
           size="md"
           className="w-full"
@@ -161,11 +231,24 @@ Would love to chat more about...`}
   // Step 3: Review and save
   if (step === 3 && voiceProfile) {
     return (
-      <div className="p-4 space-y-6">
-        <div>
-          <h2 className="text-base font-semibold leading-tight text-foreground mb-2">
-            Step 3: Review Your Voice Profile
+      <div className="space-y-6">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleBack}
+            className="text-muted-foreground hover:text-foreground transition-colors p-1 -ml-1"
+            aria-label="Back to settings"
+          >
+            <ArrowLeft size={18} />
+          </button>
+          <h2 className="text-base font-semibold leading-tight text-foreground">
+            Voice Training
           </h2>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-medium leading-tight text-foreground mb-2">
+            Step 3: Review Your Voice Profile
+          </h3>
           <p className="text-[13px] leading-relaxed text-muted-foreground">
             Review and edit your voice fingerprint before saving.
           </p>
@@ -183,7 +266,7 @@ Would love to chat more about...`}
                   max="10"
                   value={voiceProfile.tone}
                   readOnly
-                  className="flex-1"
+                  className="flex-1 accent-foreground"
                 />
                 <span className="text-[13px] leading-relaxed font-numerical text-foreground w-8 text-right">
                   {voiceProfile.tone}/10

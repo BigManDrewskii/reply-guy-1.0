@@ -1,6 +1,59 @@
 /* Import Tailwind with design tokens */
 @import './design-tokens.css';
 
+/* ============================================
+ * FONT FACE DECLARATIONS
+ * Geist Sans + Geist Mono bundled as WOFF2
+ * ============================================ */
+
+@font-face {
+  font-family: 'Geist';
+  src: url('../assets/fonts/GeistRegular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geist';
+  src: url('../assets/fonts/GeistMedium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geist';
+  src: url('../assets/fonts/GeistSemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geist';
+  src: url('../assets/fonts/GeistBold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('../assets/fonts/GeistMonoRegular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('../assets/fonts/GeistMonoMedium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Legacy color variables for compatibility with existing components */
 :root {
   --bg-base: var(--background);
@@ -116,9 +169,9 @@ button.bg-\[\#ededed\]:focus-visible {
 .skeleton-shimmer {
   background: linear-gradient(
     90deg,
-    oklch(var(--color-muted)) 0%,
-    oklch(var(--color-muted-hover)) 50%,
-    oklch(var(--color-muted)) 100%
+    var(--color-muted) 0%,
+    var(--color-muted-hover) 50%,
+    var(--color-muted) 100%
   );
   background-size: 200% 100%;
 }
@@ -130,7 +183,7 @@ button.bg-\[\#ededed\]:focus-visible {
   }
 
   .skeleton-shimmer {
-    background: oklch(var(--color-muted));
+    background: var(--color-muted);
   }
 }
 

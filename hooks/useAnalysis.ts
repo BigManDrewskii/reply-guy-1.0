@@ -1,7 +1,12 @@
 import { useState, useCallback, useRef } from 'react';
 import { useStore } from '@/lib/store';
 import { getAnalysisPrompt } from '@/lib/prompts';
-import { streamCompletion, getCachedAnalysis, setCachedAnalysis } from '@/lib/openrouter';
+import {
+  streamCompletion,
+  getCachedAnalysis,
+  setCachedAnalysis,
+  extractJsonFromResponse,
+} from '@/lib/openrouter';
 import type { PageData, AnalysisResult } from '@/types';
 
 interface UseAnalysisResult {
@@ -23,15 +28,22 @@ export function useAnalysis(): UseAnalysisResult {
   const [retryCount, setRetryCount] = useState(0);
   const apiKey = useStore((state) => state.apiKey);
 
-  // Refs to track debounced calls
+  // Refs to track debounced calls and abort
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const currentUrlRef = useRef<string | null>(null);
   const pageDataRef = useRef<PageData | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const MAX_RETRIES = 3;
 
   const cancelAnalysis = useCallback(() => {
+    // Abort any in-flight request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+
     // Clear debounce timeout
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
@@ -47,6 +59,7 @@ export function useAnalysis(): UseAnalysisResult {
     // Reset states
     setIsDebouncing(false);
     setDebounceCountdown(0);
+    setIsAnalyzing(false);
     currentUrlRef.current = null;
   }, []);
 
@@ -93,7 +106,7 @@ export function useAnalysis(): UseAnalysisResult {
       setAnalysis(null);
 
       try {
-        // Check cache first
+        // Check Dexie cache first
         const cached = await getCachedAnalysis(pageData.url);
         if (cached) {
           setAnalysis(cached);
@@ -101,6 +114,10 @@ export function useAnalysis(): UseAnalysisResult {
           currentUrlRef.current = null;
           return;
         }
+
+        // Create AbortController for this request
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
 
         const prompt = getAnalysisPrompt(pageData);
         let fullResponse = '';
@@ -112,48 +129,41 @@ export function useAnalysis(): UseAnalysisResult {
           ],
           apiKey,
           {
+            signal: controller.signal,
             onChunk: (chunk) => {
-              // Try to parse partial JSON as it streams in
               fullResponse += chunk;
               try {
-                // Extract JSON from the response (handle markdown code blocks)
-                let jsonStr = fullResponse;
-                const codeBlockMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
-                if (codeBlockMatch) {
-                  jsonStr = codeBlockMatch[1];
-                }
-
-                // Try to parse what we have so far
+                const jsonStr = extractJsonFromResponse(fullResponse);
                 const parsed = JSON.parse(jsonStr);
                 if (parsed.confidence) {
                   setAnalysis(parsed);
                 }
               } catch {
-                // Partial JSON, not parseable yet - wait for more chunks
+                // Partial JSON, not parseable yet — wait for more chunks
               }
             },
             onComplete: async (finalText) => {
               try {
-                // Extract JSON from the response
-                let jsonStr = finalText;
-                const codeBlockMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
-                if (codeBlockMatch) {
-                  jsonStr = codeBlockMatch[1];
-                }
-
+                const jsonStr = extractJsonFromResponse(finalText);
                 const parsed = JSON.parse(jsonStr);
                 setAnalysis(parsed);
 
-                // Cache the result
+                // Cache the result in Dexie
                 await setCachedAnalysis(pageData.url, parsed);
                 setRetryCount(0);
-              } catch (parseError) {
+              } catch {
                 setError('Failed to parse analysis response');
               }
               setIsAnalyzing(false);
               currentUrlRef.current = null;
+              abortControllerRef.current = null;
             },
             onError: (err) => {
+              // Don't report abort errors
+              if (err instanceof DOMException && err.name === 'AbortError') {
+                return;
+              }
+
               const errorMessage = err instanceof Error ? err.message : 'Analysis failed';
               const isRetryable =
                 errorMessage.includes('network') ||
@@ -162,7 +172,6 @@ export function useAnalysis(): UseAnalysisResult {
                 errorMessage.includes('502');
 
               if (isRetryable && retryCount < MAX_RETRIES) {
-                console.log(`[useAnalysis] Retrying (${retryCount + 1}/${MAX_RETRIES})...`);
                 setRetryCount((prev) => prev + 1);
 
                 const backoffDelay = Math.pow(2, retryCount) * 1000;
@@ -172,27 +181,26 @@ export function useAnalysis(): UseAnalysisResult {
                   }
                 }, backoffDelay);
               } else {
-                console.error('[useAnalysis] Analysis error:', {
-                  error: err,
-                  url: pageData.url,
-                  timestamp: new Date().toISOString(),
-                  retries: retryCount,
-                });
                 setError(errorMessage);
                 setIsAnalyzing(false);
                 currentUrlRef.current = null;
+                abortControllerRef.current = null;
                 setRetryCount(0);
               }
             }
           }
         );
       } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') {
+          return;
+        }
         setError(err instanceof Error ? err.message : 'Analysis failed');
         setIsAnalyzing(false);
         currentUrlRef.current = null;
+        abortControllerRef.current = null;
       }
     }, 1000);
-  }, [apiKey, isAnalyzing, isDebouncing, cancelAnalysis]);
+  }, [apiKey, isAnalyzing, isDebouncing, cancelAnalysis, retryCount]);
 
   return {
     analysis,

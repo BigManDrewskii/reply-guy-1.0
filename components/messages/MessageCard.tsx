@@ -6,6 +6,7 @@ import { RefreshCw, Edit } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { Tabs } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import type { PageData, AnalysisResult, OutreachAngle } from '@/types';
 
 interface MessageCardProps {
@@ -13,8 +14,18 @@ interface MessageCardProps {
   analysis: AnalysisResult | null;
   selectedAngle: OutreachAngle['angle'];
   onSelectAngle: (angle: OutreachAngle['angle']) => void;
-  onCopy?: () => void;
+  onCopy?: (message?: string) => void;
   onRegenerate?: () => void;
+}
+
+/**
+ * Get a human-readable tone label from the voice score.
+ */
+function getVoiceLabel(score: number): { label: string; variant: 'success' | 'warning' | 'error' | 'info' } {
+  if (score >= 80) return { label: 'Sounds like you', variant: 'success' };
+  if (score >= 60) return { label: 'Close match', variant: 'info' };
+  if (score >= 40) return { label: 'Moderate match', variant: 'warning' };
+  return { label: 'Generic tone', variant: 'error' };
 }
 
 function MessageCard({
@@ -34,21 +45,29 @@ function MessageCard({
 
   // Auto-generate message when angle changes
   const handleAngleChange = (angle: string) => {
-    onSelectAngle(angle);
+    onSelectAngle(angle as OutreachAngle['angle']);
     if (!messages[angle] && !isGenerating[angle]) {
-      generateMessage(pageData, analysis, angle);
+      generateMessage(pageData, analysis!, angle as OutreachAngle['angle']);
     }
   };
 
   const handleRegenerate = () => {
-    regenerateMessage(pageData, analysis, selectedAngle);
+    regenerateMessage(pageData, analysis!, selectedAngle);
     if (onRegenerate) onRegenerate();
   };
 
+  const handleCopy = () => {
+    if (onCopy && currentMessage) {
+      onCopy(currentMessage.message);
+    }
+  };
+
   // Generate initial message for selected angle
-  if (!currentMessage && !isLoading) {
+  if (!currentMessage && !isLoading && analysis) {
     generateMessage(pageData, analysis, selectedAngle);
   }
+
+  const voiceInfo = currentMessage ? getVoiceLabel(currentMessage.voiceScore) : null;
 
   return (
     <Card variant="default" className="space-y-4">
@@ -87,22 +106,32 @@ function MessageCard({
               {currentMessage.message}
             </p>
 
-            {/* Metadata */}
+            {/* Metadata with voice score badge */}
             <div className="flex items-center justify-between text-xs text-muted-foreground pt-3 border-t border-border">
+              <div className="flex items-center gap-2">
+                {voiceInfo && (
+                  <Badge variant={voiceInfo.variant} size="sm">
+                    {voiceInfo.label}
+                  </Badge>
+                )}
+                <span className="font-numerical">
+                  {currentMessage.voiceScore}%
+                </span>
+              </div>
               <span className="font-numerical">
-                Voice: {currentMessage.voiceScore}% · {currentMessage.wordCount}w
+                {currentMessage.wordCount}w
               </span>
             </div>
 
             {/* Hook explanation */}
             {currentMessage.hook && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground italic">
                 Hook: {currentMessage.hook}
               </p>
             )}
 
             {/* Copy button */}
-            <CopyButton text={currentMessage.message} onCopy={onCopy} />
+            <CopyButton text={currentMessage.message} onCopy={handleCopy} />
           </>
         )}
 
@@ -116,7 +145,7 @@ function MessageCard({
               disabled={isLoading}
               className="flex-1"
             >
-              <RefreshCw size={14} />
+              <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
               Regenerate
             </Button>
             <Button
@@ -155,11 +184,11 @@ function MessageCard({
 }
 
 export default memo(MessageCard, (prevProps, nextProps) => {
-  // Only re-render if these critical props change
   return (
     prevProps.pageData.url === nextProps.pageData.url &&
     prevProps.selectedAngle === nextProps.selectedAngle &&
     prevProps.analysis?.personName === nextProps.analysis?.personName &&
-    prevProps.analysis?.summary === nextProps.analysis?.summary
+    prevProps.analysis?.confidence === nextProps.analysis?.confidence &&
+    prevProps.analysis?.outreachAngles?.length === nextProps.analysis?.outreachAngles?.length
   );
 });
