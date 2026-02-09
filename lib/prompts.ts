@@ -27,42 +27,66 @@ const COPY_FRAMEWORK = `MESSAGE STRUCTURE (follow this framework):
 // Analysis Prompts
 // ============================================
 
-export function getAnalysisPrompt(pageData: PageData): string {
-  if (pageData.platform === 'linkedin') {
-    return `You analyze LinkedIn profiles to help craft personalized outreach messages.
+/**
+ * Strip empty/null/undefined fields from pageData before sending to LLM.
+ * This reduces token waste and prevents the LLM from hallucinating about empty fields.
+ */
+function cleanPageData(data: PageData): Record<string, unknown> {
+  const clean: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (value === null || value === undefined || value === '') continue;
+    if (Array.isArray(value) && value.length === 0) continue;
+    if (typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === 0) continue;
+    // Skip internal/redundant fields
+    if (['hostname', 'isReady', 'scrapedAt', 'ogImage'].includes(key)) continue;
+    clean[key] = value;
+  }
+  return clean;
+}
 
-PAGE DATA:
-${JSON.stringify(pageData, null, 2)}
+export function getAnalysisPrompt(pageData: PageData): string {
+  const cleanData = cleanPageData(pageData);
+
+  if (pageData.platform === 'linkedin') {
+    return `You are an expert at analyzing LinkedIn profiles to identify high-value outreach opportunities.
+
+PROFILE DATA:
+${JSON.stringify(cleanData, null, 2)}
+
+IMPORTANT: The "profileSections" field contains raw text extracted from LinkedIn profile sections. Parse it carefully — it may contain role titles, company names, dates, descriptions, school names, certifications, and other structured information embedded in the text.
 
 Return JSON in this exact format (no markdown, no code blocks, just raw JSON):
 {
-  "personName": "full name from profile",
-  "summary": "2-3 sentences about their role, company, and professional focus",
-  "interests": ["3-5 professional interests based on headline, about, experience, and skills"],
+  "personName": "full name",
+  "summary": "3-4 sentences: their current role, company, career trajectory, and what they seem to care about. Be specific — mention actual company names, titles, and industries.",
+  "interests": ["5-7 SPECIFIC professional interests derived from their experience, skills, about section, and activity. NOT generic like 'technology' — specific like 'B2B SaaS growth marketing' or 'React Native mobile development'"],
   "outreachAngles": [
-    { "angle": "service", "hook": "specific service you could offer based on their role/company", "relevance": "why it's relevant to their current position" },
-    { "angle": "partner", "hook": "partnership opportunity based on complementary skills/industries", "relevance": "mutual benefit explanation" },
-    { "angle": "community", "hook": "shared industry/interest connection point", "relevance": "why connecting makes sense" },
-    { "angle": "value", "hook": "specific value you could provide (insight, intro, resource)", "relevance": "why they'd care" }
+    { "angle": "service", "hook": "specific service offering tied to their current role/company challenges", "relevance": "why this matters for their specific situation" },
+    { "angle": "partner", "hook": "concrete partnership idea based on complementary capabilities", "relevance": "specific mutual benefit" },
+    { "angle": "community", "hook": "shared professional interest or industry connection", "relevance": "why connecting makes sense now" },
+    { "angle": "value", "hook": "specific resource, insight, or introduction you could offer", "relevance": "why they'd find this valuable" }
   ],
   "confidence": 0-100,
-  "confidenceReason": "based on profile completeness and data quality"
+  "confidenceReason": "explain what data was available and what was missing"
 }
 
-LinkedIn-specific rules:
-- Use their headline and experience to understand their professional focus
-- Reference specific companies, roles, or skills from their profile
-- If they have an "About" section, use it to understand their priorities
-- Connection degree matters: 1st = warm, 2nd = mutual connections, 3rd = cold
-- If experience data is available, reference career trajectory
-- Skills endorsements indicate areas of expertise
-- interests must be specific professional topics, not generic phrases`;
+LinkedIn analysis rules:
+- Extract SPECIFIC details: company names, job titles, technologies, industries, school names
+- If experience data is available, identify their career trajectory and current focus
+- If they have an About section, treat it as their own words about their priorities
+- Connection degree context: 1st = warm (reference existing connection), 2nd = mention mutual connections, 3rd = establish credibility first
+- If skills are listed, use them to understand technical/professional expertise
+- If education is available, note alma mater for potential shared background
+- If recent activity is available, reference it — it shows what they're currently thinking about
+- Each outreach angle MUST reference specific details from their profile, not generic templates
+- interests must be specific professional topics derived from evidence in the profile
+- If profileSections contains raw text, parse it to extract structured information the selectors may have missed`;
   }
 
   return `You analyze webpages to help craft personalized outreach messages.
 
 PAGE DATA:
-${JSON.stringify(pageData, null, 2)}
+${JSON.stringify(cleanData, null, 2)}
 
 Return JSON in this exact format (no markdown, no code blocks, just raw JSON):
 {
@@ -100,10 +124,12 @@ export function getMessagePrompt(
   voiceProfile?: VoiceProfile,
   messageLength: MessageLength = 'medium'
 ): string {
+  const cleanData = cleanPageData(pageData);
+
   let prompt = `Generate a personalized outreach message based on:
 
 PAGE DATA:
-${JSON.stringify(pageData, null, 2)}
+${JSON.stringify(cleanData, null, 2)}
 
 ANALYSIS:
 ${JSON.stringify(analysis, null, 2)}
@@ -271,18 +297,33 @@ function buildLegacyVoiceContext(vp: any): string {
 
 function getPlatformInstructions(pageData: PageData): string {
   if (pageData.platform === 'linkedin') {
-    return `PLATFORM: LinkedIn
-- Use professional but warm tone appropriate for LinkedIn
-- Reference their headline, role, company, or recent activity
-- If connection degree is available, adjust warmth accordingly:
-  - 1st degree: Reference existing connection, be warm
-  - 2nd degree: Mention mutual connections if possible
-  - 3rd degree: Be more formal, establish credibility first
-- Reference specific skills or experience from their profile
+    let instructions = `PLATFORM: LinkedIn
+- Use professional but warm tone appropriate for LinkedIn DMs
+- Reference SPECIFIC details: their actual job title, company name, a project they worked on, or a skill they have
+- If their About section is available, reference something specific from it — it's their own words about what they care about
+- If experience data shows a career trajectory, acknowledge it (e.g., "your move from X to Y shows...")
+- If education is available and relevant, mention shared alma mater or notable programs
+- If recent activity/posts are available, reference them — it's the most timely hook possible
+`;
+    if (pageData.connectionDegree) {
+      const degree = pageData.connectionDegree.trim();
+      if (degree.includes('1')) {
+        instructions += `- CONNECTION: 1st degree — you're already connected. Be warm, reference the existing connection.
+`;
+      } else if (degree.includes('2')) {
+        instructions += `- CONNECTION: 2nd degree — mention mutual connections if possible. Medium warmth.
+`;
+      } else {
+        instructions += `- CONNECTION: 3rd degree or unknown — establish credibility first. Be more formal.
+`;
+      }
+    }
+    instructions += `- Avoid overly salesy language — LinkedIn users are highly sensitive to spam and generic outreach
+- NEVER use phrases like "I came across your profile", "I hope this finds you well", "I'd love to connect"
 - If this is a connection request note, keep it under 300 characters
-- Avoid overly salesy language — LinkedIn users are sensitive to spam
 
 `;
+    return instructions;
   }
 
   if (pageData.platform === 'x') {

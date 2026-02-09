@@ -24,8 +24,12 @@ export interface PageData {
   headline?: string;
   about?: string;
   experience?: string[];
+  education?: string[];
   skills?: string[];
   connectionDegree?: string;
+  avatarUrl?: string;
+  profileSections?: Record<string, string>;
+  recentActivity?: string[];
   // GitHub specific
   company?: string;
   // Generic site specific

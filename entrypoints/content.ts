@@ -226,56 +226,343 @@ function detectThreadContext(): string[] {
 }
 
 // ============================================
-// LinkedIn Scraper — Enhanced
+// LinkedIn Scraper — Resilient Section-Based
 // ============================================
+
+/**
+ * Multi-strategy element finder. Tries each selector in order,
+ * returns the first match. Resilient to LinkedIn DOM changes.
+ */
+function q(selectors: string[]): Element | null {
+  for (const sel of selectors) {
+    try {
+      const el = document.querySelector(sel);
+      if (el) return el;
+    } catch { /* invalid selector, skip */ }
+  }
+  return null;
+}
+
+/** Extract trimmed text from first matching selector */
+function qText(selectors: string[]): string {
+  return q(selectors)?.textContent?.trim() || '';
+}
+
+/**
+ * Extract the text content of a LinkedIn profile section by its anchor ID.
+ * LinkedIn sections follow the pattern: <section> containing an element with id="sectionName"
+ * The section's visible text is extracted, cleaned, and returned.
+ */
+function extractSection(sectionId: string, maxLength = 2000): string {
+  try {
+    // Strategy 1: Find the anchor element and walk up to its <section>
+    const anchor = document.getElementById(sectionId);
+    if (anchor) {
+      const section = anchor.closest('section');
+      if (section) {
+        return cleanSectionText(section.innerText, maxLength);
+      }
+      // Fallback: the anchor's parent section via sibling traversal
+      const parent = anchor.parentElement;
+      if (parent) {
+        const nextContainer = parent.nextElementSibling;
+        if (nextContainer) {
+          return cleanSectionText((nextContainer as HTMLElement).innerText, maxLength);
+        }
+      }
+    }
+
+    // Strategy 2: Find section by aria-label or heading text
+    const sectionLabel = sectionId.charAt(0).toUpperCase() + sectionId.slice(1);
+    const sections = document.querySelectorAll('section');
+    for (const sec of sections) {
+      const heading = sec.querySelector('h2, [class*="header"]');
+      if (heading && heading.textContent?.trim().toLowerCase().includes(sectionId.toLowerCase())) {
+        return cleanSectionText(sec.innerText, maxLength);
+      }
+    }
+
+    return '';
+  } catch {
+    return '';
+  }
+}
+
+/** Clean raw section text: collapse whitespace, remove "see more" artifacts */
+function cleanSectionText(text: string, maxLength: number): string {
+  return text
+    .replace(/\s*see more\s*/gi, ' ')
+    .replace(/\s*\.\.\.(see more|show more)\s*/gi, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/[ \t]+/g, ' ')
+    .trim()
+    .substring(0, maxLength);
+}
+
+/**
+ * Extract structured list items from a section.
+ * Returns individual entries (experience roles, education items, etc.)
+ */
+function extractSectionItems(sectionId: string, maxItems = 8): string[] {
+  try {
+    const anchor = document.getElementById(sectionId);
+    if (!anchor) return [];
+
+    const section = anchor.closest('section');
+    if (!section) return [];
+
+    // LinkedIn wraps each item in an <li> inside a pvs-list or artdeco-list
+    const items = section.querySelectorAll('li.artdeco-list__item, li[class*="pvs-list__item"], li[class*="pvs-list__paged-list-item"]');
+    if (items.length > 0) {
+      return Array.from(items)
+        .slice(0, maxItems)
+        .map(li => {
+          // Get visible text, collapse to single line
+          const text = (li as HTMLElement).innerText
+            ?.replace(/\n+/g, ' | ')
+            .replace(/\s+/g, ' ')
+            .trim();
+          return text || '';
+        })
+        .filter(t => t.length > 5);
+    }
+
+    // Fallback: split section text by double newlines
+    const sectionText = cleanSectionText(section.innerText, 3000);
+    return sectionText
+      .split(/\n{2,}/)
+      .map(s => s.trim())
+      .filter(s => s.length > 10)
+      .slice(0, maxItems);
+  } catch {
+    return [];
+  }
+}
 
 function scrapeLinkedIn() {
   try {
-    const name = document.querySelector('.text-heading-xlarge')?.textContent?.trim() || '';
-    const headline = document.querySelector('.text-body-medium.break-words')?.textContent?.trim() || '';
-    const about = document.querySelector('#about ~ div .visually-hidden + span')?.textContent?.trim() || '';
-    const isProfile = !!document.querySelector('.text-heading-xlarge');
+    const url = window.location.href;
+    const isProfile = /linkedin\.com\/in\//.test(url);
+    const isCompany = /linkedin\.com\/company\//.test(url);
 
-    // Enhanced: Extract experience entries
-    const experience = Array.from(
-      document.querySelectorAll('#experience ~ div .pvs-entity__path-node + div')
+    if (isCompany) {
+      return scrapeLinkedInCompany();
+    }
+
+    if (!isProfile) {
+      // LinkedIn article or other page
+      return {
+        name: getMeta('og:title') || document.querySelector('h1')?.textContent?.trim() || '',
+        bodyText: document.querySelector('.article-content, .reader-article-content')?.textContent?.trim()?.substring(0, 3000) || '',
+        confidence: 40,
+      };
+    }
+
+    // ── Profile Name ──
+    const name = qText([
+      '.text-heading-xlarge',
+      'h1.top-card-layout__title',
+      '[data-anonymize="person-name"]',
+      '.pv-top-card--list li:first-child',
+      'h1',
+    ]) || [getMeta('profile:first_name'), getMeta('profile:last_name')].filter(Boolean).join(' ');
+
+    // ── Headline ──
+    const headline = qText([
+      '.text-body-medium.break-words',
+      '.top-card-layout__headline',
+      '[data-anonymize="headline"]',
+      '.pv-top-card--list + .text-body-medium',
+    ]);
+
+    // ── Location ──
+    const location = qText([
+      '.text-body-small.inline.t-black--light.break-words',
+      '.top-card-layout__first-subline',
+      '.pv-top-card--list-bullet li:first-child',
+      'span.text-body-small[class*="break-words"]',
+    ]);
+
+    // ── Connection degree ──
+    const connectionDegree = qText([
+      '.dist-value',
+      '.distance-badge .dist-value',
+      'span[class*="distance-badge"]',
+    ]);
+
+    // ── Followers / connections count ──
+    const followers = qText([
+      '.pvs-header__optional-link span.t-bold',
+      '.t-bold:has(+ .t-black--light)',
+      '[data-anonymize="connections-count"]',
+      'span[class*="t-bold"][class*="connections"]',
+    ]) || extractFollowersFromText();
+
+    // ── Avatar URL ──
+    const avatarUrl = (() => {
+      const img = q([
+        '.pv-top-card-profile-picture__image',
+        '.pv-top-card__photo img',
+        'img.profile-photo-edit__preview',
+        '.presence-entity__image',
+        'img[class*="pv-top-card"]',
+      ]) as HTMLImageElement | null;
+      return img?.src || getMeta('og:image') || '';
+    })();
+
+    // ── About section (critical — use section-based extraction) ──
+    const about = extractSection('about', 2000) || qText([
+      '#about ~ .display-flex .inline-show-more-text',
+      '.pv-about-section .pv-about__summary-text',
+      '[data-anonymize="about-description"]',
+    ]);
+
+    // ── Experience (structured items) ──
+    const experience = extractSectionItems('experience', 8);
+
+    // ── Education ──
+    const education = extractSectionItems('education', 5);
+
+    // ── Skills ──
+    const skillsSection = extractSectionItems('skills', 15);
+    // Also try the direct span approach
+    const skillSpans = Array.from(
+      document.querySelectorAll(
+        '#skills ~ div span[aria-hidden="true"], ' +
+        '[id="skills"] ~ div span[aria-hidden="true"], ' +
+        '.pv-skill-category-entity__name-text'
+      )
     )
-      .slice(0, 5)
+      .slice(0, 15)
       .map(el => el.textContent?.trim() || '')
-      .filter(Boolean);
+      .filter(s => s.length > 1 && s.length < 60);
 
-    // Enhanced: Extract skills
-    const skills = Array.from(
-      document.querySelectorAll('#skills ~ div .pvs-entity__path-node + div span[aria-hidden="true"]')
-    )
-      .slice(0, 10)
-      .map(el => el.textContent?.trim() || '')
-      .filter(Boolean);
+    const skills = skillSpans.length > 0 ? skillSpans : skillsSection;
 
-    // Enhanced: Connection degree
-    const connectionDegree = document.querySelector('.dist-value')?.textContent?.trim() || '';
+    // ── Recent Activity ──
+    const recentActivity = extractRecentActivity();
 
-    // Enhanced: Location
-    const location = document.querySelector('.text-body-small.inline.t-black--light.break-words')?.textContent?.trim() || '';
+    // ── Raw profile sections (fallback for LLM analysis) ──
+    const profileSections: Record<string, string> = {};
+    for (const sectionId of ['about', 'experience', 'education', 'skills', 'certifications', 'publications', 'projects', 'volunteering']) {
+      const text = extractSection(sectionId, 1500);
+      if (text.length > 20) {
+        profileSections[sectionId] = text;
+      }
+    }
 
-    // Enhanced: Followers count
-    const followersEl = document.querySelector('.pvs-header__optional-link span.t-bold');
-    const followers = followersEl?.textContent?.trim() || '';
-
-    let confidence = 40;
-    if (name) confidence += 20;
-    if (headline) confidence += 15;
-    if (about) confidence += 15;
-    if (isProfile) confidence += 10;
-    if (experience.length > 0) confidence += 5;
+    // ── Confidence scoring ──
+    let confidence = 30;
+    if (name && name.length > 2) confidence += 15;
+    if (headline) confidence += 10;
+    if (about && about.length > 50) confidence += 15;
+    if (experience.length > 0) confidence += 10;
+    if (education.length > 0) confidence += 5;
     if (skills.length > 0) confidence += 5;
+    if (recentActivity.length > 0) confidence += 5;
+    if (location) confidence += 3;
+    if (connectionDegree) confidence += 2;
 
     return {
-      name, headline, about, isProfile, location, followers,
-      experience, skills, connectionDegree,
-      confidence: Math.min(confidence, 100)
+      name,
+      headline,
+      about,
+      location,
+      followers,
+      connectionDegree,
+      avatarUrl,
+      experience,
+      education,
+      skills,
+      recentActivity,
+      profileSections,
+      isProfile: true,
+      confidence: Math.min(confidence, 100),
     };
-  } catch { return {}; }
+  } catch (err) {
+    // Last resort: return whatever we can get from meta tags
+    return {
+      name: getMeta('og:title') || document.querySelector('h1')?.textContent?.trim() || '',
+      headline: getMeta('og:description') || '',
+      isProfile: true,
+      confidence: 25,
+    };
+  }
+}
+
+/** Extract followers/connections count from nearby text patterns */
+function extractFollowersFromText(): string {
+  try {
+    const topCard = document.querySelector('.pv-top-card, .scaffold-layout__main');
+    if (!topCard) return '';
+    const text = topCard.textContent || '';
+    const match = text.match(/(\d[\d,]+)\+?\s*(followers|connections)/i);
+    return match ? match[1] + ' ' + match[2] : '';
+  } catch {
+    return '';
+  }
+}
+
+/** Extract recent activity/posts from the activity section */
+function extractRecentActivity(): string[] {
+  try {
+    // Try the activity section on the profile page
+    const activityItems = document.querySelectorAll(
+      '.feed-shared-update-v2__description, ' +
+      '.pv-recent-activity-section__card-subtitle, ' +
+      '[class*="feed-shared-text"] span[dir="ltr"], ' +
+      '.update-components-text span[dir="ltr"]'
+    );
+
+    if (activityItems.length > 0) {
+      return Array.from(activityItems)
+        .slice(0, 6)
+        .map(el => el.textContent?.trim()?.substring(0, 400) || '')
+        .filter(t => t.length > 10);
+    }
+
+    // Fallback: extract from the "Recent Activity" or "Activity" section
+    const activitySection = extractSection('recent-activity', 2000) || extractSection('activity', 2000);
+    if (activitySection.length > 30) {
+      return activitySection
+        .split(/\n{2,}/)
+        .map(s => s.trim())
+        .filter(s => s.length > 20)
+        .slice(0, 6);
+    }
+
+    return [];
+  } catch {
+    return [];
+  }
+}
+
+/** Scrape LinkedIn company page */
+function scrapeLinkedInCompany() {
+  try {
+    const name = document.querySelector('h1 span')?.textContent?.trim() || getMeta('og:title') || '';
+    const headline = qText([
+      '.org-top-card-summary__tagline',
+      '.top-card-layout__headline',
+    ]);
+    const about = qText([
+      '.org-about-us-organization-description__text',
+      '.org-page-details__definition-text',
+    ])?.substring(0, 2000) || extractSection('about', 2000);
+
+    const bodyText = document.querySelector('.org-grid__content-height-enforcer, main')?.textContent?.trim()?.substring(0, 3000) || '';
+
+    return {
+      name,
+      headline,
+      about,
+      bodyText,
+      isProfile: false,
+      confidence: name ? 60 : 35,
+    };
+  } catch {
+    return { isProfile: false, confidence: 25 };
+  }
 }
 
 // ============================================
